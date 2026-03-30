@@ -124,6 +124,10 @@ var productCards = new Swiper(".productCardsSwiper", {
             slidesPerView: 2,
             spaceBetween: 15
         },
+        768: {
+            slidesPerView: 3,
+            spaceBetween: 15
+        },
         992: {
             slidesPerView: 3,
             spaceBetween: 15

@@ -742,15 +742,21 @@ a:focus {
 }
 
 .productCardsSwiper {
-    padding: 6px 2px 48px;
+    padding: 0 0 48px;
+}
+
+.productCardsSwiper .swiper-wrapper {
+    align-items: stretch;
 }
 
 .productCardsSwiper .swiper-slide {
+    display: flex;
     height: auto;
     box-sizing: border-box;
 }
 
 .productCardsSwiper .produto-content {
+    width: 100%;
     height: 100%;
     margin-bottom: 0;
 }
@@ -806,7 +812,6 @@ a:focus {
 .faq-section {
     padding-top: 18px;
     padding-bottom: 10px;
-    background: linear-gradient(180deg, #f6f1ea 0%, #ffffff 100%);
 }
 
 .faq-layout {
@@ -942,10 +947,6 @@ a:focus {
         display: block !important;
     }
 
-    .productCardsSwiper {
-        padding-inline: 22px;
-    }
-
     .faq-layout {
         display: block;
     }
@@ -975,6 +976,7 @@ a:focus {
     .faq-item.active .faq-answer p {
         padding-bottom: 18px;
     }
+
 }
 
 
