@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V Santos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+    <!-- Barra superior -->
+    <div class="top-bar">
+        <div class="top-container-bar container">
+            <div class="top-left">
+                <div class="contact-item">
+                    <i class="fa-brands fa-whatsapp icon-wp"></i>
+                    <span>WhatsApp</span>
+
+                </div>
+
+                <div class="contact-item">
+                    <i class="fa-regular fa-envelope icon-email"></i>
+                    <span>comercialvsantosrs@gmail.com</span>
+
+                </div>
+            </div>
+
+
+            <div class="top-right contact-item">
+                <i class="fa-brands fa-instagram"></i>
+            </div>
+        </div>
+    </div>
+
+
+
+    <header class="header">
+
+        <div class="header-top container">
+
+            <!-- Menu Mobile -->
+            <div class="menu-icon">
+                <svg width="28" height="28" viewBox="0 0 34 24" fill="none">
+                    <rect y="0" width="20" height="3" rx="2" fill="black" />
+                    <rect y="10" width="34" height="3" rx="2" fill="black" />
+                    <rect y="20" width="26" height="3" rx="2" fill="black" />
+                </svg>
+            </div>
+
+            <!-- Logo -->
+            <div class="logo">
+                <img src="../img/logo.png" alt="Logo" class="logo-img">
+            </div>
+
+            <!-- Busca -->
+            <div class="search-container">
+                <input type="text" placeholder="Buscar">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
+                </svg>
+            </div>
+
+
+            <!-- Área direita -->
+            <div class="header-right">
+
+                <div class="account">
+                    <i class="fa-regular fa-circle-user"></i>
+                    <span>
+                        <a href="#">
+                            Cadastre-se
+                        </a>
+                    </span>
+                    <span style="cursor: default;">|</span>
+                    <span>
+                        <a href="#">
+                            Fazer Login
+                        </a>
+                    </span>
+                </div>
+
+
+
+                <div class="cart" id="cart">
+                    <svg class="cart-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    <!-- contador -->
+                    <span class="cart-count" id="cart-count">0</span>
+                </div>
+
+
+            </div>
+
+        </div>
+
+
+    </header>
+
+    <!-- Menu Desktop -->
+    <nav class="navbar">
+        <ul class="list">
+            <li class="l1"><a class="links" href="#">Início</a></li>
+            <li class="l1"><a class="links" href="#">Quem Somos</a></li>
+            <li class="nav-item-container l1">
+                <a class="links" href="#" class="menu-link">
+                    Produtos
+                    <i class="fa-solid fa-chevron-down"></i>
+                </a>
+                <ul class="submenu-desktop">
+                    <li>
+                        <a href="#">Tábuas</a>
+                        <a href="#">Copos Térmicos</a>
+                        <a href="#">Kits Personalizados</a>
+                        <a href="#">Gamelas</a>
+                        <a href="#">Utensílios</a>
+                    </li>
+                </ul>
+            </li>
+
+            </div>
+            <li class="l1"><a class="links" href="#">Blog</a></li>
+            <li class="l1"><a class="links" href="#">Contato</a></li>
+            <li class="l1"><a class="links" href="#">Trocas e Devoluções</a></li>
+        </ul>
+    </nav>
+
+
+
+    <!-- Overlay escuro -->
+    <!-- Overlay -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Menu lateral -->
+    <aside class="side-menu" id="sideMenu">
+
+        <!-- Faixa preta superior -->
+        <div class="menu-top">
+            <div class="menu-enter">
+
+                <svg class="login-icon" viewBox="0 0 24 24" fill="none">
+
+                    <!-- Colchete ( ] ) -->
+                    <path d="M14 4h4v16h-4" stroke="white" stroke-width="2.8" stroke-linecap="round"
+                        stroke-linejoin="round" />
+
+                    <!-- Linha da seta -->
+                    <path d="M4 12h9" stroke="white" stroke-width="2.8" stroke-linecap="round" />
+
+                    <!-- Ponta da seta -->
+                    <path d="M10 8l4 4-4 4" stroke="white" stroke-width="2.8" stroke-linecap="round"
+                        stroke-linejoin="round" />
+
+                </svg>
+
+                <span>Entrar</span>
+            </div>
+
+
+
+
+            <button class="close-btn" id="closeMenu">✕</button>
+        </div>
+
+        <!-- Links -->
+        <nav class="menu-lateral">
+            <ul>
+
+                <li class="inicio">
+                    <img src="../img/img-tabua1.png" alt="">
+                    <img src="../img/img-tabua2.png" alt="">
+                    <a href="#">Início</a>
+                </li>
+
+                <li>
+                    <a href="#">Quem Somos</a>
+                </li>
+
+                <li class="produtos" id="abrir-submenu">
+                    <a href="#">Produtos</a>
+                    <span class="seta"></span>
+                </li>
+
+                <ul class="submenu">
+                    <li class="ver-tudo"><strong>Ver tudo em Produtos</strong></li>
+                    <li>Tábuas</li>
+                    <li>Copos Térmicos</li>
+                    <li>Kits Personalizados</li>
+                    <li>Gamelas</li>
+                    <li>Utensílios</li>
+                </ul>
+
+
+                <li>
+                    <a href="#">Blog</a>
+                </li>
+
+                <li>
+                    <a href="#">Contato</a>
+                </li>
+
+                <li>
+                    <a href="#">Trocas e Devoluções</a>
+                </li>
+
+            </ul>
+        </nav>
+
+    </aside>
+
+
+
+    <!-- Banner -->
+    <section class="banner">
+        <div class="container animar">
+            <img src="../img/banner.png" alt="Banner">
+        </div>
+    </section>
+
+
+
+    <!-- Avaliações -->
+    <section class="avaliacoes section-home">
+        <div class="swiper-area">
+            <div class="container">
+                <div class=" swiper mySwiper">
+
+                    <div class="swiper-wrapper">
+                        <div class="swiper-slide">
+                            <div class="card-avaliacao">
+                                <div class="estrelas">★★★★★</div>
+                                <p>
+                                    Produtos de altíssima qualidade, preço justo e atendimento espetacular. Uma gama
+                                    ampla
+                                    de
+                                    produtos, com opção de personalização, tudo feito com extrema qualidade e agilidade.
+                                    Sou
+                                    cliente, e recomendo!!
+                                </p>
+                                <h4>Tiago Amorim</h4>
+                            </div>
+                        </div>
+
+                        <div class="swiper-slide">
+                            <div class="card-avaliacao">
+                                <div class="estrelas">★★★★★</div>
+                                <p>
+                                    Atendimento top! Qualidade nota 10! Parabéns! 👏🏻
+                                </p>
+                                <h4>Jeniffer Tavares</h4>
+                            </div>
+                        </div>
+
+                        <div class="swiper-slide">
+                            <div class="card-avaliacao">
+                                <div class="estrelas">★★★★★</div>
+                                <p>
+                                    Empresa muito comprometida, entrega com capricho e cuidado em cada detalhe do que
+                                    foi solicitado, amei a experiência, meu Pai amou o presente. Eu indico de olhos
+                                    fechados, uma ótima opção para surpreender no presente. Inclusive estou comprando
+                                    novamente.
+                                </p>
+                                <h4>Bruna Velloso</h4>
+                            </div>
+                        </div>
+
+                        <div class="swiper-slide">
+                            <div class="card-avaliacao">
+                                <div class="estrelas">★★★★★</div>
+                                <p>
+                                    Estão de parabéns!! pelo capricho e comprometimento.
+                                </p>
+                                <h4>Fabiane Machado Teixeira</h4>
+                            </div>
+                        </div>
+
+                        <div class="swiper-slide">
+                            <div class="card-avaliacao">
+                                <div class="estrelas">★★★★★</div>
+                                <p>
+                                    O trabalho é excelente. O material de altíssima qualidade. Entrega super rápida.
+                                    Super indico.
+                                </p>
+                                <h4>Iriane Dias</h4>
+                            </div>
+                        </div>
+
+                        <div class="swiper-slide">
+                            <div class="card-avaliacao">
+                                <div class="estrelas">★★★★★</div>
+                                <p>
+                                    Adoramos a experiência!!! Trabalho impecável
+                                </p>
+                                <h4>Hamanda Cardoso</h4>
+                            </div>
+                        </div>
+
+                        <div class="swiper-slide">
+                            <div class="card-avaliacao">
+                                <div class="estrelas">★★★★★</div>
+                                <p>
+                                    Maravilhosos otimo atendimento rápido na entrega produto lindo e alta qualidade
+                                </p>
+                                <h4>Claudia Costa</h4>
+                            </div>
+                        </div>
+
+                        <div class="swiper-slide">
+                            <div class="card-avaliacao">
+                                <div class="estrelas">★★★★★</div>
+                                <p>
+                                    Excelente! Produto e qualidade 5 estrelas. Já comprei 4 tábuas para presente.
+                                    Recomendo sem restrição.
+                                </p>
+                                <h4>Carlos Ricardo</h4>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Bolinhas -->
+                    <div class="swiper-pagination"></div>
+
+                </div>
+            </div>
+
+            <!-- Setas -->
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-button-next"></div>
+        </div>
+
+
+    </section>
+
+    <section class="section-home section-categories-home animar">
+        <div class="section-title mx-auto row">
+            <div class="col-12 text-center">
+                <h2 class="text-heading">Escolha seu presente personalizado ideal</h2>
+            </div>
+        </div>
+
+        <div>
+            <div class="swiper produtosSwiper">
+                <div class="swiper-wrapper">
+
+                    <div class="swiper-slide">
+                        <a href="#">
+                            <div class="card categories-cards">
+                                <img src="../img/categoria1-img.webp" alt="">
+                                <p>Tábuas</p>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="swiper-slide">
+                        <a href="#">
+                            <div class="card categories-cards">
+                                <img src="../img/categoria2-img.webp" alt="">
+                                <p>Gamelas</p>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="swiper-slide">
+                        <a href="#">
+                            <div class="card categories-cards">
+                                <img src="../img/categoria3-img.webp" alt="">
+                                <p>Kits Personalizados</p>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="swiper-slide">
+                        <a href="#">
+                            <div class="card categories-cards">
+                                <img src="../img/categoria4-img.webp" alt="">
+                                <p>Copos Térmicos</p>
+                            </div>
+                        </a>
+                    </div>
+
+                </div>
+
+                <div class="swiper-pagination "></div>
+            </div>
+        </div>
+    </section>
+
+
+    <section class="section-home">
+        <div class="section-title mx-auto row">
+            <div class="col-12 text-center">
+                <h2 class="text-heading">Produtos em destaque</h2>
+            </div>
+        </div>
+
+
+        <div class="container produtos-grid">
+
+
+            <div>
+                <div class="produto-content item">
+                    <img src="../img/tabua-produto01.webp" alt="">
+
+                    <div class="item-name-wrapper">
+                        <a href="#">
+                            <span>TÁBUA PIONEIRA EM MADEIRA NOBRE – PERSONALIZADA E FEITA PARA IMPRESSIONAR TÁBUA</span>
+                        </a>
+                    </div>
+
+                    <div class="item-price-container">
+
+
+                        <div class="item-featured-price">
+                            <span class="price-compare">R$189,90</span>
+                            <span class="item-price">R$164,90</span>
+                        </div>
+
+                        <div class="card-parcelamento">
+                            <i class="fa-regular fa-credit-card icone-parcela"></i>
+
+
+                            <div class="max-installments-container">
+                                <span>2</span>
+                                <span> x de </span>
+                                <span class="product-installment-value">R$82,45</span>
+                                <span class="sem-juros">sem juros</span>
+                            </div>
+
+                        </div>
+
+
+                        <div class="mt-2">
+                            <a href="#" class="add-to-cart">
+
+
+
+                                <svg class="icone-carrinho" viewBox="0 0 24 24" fill="none" stroke="white"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="9" cy="21" r="1"></circle>
+                                    <circle cx="20" cy="21" r="1"></circle>
+                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                </svg>
+
+
+                                <span>COMPRAR</span>
+
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="produto-content item">
+                    <img src="../img/tabua-produto01.webp" alt="">
+
+                    <div class="item-name-wrapper">
+                        <a href="#">
+                            <span>TÁBUA PIONEIRA EM MADEIRA NOBRE – PERSONALIZADA E FEITA PARA IMPRESSIONAR TÁBUA</span>
+                        </a>
+                    </div>
+
+                    <div class="item-price-container">
+
+
+                        <div class="item-featured-price">
+                            <span class="price-compare">R$189,90</span>
+                            <span class="item-price">R$164,90</span>
+                        </div>
+
+                        <div class="card-parcelamento">
+                            <i class="fa-regular fa-credit-card icone-parcela"></i>
+
+
+                            <div class="max-installments-container">
+                                <span>2</span>
+                                <span> x de </span>
+                                <span class="product-installment-value">R$82,45</span>
+                                <span class="sem-juros">sem juros</span>
+                            </div>
+
+                        </div>
+
+
+                        <div class="mt-2">
+                            <a href="#" class="add-to-cart">
+
+
+
+                                <svg class="icone-carrinho" viewBox="0 0 24 24" fill="none" stroke="white"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="9" cy="21" r="1"></circle>
+                                    <circle cx="20" cy="21" r="1"></circle>
+                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                </svg>
+
+
+                                <span>COMPRAR</span>
+
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="produto-content item">
+                    <img src="../img/tabua-produto01.webp" alt="">
+
+                    <div class="item-name-wrapper">
+                        <a href="#">
+                            <span>TÁBUA PIONEIRA EM MADEIRA NOBRE – PERSONALIZADA E FEITA PARA IMPRESSIONAR TÁBUA</span>
+                        </a>
+                    </div>
+
+                    <div class="item-price-container">
+
+
+                        <div class="item-featured-price">
+                            <span class="price-compare">R$189,90</span>
+                            <span class="item-price">R$164,90</span>
+                        </div>
+
+                        <div class="card-parcelamento">
+                            <i class="fa-regular fa-credit-card icone-parcela"></i>
+
+
+                            <div class="max-installments-container">
+                                <span>2</span>
+                                <span> x de </span>
+                                <span class="product-installment-value">R$82,45</span>
+                                <span class="sem-juros">sem juros</span>
+                            </div>
+
+                        </div>
+
+
+                        <div class="mt-2">
+                            <a href="#" class="add-to-cart">
+
+
+
+                                <svg class="icone-carrinho" viewBox="0 0 24 24" fill="none" stroke="white"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="9" cy="21" r="1"></circle>
+                                    <circle cx="20" cy="21" r="1"></circle>
+                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                </svg>
+
+
+                                <span>COMPRAR</span>
+
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="produto-content item">
+                    <img src="../img/tabua-produto01.webp" alt="">
+
+                    <div class="item-name-wrapper">
+                        <a href="#">
+                            <span>TÁBUA PIONEIRA EM MADEIRA NOBRE – PERSONALIZADA E FEITA PARA IMPRESSIONAR TÁBUA</span>
+                        </a>
+                    </div>
+
+                    <div class="item-price-container">
+
+
+                        <div class="item-featured-price">
+                            <span class="price-compare">R$189,90</span>
+                            <span class="item-price">R$164,90</span>
+                        </div>
+
+                        <div class="card-parcelamento">
+                            <i class="fa-regular fa-credit-card icone-parcela"></i>
+
+
+                            <div class="max-installments-container">
+                                <span>2</span>
+                                <span> x de </span>
+                                <span class="product-installment-value">R$82,45</span>
+                                <span class="sem-juros">sem juros</span>
+                            </div>
+
+                        </div>
+
+
+                        <div class="mt-2">
+                            <a href="#" class="add-to-cart">
+
+
+
+                                <svg class="icone-carrinho" viewBox="0 0 24 24" fill="none" stroke="white"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="9" cy="21" r="1"></circle>
+                                    <circle cx="20" cy="21" r="1"></circle>
+                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                </svg>
+
+
+                                <span>COMPRAR</span>
+
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="produto-content item">
+                    <img src="../img/tabua-produto01.webp" alt="">
+
+                    <div class="item-name-wrapper">
+                        <a href="#">
+                            <span>TÁBUA PIONEIRA EM MADEIRA NOBRE – PERSONALIZADA E FEITA PARA IMPRESSIONAR TÁBUA</span>
+                        </a>
+                    </div>
+
+                    <div class="item-price-container">
+
+
+                        <div class="item-featured-price">
+                            <span class="price-compare">R$189,90</span>
+                            <span class="item-price">R$164,90</span>
+                        </div>
+
+                        <div class="card-parcelamento">
+                            <i class="fa-regular fa-credit-card icone-parcela"></i>
+
+
+                            <div class="max-installments-container">
+                                <span>2</span>
+                                <span> x de </span>
+                                <span class="product-installment-value">R$82,45</span>
+                                <span class="sem-juros">sem juros</span>
+                            </div>
+
+                        </div>
+
+
+                        <div class="mt-2">
+                            <a href="#" class="add-to-cart">
+
+
+
+                                <svg class="icone-carrinho" viewBox="0 0 24 24" fill="none" stroke="white"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="9" cy="21" r="1"></circle>
+                                    <circle cx="20" cy="21" r="1"></circle>
+                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                </svg>
+
+
+                                <span>COMPRAR</span>
+
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="produto-content item">
+                    <img src="../img/tabua-produto01.webp" alt="">
+
+                    <div class="item-name-wrapper">
+                        <a href="#">
+                            <span>TÁBUA PIONEIRA EM MADEIRA NOBRE – PERSONALIZADA E FEITA PARA IMPRESSIONAR TÁBUA</span>
+                        </a>
+                    </div>
+
+                    <div class="item-price-container">
+
+
+                        <div class="item-featured-price">
+                            <span class="price-compare">R$189,90</span>
+                            <span class="item-price">R$164,90</span>
+                        </div>
+
+                        <div class="card-parcelamento">
+                            <i class="fa-regular fa-credit-card icone-parcela"></i>
+
+
+                            <div class="max-installments-container">
+                                <span>2</span>
+                                <span> x de </span>
+                                <span class="product-installment-value">R$82,45</span>
+                                <span class="sem-juros">sem juros</span>
+                            </div>
+
+                        </div>
+
+
+                        <div class="mt-2">
+                            <a href="#" class="add-to-cart">
+
+
+
+                                <svg class="icone-carrinho" viewBox="0 0 24 24" fill="none" stroke="white"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="9" cy="21" r="1"></circle>
+                                    <circle cx="20" cy="21" r="1"></circle>
+                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                </svg>
+
+
+                                <span>COMPRAR</span>
+
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="produto-content item">
+                    <img src="../img/tabua-produto01.webp" alt="">
+
+                    <div class="item-name-wrapper">
+                        <a href="#">
+                            <span>TÁBUA PIONEIRA EM MADEIRA NOBRE – PERSONALIZADA E FEITA PARA IMPRESSIONAR TÁBUA</span>
+                        </a>
+                    </div>
+
+                    <div class="item-price-container">
+
+
+                        <div class="item-featured-price">
+                            <span class="price-compare">R$189,90</span>
+                            <span class="item-price">R$164,90</span>
+                        </div>
+
+                        <div class="card-parcelamento">
+                            <i class="fa-regular fa-credit-card icone-parcela"></i>
+
+
+                            <div class="max-installments-container">
+                                <span>2</span>
+                                <span> x de </span>
+                                <span class="product-installment-value">R$82,45</span>
+                                <span class="sem-juros">sem juros</span>
+                            </div>
+
+                        </div>
+
+
+                        <div class="mt-2">
+                            <a href="#" class="add-to-cart">
+
+
+
+                                <svg class="icone-carrinho" viewBox="0 0 24 24" fill="none" stroke="white"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="9" cy="21" r="1"></circle>
+                                    <circle cx="20" cy="21" r="1"></circle>
+                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                </svg>
+
+
+                                <span>COMPRAR</span>
+
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="produto-content item">
+                    <img src="../img/tabua-produto01.webp" alt="">
+
+                    <div class="item-name-wrapper">
+                        <a href="#">
+                            <span>TÁBUA PIONEIRA EM MADEIRA NOBRE – PERSONALIZADA E FEITA PARA IMPRESSIONAR TÁBUA</span>
+                        </a>
+                    </div>
+
+                    <div class="item-price-container">
+
+
+                        <div class="item-featured-price">
+                            <span class="price-compare">R$189,90</span>
+                            <span class="item-price">R$164,90</span>
+                        </div>
+
+                        <div class="card-parcelamento">
+                            <i class="fa-regular fa-credit-card icone-parcela"></i>
+
+
+                            <div class="max-installments-container">
+                                <span>2</span>
+                                <span> x de </span>
+                                <span class="product-installment-value">R$82,45</span>
+                                <span class="sem-juros">sem juros</span>
+                            </div>
+
+                        </div>
+
+
+                        <div class="mt-2">
+                            <a href="#" class="add-to-cart">
+
+
+
+                                <svg class="icone-carrinho" viewBox="0 0 24 24" fill="none" stroke="white"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="9" cy="21" r="1"></circle>
+                                    <circle cx="20" cy="21" r="1"></circle>
+                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                </svg>
+
+
+                                <span>COMPRAR</span>
+
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+
+            <div>
+                <div class="produto-content item">
+                    <img src="../img/tabua-produto01.webp" alt="">
+
+                    <div class="item-name-wrapper">
+                        <a href="#">
+                            <span>TÁBUA PIONEIRA EM MADEIRA NOBRE – PERSONALIZADA E FEITA PARA IMPRESSIONAR TÁBUA</span>
+                        </a>
+                    </div>
+
+                    <div class="item-price-container">
+
+
+                        <div class="item-featured-price">
+                            <span class="price-compare">R$189,90</span>
+                            <span class="item-price">R$164,90</span>
+                        </div>
+
+                        <div class="card-parcelamento">
+                            <i class="fa-regular fa-credit-card icone-parcela"></i>
+
+
+                            <div class="max-installments-container">
+                                <span>2</span>
+                                <span> x de </span>
+                                <span class="product-installment-value">R$82,45</span>
+                                <span class="sem-juros">sem juros</span>
+                            </div>
+
+                        </div>
+
+
+                        <div class="mt-2">
+                            <a href="#" class="add-to-cart">
+
+
+
+                                <svg class="icone-carrinho" viewBox="0 0 24 24" fill="none" stroke="white"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="9" cy="21" r="1"></circle>
+                                    <circle cx="20" cy="21" r="1"></circle>
+                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                </svg>
+
+
+                                <span>COMPRAR</span>
+
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        </div>
+    </section>
+
+
+    <section class="section-home">
+        <div class="section-title mx-auto row">
+            <div class="col-12 text-center">
+                <h2 class="text-heading">Mais opções para presentear</h2>
+            </div>
+        </div>
+
+        <div class="container product-carousel-section">
+            <div class="swiper productCardsSwiper">
+                <div class="swiper-wrapper">
+                    <div class="swiper-slide">
+                        <div class="produto-content item">
+                            <img src="../img/tabua-produto01.webp" alt="">
+
+                            <div class="item-name-wrapper">
+                                <a href="#">
+                                    <span>TÁBUA PIONEIRA EM MADEIRA NOBRE - PERSONALIZADA E FEITA PARA
+                                        IMPRESSIONAR</span>
+                                </a>
+                            </div>
+
+                            <div class="item-price-container">
+                                <div class="item-featured-price">
+                                    <span class="price-compare">R$189,90</span>
+                                    <span class="item-price">R$164,90</span>
+                                </div>
+
+                                <div class="card-parcelamento">
+                                    <i class="fa-regular fa-credit-card icone-parcela"></i>
+
+                                    <div class="max-installments-container">
+                                        <span>2</span>
+                                        <span> x de </span>
+                                        <span class="product-installment-value">R$82,45</span>
+                                        <span class="sem-juros">sem juros</span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-2">
+                                    <a href="#" class="add-to-cart">
+                                        <svg class="icone-carrinho" viewBox="0 0 24 24" fill="none" stroke="white"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="9" cy="21" r="1"></circle>
+                                            <circle cx="20" cy="21" r="1"></circle>
+                                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6">
+                                            </path>
+                                        </svg>
+
+                                        <span>COMPRAR</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                    <div class="swiper-slide">
+                        <div class="produto-content item">
+                            <img src="../img/tabua-produto01.webp" alt="">
+
+                            <div class="item-name-wrapper">
+                                <a href="#">
+                                    <span>TÁBUA PIONEIRA EM MADEIRA NOBRE - PERSONALIZADA E FEITA PARA
+                                        IMPRESSIONAR</span>
+                                </a>
+                            </div>
+
+                            <div class="item-price-container">
+                                <div class="item-featured-price">
+                                    <span class="price-compare">R$189,90</span>
+                                    <span class="item-price">R$164,90</span>
+                                </div>
+
+                                <div class="card-parcelamento">
+                                    <i class="fa-regular fa-credit-card icone-parcela"></i>
+
+                                    <div class="max-installments-container">
+                                        <span>2</span>
+                                        <span> x de </span>
+                                        <span class="product-installment-value">R$82,45</span>
+                                        <span class="sem-juros">sem juros</span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-2">
+                                    <a href="#" class="add-to-cart">
+                                        <svg class="icone-carrinho" viewBox="0 0 24 24" fill="none" stroke="white"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="9" cy="21" r="1"></circle>
+                                            <circle cx="20" cy="21" r="1"></circle>
+                                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6">
+                                            </path>
+                                        </svg>
+
+                                        <span>COMPRAR</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="swiper-slide">
+                        <div class="produto-content item">
+                            <img src="../img/tabua-produto01.webp" alt="">
+
+                            <div class="item-name-wrapper">
+                                <a href="#">
+                                    <span>TÁBUA PIONEIRA EM MADEIRA NOBRE - PERSONALIZADA E FEITA PARA
+                                        IMPRESSIONAR</span>
+                                </a>
+                            </div>
+
+                            <div class="item-price-container">
+                                <div class="item-featured-price">
+                                    <span class="price-compare">R$189,90</span>
+                                    <span class="item-price">R$164,90</span>
+                                </div>
+
+                                <div class="card-parcelamento">
+                                    <i class="fa-regular fa-credit-card icone-parcela"></i>
+
+                                    <div class="max-installments-container">
+                                        <span>2</span>
+                                        <span> x de </span>
+                                        <span class="product-installment-value">R$82,45</span>
+                                        <span class="sem-juros">sem juros</span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-2">
+                                    <a href="#" class="add-to-cart">
+                                        <svg class="icone-carrinho" viewBox="0 0 24 24" fill="none" stroke="white"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="9" cy="21" r="1"></circle>
+                                            <circle cx="20" cy="21" r="1"></circle>
+                                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6">
+                                            </path>
+                                        </svg>
+
+                                        <span>COMPRAR</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="swiper-slide">
+                        <div class="produto-content item">
+                            <img src="../img/tabua-produto01.webp" alt="">
+
+                            <div class="item-name-wrapper">
+                                <a href="#">
+                                    <span>TÁBUA PIONEIRA EM MADEIRA NOBRE - PERSONALIZADA E FEITA PARA
+                                        IMPRESSIONAR</span>
+                                </a>
+                            </div>
+
+                            <div class="item-price-container">
+                                <div class="item-featured-price">
+                                    <span class="price-compare">R$189,90</span>
+                                    <span class="item-price">R$164,90</span>
+                                </div>
+
+                                <div class="card-parcelamento">
+                                    <i class="fa-regular fa-credit-card icone-parcela"></i>
+
+                                    <div class="max-installments-container">
+                                        <span>2</span>
+                                        <span> x de </span>
+                                        <span class="product-installment-value">R$82,45</span>
+                                        <span class="sem-juros">sem juros</span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-2">
+                                    <a href="#" class="add-to-cart">
+                                        <svg class="icone-carrinho" viewBox="0 0 24 24" fill="none" stroke="white"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="9" cy="21" r="1"></circle>
+                                            <circle cx="20" cy="21" r="1"></circle>
+                                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6">
+                                            </path>
+                                        </svg>
+
+                                        <span>COMPRAR</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="swiper-slide">
+                        <div class="produto-content item">
+                            <img src="../img/tabua-produto01.webp" alt="">
+
+                            <div class="item-name-wrapper">
+                                <a href="#">
+                                    <span>TÁBUA PIONEIRA EM MADEIRA NOBRE - PERSONALIZADA E FEITA PARA
+                                        IMPRESSIONAR</span>
+                                </a>
+                            </div>
+
+                            <div class="item-price-container">
+                                <div class="item-featured-price">
+                                    <span class="price-compare">R$189,90</span>
+                                    <span class="item-price">R$164,90</span>
+                                </div>
+
+                                <div class="card-parcelamento">
+                                    <i class="fa-regular fa-credit-card icone-parcela"></i>
+
+                                    <div class="max-installments-container">
+                                        <span>2</span>
+                                        <span> x de </span>
+                                        <span class="product-installment-value">R$82,45</span>
+                                        <span class="sem-juros">sem juros</span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-2">
+                                    <a href="#" class="add-to-cart">
+                                        <svg class="icone-carrinho" viewBox="0 0 24 24" fill="none" stroke="white"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="9" cy="21" r="1"></circle>
+                                            <circle cx="20" cy="21" r="1"></circle>
+                                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6">
+                                            </path>
+                                        </svg>
+
+                                        <span>COMPRAR</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="swiper-slide">
+                        <div class="produto-content item">
+                            <img src="../img/tabua-produto01.webp" alt="">
+
+                            <div class="item-name-wrapper">
+                                <a href="#">
+                                    <span>TÁBUA PIONEIRA EM MADEIRA NOBRE - PERSONALIZADA E FEITA PARA
+                                        IMPRESSIONAR</span>
+                                </a>
+                            </div>
+
+                            <div class="item-price-container">
+                                <div class="item-featured-price">
+                                    <span class="price-compare">R$189,90</span>
+                                    <span class="item-price">R$164,90</span>
+                                </div>
+
+                                <div class="card-parcelamento">
+                                    <i class="fa-regular fa-credit-card icone-parcela"></i>
+
+                                    <div class="max-installments-container">
+                                        <span>2</span>
+                                        <span> x de </span>
+                                        <span class="product-installment-value">R$82,45</span>
+                                        <span class="sem-juros">sem juros</span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-2">
+                                    <a href="#" class="add-to-cart">
+                                        <svg class="icone-carrinho" viewBox="0 0 24 24" fill="none" stroke="white"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="9" cy="21" r="1"></circle>
+                                            <circle cx="20" cy="21" r="1"></circle>
+                                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6">
+                                            </path>
+                                        </svg>
+
+                                        <span>COMPRAR</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="swiper-slide">
+                        <div class="produto-content item">
+                            <img src="../img/tabua-produto01.webp" alt="">
+
+                            <div class="item-name-wrapper">
+                                <a href="#">
+                                    <span>TÁBUA PIONEIRA EM MADEIRA NOBRE - PERSONALIZADA E FEITA PARA
+                                        IMPRESSIONAR</span>
+                                </a>
+                            </div>
+
+                            <div class="item-price-container">
+                                <div class="item-featured-price">
+                                    <span class="price-compare">R$189,90</span>
+                                    <span class="item-price">R$164,90</span>
+                                </div>
+
+                                <div class="card-parcelamento">
+                                    <i class="fa-regular fa-credit-card icone-parcela"></i>
+
+                                    <div class="max-installments-container">
+                                        <span>2</span>
+                                        <span> x de </span>
+                                        <span class="product-installment-value">R$82,45</span>
+                                        <span class="sem-juros">sem juros</span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-2">
+                                    <a href="#" class="add-to-cart">
+                                        <svg class="icone-carrinho" viewBox="0 0 24 24" fill="none" stroke="white"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="9" cy="21" r="1"></circle>
+                                            <circle cx="20" cy="21" r="1"></circle>
+                                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6">
+                                            </path>
+                                        </svg>
+
+                                        <span>COMPRAR</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="swiper-slide">
+                        <div class="produto-content item">
+                            <img src="../img/tabua-produto01.webp" alt="">
+
+                            <div class="item-name-wrapper">
+                                <a href="#">
+                                    <span>TÁBUA PIONEIRA EM MADEIRA NOBRE - PERSONALIZADA E FEITA PARA
+                                        IMPRESSIONAR</span>
+                                </a>
+                            </div>
+
+                            <div class="item-price-container">
+                                <div class="item-featured-price">
+                                    <span class="price-compare">R$189,90</span>
+                                    <span class="item-price">R$164,90</span>
+                                </div>
+
+                                <div class="card-parcelamento">
+                                    <i class="fa-regular fa-credit-card icone-parcela"></i>
+
+                                    <div class="max-installments-container">
+                                        <span>2</span>
+                                        <span> x de </span>
+                                        <span class="product-installment-value">R$82,45</span>
+                                        <span class="sem-juros">sem juros</span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-2">
+                                    <a href="#" class="add-to-cart">
+                                        <svg class="icone-carrinho" viewBox="0 0 24 24" fill="none" stroke="white"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="9" cy="21" r="1"></circle>
+                                            <circle cx="20" cy="21" r="1"></circle>
+                                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6">
+                                            </path>
+                                        </svg>
+
+                                        <span>COMPRAR</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="swiper-slide">
+                        <div class="produto-content item">
+                            <img src="../img/tabua-produto01.webp" alt="">
+
+                            <div class="item-name-wrapper">
+                                <a href="#">
+                                    <span>TÁBUA PIONEIRA EM MADEIRA NOBRE - PERSONALIZADA E FEITA PARA
+                                        IMPRESSIONAR</span>
+                                </a>
+                            </div>
+
+                            <div class="item-price-container">
+                                <div class="item-featured-price">
+                                    <span class="price-compare">R$189,90</span>
+                                    <span class="item-price">R$164,90</span>
+                                </div>
+
+                                <div class="card-parcelamento">
+                                    <i class="fa-regular fa-credit-card icone-parcela"></i>
+
+                                    <div class="max-installments-container">
+                                        <span>2</span>
+                                        <span> x de </span>
+                                        <span class="product-installment-value">R$82,45</span>
+                                        <span class="sem-juros">sem juros</span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-2">
+                                    <a href="#" class="add-to-cart">
+                                        <svg class="icone-carrinho" viewBox="0 0 24 24" fill="none" stroke="white"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="9" cy="21" r="1"></circle>
+                                            <circle cx="20" cy="21" r="1"></circle>
+                                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6">
+                                            </path>
+                                        </svg>
+
+                                        <span>COMPRAR</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="swiper-button-prev product-cards-prev"></div>
+                <div class="swiper-button-next product-cards-next"></div>
+                <div class="swiper-pagination product-cards-pagination"></div>
+            </div>
+        </div>
+    </section>
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="script.js"></script>
+
+
+
+</body>
+
+</html>
