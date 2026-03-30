@@ -99,8 +99,14 @@ var categories = new Swiper(".produtosSwiper", {
 });
 
 var productCards = new Swiper(".productCardsSwiper", {
+    loop: true,
     slidesPerView: 2,
+    slidesPerGroup: 1,
     spaceBetween: 15,
+    observer: true,
+    observeParents: true,
+    updateOnWindowResize: true,
+    watchOverflow: true,
     pagination: {
         el: ".product-cards-pagination",
         clickable: true,
@@ -123,6 +129,26 @@ var productCards = new Swiper(".productCardsSwiper", {
             spaceBetween: 15
         }
     }
+});
+
+const faqItems = document.querySelectorAll(".faq-item");
+
+faqItems.forEach((item) => {
+    const button = item.querySelector(".faq-question");
+
+    button.addEventListener("click", () => {
+        const isActive = item.classList.contains("active");
+
+        faqItems.forEach((faqItem) => {
+            faqItem.classList.remove("active");
+            faqItem.querySelector(".faq-question").setAttribute("aria-expanded", "false");
+        });
+
+        if (!isActive) {
+            item.classList.add("active");
+            button.setAttribute("aria-expanded", "true");
+        }
+    });
 });
 
 const elementos = document.querySelectorAll(".animar");
