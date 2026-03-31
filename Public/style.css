@@ -1,4 +1,4 @@
-/* RESET */
+﻿/* RESET */
 * {
     margin: 0;
     padding: 0;
@@ -132,9 +132,9 @@ a:focus {
 @keyframes subir {
     from {
         transform: translateY(30px);
-        /* começa 50px abaixo */
+        /* comeÃ§a 50px abaixo */
         opacity: 0;
-        /* começa invisível */
+        /* comeÃ§a invisÃ­vel */
     }
 
     to {
@@ -228,7 +228,7 @@ a:focus {
     cursor: pointer;
 }
 
-/* Botão X */
+/* BotÃ£o X */
 .close-btn {
     background: none;
     border: none;
@@ -309,7 +309,7 @@ a:focus {
     padding: 0 20px;
 
     max-height: 0;
-    /* começa fechado */
+    /* comeÃ§a fechado */
     overflow: hidden;
 
     opacity: 0;
@@ -475,14 +475,14 @@ a:focus {
     transition: all 0.8s ease-out;
 }
 
-/* quando estiver visível */
+/* quando estiver visÃ­vel */
 .animar.ativo {
     opacity: 1;
     transform: translateY(0);
 }
 
 
-/*Avaliações*/
+/*AvaliaÃ§Ãµes*/
 
 .avaliacoes {
     background: #fafafa;
@@ -546,7 +546,7 @@ a:focus {
 
 }
 
-/* Bolinhas padrão */
+/* Bolinhas padrÃ£o */
 .avaliacoes .swiper-pagination-bullet {
     width: 10px !important;
     height: 10px !important;
@@ -571,7 +571,7 @@ a:focus {
     display: none;
 }
 
-/* ===== BOTÕES DESKTOP ===== */
+/* ===== BOTÃ•ES DESKTOP ===== */
 @media (min-width: 991px) {
 
 
@@ -599,7 +599,7 @@ a:focus {
     }
 
 
-    /* Remove estilo padrão azul */
+    /* Remove estilo padrÃ£o azul */
     .swiper-button-next::after,
     .swiper-button-prev::after {
         font-size: 16px;
@@ -712,7 +712,7 @@ a:focus {
 
 .produtosSwiper {
     padding-bottom: 40px;
-    /* cria espaço para as bolinhas */
+    /* cria espaÃ§o para as bolinhas */
 }
 
 .section-home .position-relative {
@@ -828,33 +828,11 @@ a:focus {
     box-shadow: none;
 }
 
-.faq-kicker {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 7px 12px;
-    border-radius: 999px;
-    background: #111111;
-    color: #ffffff;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    margin-bottom: 14px;
-}
-
 .faq-intro .text-heading {
     text-align: center;
-    margin-bottom: 10px;
     color: #1a1a1a;
     font-size: 44px;
     line-height: 1.1;
-}
-
-.faq-intro p {
-    margin: 0;
-    color: #7a5f49;
-    font-size: 18px;
-    line-height: 1.6;
 }
 
 .faq-list {
@@ -911,7 +889,7 @@ a:focus {
 }
 
 .faq-item.active .faq-question i {
-    transform: rotate(45deg);
+    transform: rotate(180deg);
     color: #2563eb;
 }
 
@@ -938,6 +916,162 @@ a:focus {
     padding-bottom: 24px;
 }
 
+.simple-footer {
+    margin-top: 52px;
+    padding: 34px 0;
+    border-top: 1px solid #18181814;
+    background: #faf8f5;
+}
+
+.simple-footer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+.simple-footer-logo {
+    width: 78px;
+    height: auto;
+}
+
+.simple-footer-column h3 {
+    margin: 0 0 14px;
+    font-size: 17px;
+    font-weight: 700;
+    color: #1d1d1d;
+}
+
+.simple-footer-column ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.simple-footer-column a {
+    color: #4c4c4c;
+    transition: color 0.25s ease;
+}
+
+.simple-footer-column a:hover {
+    color: #111111;
+}
+
+.simple-footer-payments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.simple-footer-payments span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid #18181814;
+    background: #ffffff;
+    color: #2b2b2b;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.whatsapp-float {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 999;
+    transform: translateY(80px);
+    opacity: 0;
+    animation: whatsapp-rise 0.7s ease-out 0.4s forwards;
+    transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+.whatsapp-float span {
+    max-width: 0;
+    height: 46px;
+    padding: 0;
+    border-radius: 999px;
+    background: #2b2b2b;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.20);
+    overflow: hidden;
+    opacity: 0;
+    transition: max-width 0.25s ease, padding 0.25s ease, opacity 0.2s ease;
+}
+
+.whatsapp-float i {
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #2fd066 0%, #1faa4b 100%);
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 31px;
+    box-shadow: 0 16px 32px rgba(31, 170, 75, 0.35);
+}
+
+.whatsapp-float:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.03);
+    color: #ffffff;
+}
+
+.whatsapp-float:hover span {
+    max-width: 180px;
+    padding: 0 16px;
+    opacity: 1;
+}
+
+.whatsapp-float:hover i {
+    animation: whatsapp-pulse 1s ease-in-out infinite;
+}
+
+@keyframes whatsapp-rise {
+    from {
+        transform: translateY(80px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes whatsapp-pulse {
+    0% {
+        transform: scale(1);
+        filter: brightness(1.03);
+    }
+
+    50% {
+        transform: scale(1.08);
+        filter: brightness(1.12);
+    }
+
+    100% {
+        transform: scale(1);
+        filter: brightness(1.03);
+    }
+}
+
 @media (max-width: 768px) {
     .produtos-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -960,10 +1094,6 @@ a:focus {
         font-size: 34px;
     }
 
-    .faq-intro p {
-        font-size: 16px;
-    }
-
     .faq-question {
         padding-left: 18px;
         padding-right: 18px;
@@ -975,6 +1105,33 @@ a:focus {
 
     .faq-item.active .faq-answer p {
         padding-bottom: 18px;
+    }
+
+    .simple-footer {
+        margin-top: 40px;
+        padding: 28px 0;
+    }
+
+    .simple-footer-grid {
+        grid-template-columns: 1fr;
+        gap: 22px;
+    }
+
+    .whatsapp-float {
+        right: 16px;
+        bottom: 16px;
+        gap: 8px;
+    }
+
+    .whatsapp-float span {
+        font-size: 13px;
+        height: 42px;
+    }
+
+    .whatsapp-float i {
+        width: 58px;
+        height: 58px;
+        font-size: 28px;
     }
 
 }
@@ -1024,7 +1181,7 @@ a:focus {
 
     -webkit-line-clamp: 4;
     line-clamp: 4;
-    /* padrão moderno */
+    /* padrÃ£o moderno */
 
     overflow: hidden;
 }
@@ -1265,7 +1422,7 @@ a:focus {
 
     .produtosSwiper .swiper-slide {
         width: 11vw !important;
-        /* 👈 controla o tamanho real */
+        /* ðŸ‘ˆ controla o tamanho real */
     }
 
     .produtosSwiper .swiper-wrapper {
@@ -1356,3 +1513,4 @@ a:focus {
         max-width: 1200px;
     }
 }
+

@@ -1,4 +1,4 @@
-
+﻿
 const menuIcon = document.querySelector(".menu-icon");
 const sideMenu = document.getElementById("sideMenu");
 const overlay = document.getElementById("overlay");
@@ -40,13 +40,13 @@ const swiper = new Swiper(".mySwiper", {
     pagination: {
         el: ".swiper-pagination",
         clickable: true,
-        enabled: true // 🔥 força ativação no mobile
+        enabled: true // força ativação no mobile
     },
 
     navigation: {
         nextEl: ".swiper-button-next",
         prevEl: ".swiper-button-prev",
-        enabled: false // 🔥 desativa no mobile
+        enabled: false // desativa no mobile
     },
 
     breakpoints: {
@@ -82,7 +82,7 @@ const swiper = new Swiper(".mySwiper", {
 var categories = new Swiper(".produtosSwiper", {
     grabCursor: true,
 
-    // 📱 Celular
+    // Celular
     slidesPerView: 3,
 
     pagination: {
@@ -92,7 +92,7 @@ var categories = new Swiper(".produtosSwiper", {
 
     breakpoints: {
         768: {
-            slidesPerView: "auto",  // 👈 importante
+            slidesPerView: "auto",  // importante
             allowTouchMove: false
         }
     }
@@ -163,7 +163,7 @@ const observer = new IntersectionObserver((entries) => {
             entry.target.classList.add("ativo");
         } else {
             entry.target.classList.remove("ativo");
-            // 🔥 remove se sair da tela (para animar toda vez)
+            // remove se sair da tela para animar toda vez
         }
     });
 }, {
@@ -171,3 +171,4 @@ const observer = new IntersectionObserver((entries) => {
 });
 
 elementos.forEach(el => observer.observe(el));
+
