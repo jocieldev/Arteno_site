@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurações | Admin Arteno</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body class="admin-panel-body">
+    <div class="admin-layout">
+        <div class="admin-mobile-overlay" id="adminMobileOverlay"></div>
+
+        <aside class="admin-sidebar">
+            <div class="admin-sidebar-brand">
+                <img src="/img/logo.png" alt="Logo Arteno" class="admin-sidebar-logo">
+                <div>
+                    <strong>Arteno</strong>
+                    <span>Painel administrativo</span>
+                </div>
+
+                <button type="button" class="admin-sidebar-close" id="adminSidebarClose" aria-label="Fechar menu">
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+
+            <nav class="admin-sidebar-nav">
+                <a href="/admin" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-box"></i></span>
+                    <span>Produtos</span>
+                </a>
+                <a href="/admin/categories" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-tags"></i></span>
+                    <span>Categorias</span>
+                </a>
+                <a href="/admin/orders" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-bag-shopping"></i></span>
+                    <span>Pedidos</span>
+                </a>
+                <a href="/admin/coupons" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-ticket"></i></span>
+                    <span>Cupons</span>
+                </a>
+                <a href="/admin/messages" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-envelope"></i></span>
+                    <span>Mensagens</span>
+                    <span class="admin-sidebar-badge" data-admin-message-badge hidden></span>
+                </a>
+                <a href="/admin/integrations" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-plug"></i></span>
+                    <span>Integrações</span>
+                </a>
+                <a href="/admin/settings" class="admin-sidebar-link active">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-gear"></i></span>
+                    <span>Configurações</span>
+                </a>
+            </nav>
+
+            <div class="admin-sidebar-footer">
+                <a href="/" target="_blank" rel="noreferrer" class="admin-sidebar-secondary">Ver loja</a>
+                <form action="/admin/logout" method="get">
+                    <button type="submit" class="admin-sidebar-logout">Sair</button>
+                </form>
+            </div>
+        </aside>
+
+        <main class="admin-main admin-products-page">
+            <header class="admin-products-header">
+                <div class="admin-products-header-left">
+                    <button type="button" class="admin-mobile-menu-button" id="adminMobileMenuButton" aria-label="Abrir menu">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+
+                    <div class="admin-products-title-wrap">
+                        <span class="admin-products-title-icon"><i class="fa-solid fa-gear"></i></span>
+                        <h1>Configurações do site</h1>
+                    </div>
+                </div>
+            </header>
+
+            <section class="admin-settings-hero">
+                <div>
+                    <p class="admin-card-kicker">Aparência da home</p>
+                    <h2>Gerencie os banners principais da loja</h2>
+                    <p class="admin-panel-subtitle">Escolha quais imagens aparecem no topo do site, adicione links para categorias ou páginas e mantenha tudo organizado em um único lugar.</p>
+                </div>
+                <div class="admin-settings-hero-card">
+                    <span class="admin-settings-hero-icon"><i class="fa-solid fa-images"></i></span>
+                    <div>
+                        <strong>Banners rotativos</strong>
+                        <p>Com mais de um banner ativo, a home exibe automaticamente um carrossel com navegação lateral.</p>
+                    </div>
+                </div>
+            </section>
+
+            <div class="admin-feedback admin-products-feedback" id="siteSettingsFeedback" hidden></div>
+
+            <section class="admin-settings-layout">
+                <section class="admin-editor-card admin-site-settings-card">
+                    <div class="admin-editor-card-header">
+                        <div>
+                            <h3>Contato e redes sociais</h3>
+                            <p class="admin-panel-subtitle">Atualize os dados que aparecem no topo, rodapé e botão flutuante do site.</p>
+                        </div>
+                    </div>
+
+                    <form id="siteContactForm" class="admin-site-banner-form">
+                        <div class="admin-site-banner-fields">
+                            <label class="admin-auth-field">
+                                <span>N&uacute;mero do WhatsApp</span>
+                                <input type="text" name="whatsappNumber" id="siteWhatsappNumber" placeholder="Ex: 5551999999999">
+                                <small class="admin-field-help">Informe com DDI e DDD. Exemplo: 5551997186734</small>
+                            </label>
+
+                            <label class="admin-auth-field">
+                                <span>Email do site</span>
+                                <input type="email" name="email" id="siteContactEmail" placeholder="contato@sualoja.com">
+                            </label>
+                        </div>
+
+                        <div class="admin-site-banner-fields">
+                            <label class="admin-auth-field">
+                                <span>Link do Instagram</span>
+                                <input type="url" name="instagramUrl" id="siteInstagramUrl" placeholder="https://instagram.com/seuperfil">
+                            </label>
+                        </div>
+
+                        <div class="admin-site-banner-form-actions">
+                            <button type="submit" class="admin-auth-submit" id="siteContactSubmitButton">Salvar contatos</button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="admin-editor-card admin-site-settings-card admin-site-settings-form-card">
+                    <div class="admin-editor-card-header">
+                        <div>
+                            <h3>Adicionar ou editar banner</h3>
+                            <p class="admin-panel-subtitle">Preencha os dados abaixo para publicar um novo banner na home.</p>
+                        </div>
+                    </div>
+
+                    <form id="siteBannerForm" class="admin-site-banner-form">
+                        <input type="hidden" name="bannerId" id="siteBannerId">
+
+                        <div class="admin-site-banner-fields">
+                            <label class="admin-auth-field">
+                                <span>Nome interno do banner</span>
+                                <input type="text" name="name" id="siteBannerName" placeholder="Ex: Banner principal de inverno" required>
+                            </label>
+
+                            <label class="admin-auth-field">
+                                <span>Link do banner</span>
+                                <input type="text" name="linkUrl" id="siteBannerLinkUrl" placeholder="Ex: /categoria/tabuas-personalizadas">
+                                <small class="admin-field-help">Opcional. Use links internos como páginas, categorias, produtos ou blog.</small>
+                            </label>
+                        </div>
+
+                        <div class="admin-site-banner-image-grid">
+                            <label class="admin-auth-field admin-site-banner-upload">
+                                <span>Banner desktop</span>
+                                <input type="file" name="desktopImage" id="siteBannerDesktopImage" accept="image/*" hidden>
+                                <span class="admin-site-banner-upload-trigger">
+                                    <i class="fa-solid fa-image"></i>
+                                    <strong>Escolher imagem desktop</strong>
+                                    <small>PNG, JPG ou WEBP</small>
+                                </span>
+                                <div class="admin-site-banner-preview" id="siteBannerDesktopPreview"></div>
+                                <small class="admin-field-help">Usado em telas acima de 768px.</small>
+                            </label>
+
+                            <label class="admin-auth-field admin-site-banner-upload">
+                                <span>Banner mobile</span>
+                                <input type="file" name="mobileImage" id="siteBannerMobileImage" accept="image/*" hidden>
+                                <span class="admin-site-banner-upload-trigger">
+                                    <i class="fa-solid fa-mobile-screen"></i>
+                                    <strong>Escolher imagem mobile</strong>
+                                    <small>PNG, JPG ou WEBP</small>
+                                </span>
+                                <div class="admin-site-banner-preview admin-site-banner-preview-mobile" id="siteBannerMobilePreview"></div>
+                                <small class="admin-field-help">Usado em telas de até 768px. Se ficar vazio, o desktop será reaproveitado.</small>
+                            </label>
+                        </div>
+
+                        <div class="admin-site-banner-form-actions">
+                            <button type="submit" class="admin-auth-submit" id="siteBannerSubmitButton">Adicionar banner</button>
+                            <button type="button" class="admin-secondary-button" id="siteBannerCancelButton" hidden>Cancelar edição</button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="admin-products-card admin-site-settings-card admin-site-settings-gallery-card">
+                    <div class="admin-editor-card-header">
+                        <div>
+                            <h3>Banners cadastrados</h3>
+                            <p class="admin-panel-subtitle">Edite ou remova banners já publicados no topo do site.</p>
+                        </div>
+                    </div>
+
+                    <div class="admin-empty-state" id="siteBannersEmptyState" hidden>
+                        Nenhum banner foi cadastrado ainda. Adicione o primeiro banner para exibir no início do site.
+                    </div>
+
+                    <div class="admin-site-banners-grid" id="siteBannersGrid"></div>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <script src="/admin/message-badge.js"></script>
+    <script src="/admin/settings.js"></script>
+</body>
+</html>

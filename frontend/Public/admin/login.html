@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Admin | V Santos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body class="admin-auth-body">
+    <main class="admin-auth-shell">
+        <section class="admin-auth-card">
+            <div class="admin-auth-brand">
+                <img src="/img/logo.png" alt="Logo V Santos" class="admin-auth-logo">
+                <p class="admin-auth-kicker">Painel administrativo</p>
+                <h1>Entrar no admin</h1>
+                <p class="admin-auth-subtitle">Acesse seu painel para gerenciar produtos, pedidos e informações da loja.</p>
+            </div>
+
+            <div class="admin-auth-alert" id="adminAuthAlert" hidden>
+                Usuário ou senha inválidos. Tente novamente.
+            </div>
+
+            <form class="admin-auth-form" action="/admin/login" method="post">
+                <label class="admin-auth-field">
+                    <span>Nome de usuário</span>
+                    <input type="text" name="username" placeholder="Digite seu usuário" required>
+                </label>
+
+                <label class="admin-auth-field">
+                    <span>Senha</span>
+                    <div class="admin-password-wrapper">
+                        <input type="password" name="password" id="adminPasswordInput" placeholder="Digite sua senha" required>
+                        <button
+                            type="button"
+                            class="admin-password-toggle"
+                            id="adminPasswordToggle"
+                            aria-label="Mostrar senha"
+                            aria-pressed="false"
+                        >
+                            <svg class="icon-eye-open" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                            </svg>
+                            <svg class="icon-eye-closed" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M3 3L21 21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                <path d="M10.6 5.08A9.77 9.77 0 0 1 12 5c6.5 0 10.5 7 10.5 7a17.4 17.4 0 0 1-4.09 4.93" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M6.45 6.47A17.73 17.73 0 0 0 1.5 12s4 7 10.5 7a9.7 9.7 0 0 0 3.14-.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M9.88 9.88A3 3 0 0 0 9 12a3 3 0 0 0 4.12 2.78" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                </label>
+
+                <button type="submit" class="admin-auth-submit">Entrar no painel</button>
+            </form>
+        </section>
+    </main>
+
+    <script src="/admin/admin.js"></script>
+</body>
+</html>

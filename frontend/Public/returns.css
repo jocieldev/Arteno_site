@@ -1,0 +1,107 @@
+.returns-page-body {
+    --returns-ink: #171717;
+    --returns-ink-soft: #5f6268;
+    --returns-accent: #b77946;
+    --returns-accent-strong: #935b2f;
+    background:
+        radial-gradient(circle at top left, rgba(183, 121, 70, 0.18), transparent 28%),
+        radial-gradient(circle at top right, rgba(124, 91, 58, 0.12), transparent 26%),
+        linear-gradient(180deg, #f8f3eb 0%, #f4efe8 48%, #f8f6f2 100%);
+    min-height: 100vh;
+    color: var(--returns-ink);
+}
+
+.returns-main {
+    padding-top: 36px;
+    padding-bottom: 64px;
+}
+
+.returns-intro,
+.returns-text-section,
+.returns-faq {
+    margin-bottom: 34px;
+}
+
+.returns-title-row {
+    margin-bottom: 18px;
+}
+
+.returns-main-title {
+    font-size: clamp(40px, 5vw, 64px);
+}
+
+.returns-section-subtitle {
+    max-width: 920px;
+    margin: 0 auto 16px;
+    padding-left: 18px;
+    color: var(--returns-ink);
+    font-size: clamp(24px, 3vw, 34px);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    text-align: left;
+}
+
+.returns-copy {
+    max-width: 920px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.returns-copy p {
+    margin: 0 0 14px;
+    color: var(--returns-ink-soft);
+    font-size: 20px;
+    line-height: 1.95;
+}
+
+.returns-copy p:last-child {
+    margin-bottom: 0;
+}
+
+.returns-copy strong {
+    color: var(--returns-accent-strong);
+}
+
+.returns-steps p {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+    max-width: 920px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left;
+}
+
+.returns-step-number {
+    color: var(--returns-accent-strong);
+    font-weight: 800;
+}
+
+.returns-steps p span:last-child {
+    display: block;
+}
+
+.returns-faq-list {
+    max-width: 920px;
+}
+
+.returns-faq .faq-question i {
+    color: var(--returns-accent);
+}
+
+.returns-faq .faq-item.active .faq-question i {
+    color: var(--returns-accent-strong);
+}
+
+@media (max-width: 640px) {
+    .returns-main {
+        padding-top: 24px;
+        padding-bottom: 48px;
+    }
+
+    .returns-copy p {
+        font-size: 18px;
+        line-height: 1.85;
+    }
+}

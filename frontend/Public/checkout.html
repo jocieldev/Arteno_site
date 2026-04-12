@@ -1,0 +1,407 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout | Arteno</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/cart-drawer.css">
+    <link rel="stylesheet" href="/checkout.css">
+</head>
+<body class="checkout-page-body">
+    <div class="top-bar">
+        <div class="top-container-bar container">
+            <div class="top-left">
+                <div class="contact-item">
+                    <i class="fa-brands fa-whatsapp icon-wp"></i>
+                    <span></span>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-regular fa-envelope icon-email"></i>
+                    <span></span>
+                </div>
+            </div>
+            <div class="top-right contact-item">
+                <i class="fa-brands fa-instagram"></i>
+            </div>
+        </div>
+    </div>
+
+    <header class="header">
+        <div class="header-top container">
+            <div class="menu-icon">
+                <svg width="28" height="28" viewBox="0 0 34 24" fill="none">
+                    <rect y="0" width="20" height="3" rx="2" fill="black" />
+                    <rect y="10" width="34" height="3" rx="2" fill="black" />
+                    <rect y="20" width="26" height="3" rx="2" fill="black" />
+                </svg>
+            </div>
+
+            <div class="logo">
+                <a href="/"><img src="/img/logo.png" alt="Logo" class="logo-img"></a>
+            </div>
+
+            <div class="search-container">
+                <input type="text" placeholder="Buscar">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
+                </svg>
+            </div>
+
+            <div class="header-right">
+                <div class="account">
+                    <i class="fa-regular fa-circle-user"></i>
+<span><a href="/entrar">Cadastre-se</a></span>
+<span style="cursor: default;">|</span>
+<span><a href="/entrar">Fazer Login</a></span>
+                </div>
+
+                <div class="cart" id="cart">
+                    <svg class="cart-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    <span class="cart-count" id="cart-count">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="navbar">
+        <ul class="list">
+            <li class="l1"><a class="links" href="/">Início</a></li>
+            <li class="l1"><a class="links" href="/quem-somos">Quem Somos</a></li>
+            <li class="nav-item-container l1">
+                <a class="links" href="#">
+                    Produtos
+                    <i class="fa-solid fa-chevron-down"></i>
+                </a>
+                <ul class="submenu-desktop">
+                    <li id="desktopCategoriesMenu"></li>
+                </ul>
+            </li>
+            <li class="l1"><a class="links" href="/blog">Blog</a></li>
+            <li class="l1"><a class="links" href="/contato">Contato</a></li>
+            <li class="l1"><a class="links" href="/trocas-e-devolucoes">Trocas e Devoluções</a></li>
+        </ul>
+    </nav>
+
+    <div class="overlay" id="overlay"></div>
+
+    <aside class="side-menu" id="sideMenu">
+        <div class="menu-top">
+            <a class="menu-enter" href="/entrar">
+                <svg class="login-icon" viewBox="0 0 24 24" fill="none">
+                    <path d="M14 4h4v16h-4" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M4 12h9" stroke="white" stroke-width="2.8" stroke-linecap="round" />
+                    <path d="M10 8l4 4-4 4" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <span>Entrar</span>
+            </a>
+
+            <button class="close-btn" id="closeMenu">X</button>
+        </div>
+
+        <nav class="menu-lateral">
+            <ul>
+                <li class="inicio"><a href="/">Início</a></li>
+                <li><a href="/quem-somos">Quem Somos</a></li>
+                <li class="produtos" id="abrir-submenu">
+                    <a href="#">Produtos</a>
+                    <span class="seta"></span>
+                </li>
+
+                <ul class="submenu">
+                    <li id="mobileCategoriesMenu" class="mobile-categories-menu"></li>
+                </ul>
+
+                <li><a href="/blog">Blog</a></li>
+                <li><a href="/contato">Contato</a></li>
+                <li><a href="/trocas-e-devolucoes">Trocas e Devoluções</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="container checkout-page-main">
+        <section class="checkout-page-hero">
+            <div>
+                <p class="checkout-page-kicker">Finalizar compra</p>
+                <h1>Checkout da sua compra</h1>
+                <p class="checkout-page-subtitle">Monte o pedido completo e finalize em modo de teste, com confirmação automática para validar o fluxo da loja.</p>
+            </div>
+            <div class="checkout-mode-badge" id="checkoutModeBadge">Modo desenvolvimento</div>
+        </section>
+
+        <div class="checkout-page-feedback" id="checkoutFeedback" hidden></div>
+
+        <section class="checkout-empty-state" id="checkoutEmptyState" hidden>
+            <div class="checkout-empty-card">
+                <i class="fa-solid fa-bag-shopping"></i>
+                <h2>Seu carrinho está vazio</h2>
+                <p>Adicione produtos antes de seguir para o checkout.</p>
+                <a href="/" class="checkout-empty-link">Voltar para a loja</a>
+            </div>
+        </section>
+
+        <section class="checkout-layout" id="checkoutLayout" hidden>
+            <form class="checkout-form" id="checkoutForm" autocomplete="on">
+                <article class="checkout-block">
+                    <div class="checkout-block-header">
+                        <span>1</span>
+                        <div>
+                            <h2>Seus dados</h2>
+                            <p>Preencha as informações do cliente para criar o pedido.</p>
+                        </div>
+                    </div>
+                    <div class="checkout-grid checkout-grid-two">
+                        <label class="checkout-field">
+                            <span>Nome completo</span>
+                            <input type="text" id="checkoutCustomerName" autocomplete="name" required>
+                        </label>
+                        <label class="checkout-field">
+                            <span>Telefone</span>
+                            <input type="text" id="checkoutCustomerPhone" autocomplete="tel" required>
+                        </label>
+                        <label class="checkout-field checkout-field-full">
+                            <span>Email</span>
+                            <input type="email" id="checkoutCustomerEmail" autocomplete="email" required>
+                        </label>
+                    </div>
+                </article>
+
+                <article class="checkout-block">
+                    <div class="checkout-block-header">
+                        <span>2</span>
+                        <div>
+                            <h2>Endereço de entrega</h2>
+                            <p>Essa etapa já deixa o fluxo pronto para integrar o frete real depois.</p>
+                        </div>
+                    </div>
+                    <div class="checkout-grid checkout-grid-two">
+                        <label class="checkout-field">
+                            <span>CEP</span>
+                            <input type="text" id="checkoutZipCode" autocomplete="postal-code" required>
+                        </label>
+                        <label class="checkout-field">
+                            <span>Complemento</span>
+                            <input type="text" id="checkoutComplement" autocomplete="address-line2">
+                        </label>
+                        <label class="checkout-field checkout-field-full">
+                            <span>Rua</span>
+                            <input type="text" id="checkoutStreet" autocomplete="address-line1" required>
+                        </label>
+                        <label class="checkout-field">
+                            <span>Número</span>
+                            <input type="text" id="checkoutStreetNumber" autocomplete="off" inputmode="numeric" required>
+                        </label>
+                        <label class="checkout-field">
+                            <span>Bairro</span>
+                            <input type="text" id="checkoutNeighborhood" required>
+                        </label>
+                        <label class="checkout-field">
+                            <span>Cidade</span>
+                            <input type="text" id="checkoutCity" autocomplete="address-level2" required>
+                        </label>
+                        <label class="checkout-field">
+                            <span>Estado</span>
+                            <select id="checkoutState" autocomplete="address-level1" required>
+                                <option value="">Selecione</option>
+                                <option value="AC">Acre</option>
+                                <option value="AL">Alagoas</option>
+                                <option value="AP">Amapa</option>
+                                <option value="AM">Amazonas</option>
+                                <option value="BA">Bahia</option>
+                                <option value="CE">Ceara</option>
+                                <option value="DF">Distrito Federal</option>
+                                <option value="ES">Espirito Santo</option>
+                                <option value="GO">Goias</option>
+                                <option value="MA">Maranhao</option>
+                                <option value="MT">Mato Grosso</option>
+                                <option value="MS">Mato Grosso do Sul</option>
+                                <option value="MG">Minas Gerais</option>
+                                <option value="PA">Para</option>
+                                <option value="PB">Paraiba</option>
+                                <option value="PR">Parana</option>
+                                <option value="PE">Pernambuco</option>
+                                <option value="PI">Piaui</option>
+                                <option value="RJ">Rio de Janeiro</option>
+                                <option value="RN">Rio Grande do Norte</option>
+                                <option value="RS">Rio Grande do Sul</option>
+                                <option value="RO">Rondonia</option>
+                                <option value="RR">Roraima</option>
+                                <option value="SC">Santa Catarina</option>
+                                <option value="SP">Sao Paulo</option>
+                                <option value="SE">Sergipe</option>
+                                <option value="TO">Tocantins</option>
+                            </select>
+                        </label>
+                    </div>
+                </article>
+
+                <article class="checkout-block">
+                    <div class="checkout-block-header">
+                        <span>3</span>
+                        <div>
+                            <h2>Frete</h2>
+                            <p>Informe seu CEP e selecione a opção de entrega para este pedido.</p>
+                        </div>
+                    </div>
+                    <div class="checkout-shipping-tools">
+                        <p class="checkout-shipping-feedback" id="checkoutShippingFeedback" hidden></p>
+                    </div>
+                    <div class="checkout-shipping-options" id="checkoutShippingOptions"></div>
+                </article>
+
+                <article class="checkout-block">
+                    <div class="checkout-block-header">
+                        <span>4</span>
+                        <div>
+                            <h2>Forma de pagamento</h2>
+                            <p>Fluxo visual inspirado no Mercado Pago, em modo de desenvolvimento.</p>
+                        </div>
+                    </div>
+                    <div class="checkout-payment-options">
+                        <label class="checkout-payment-option active">
+                            <input type="radio" name="paymentMethod" value="pix" checked>
+                            <div><strong>Pix</strong><span>Gera QR Code e copia e cola</span></div>
+                        </label>
+                        <label class="checkout-payment-option">
+                            <input type="radio" name="paymentMethod" value="card">
+                            <div><strong>Cartão</strong><span>Simula aprovado ou recusado</span></div>
+                        </label>
+                        <label class="checkout-payment-option">
+                            <input type="radio" name="paymentMethod" value="boleto">
+                            <div><strong>Boleto</strong><span>Gera linha digitável para pagamento</span></div>
+                        </label>
+                    </div>
+                    <div class="checkout-card-fields" id="checkoutCardFields" hidden>
+                        <div class="checkout-grid checkout-grid-two">
+                            <label class="checkout-field checkout-field-full">
+                                <span>Número do cartão</span>
+                                <input type="text" id="checkoutCardNumber" inputmode="numeric" autocomplete="off" placeholder="0000 0000 0000 0000">
+                            </label>
+                            <label class="checkout-field">
+                                <span>Nome no cartão</span>
+                                <input type="text" id="checkoutCardHolder" autocomplete="off" placeholder="Nome impresso no cartão">
+                            </label>
+                            <label class="checkout-field">
+                                <span>Validade</span>
+                                <input type="text" id="checkoutCardExpiry" inputmode="numeric" autocomplete="off" placeholder="MM/AA">
+                            </label>
+                            <label class="checkout-field">
+                                <span>CVV</span>
+                                <input type="text" id="checkoutCardCvv" inputmode="numeric" autocomplete="off" placeholder="123">
+                            </label>
+                        </div>
+                        <p class="checkout-dev-tip">No modo de desenvolvimento, cartões com último número par ficam aprovados e ímpares ficam recusados.</p>
+                    </div>
+                </article>
+            </form>
+
+            <aside class="checkout-summary" id="checkoutSummary">
+                <div class="checkout-summary-card">
+                    <div class="checkout-summary-header">
+                        <div>
+                            <p class="checkout-page-kicker">Resumo</p>
+                            <h2>Seu pedido</h2>
+                        </div>
+                        <span class="checkout-summary-count" id="checkoutSummaryCount">0 itens</span>
+                    </div>
+                    <div class="checkout-coupon-box">
+                        <div class="checkout-coupon-form">
+                            <input type="text" id="checkoutCouponCode" placeholder="Cupom de desconto">
+                            <button type="button" id="checkoutCouponApplyButton">Aplicar</button>
+                        </div>
+                        <p class="checkout-coupon-feedback" id="checkoutCouponFeedback" hidden></p>
+                        <div class="checkout-coupon-applied" id="checkoutCouponApplied" hidden></div>
+                    </div>
+                    <div class="checkout-summary-items" id="checkoutSummaryItems"></div>
+                    <div class="checkout-summary-totals">
+                        <div><span>Subtotal</span><strong id="checkoutSubtotal">R$ 0,00</strong></div>
+                        <div><span>Desconto</span><strong id="checkoutDiscountTotal">R$ 0,00</strong></div>
+                        <div><span>Frete</span><strong id="checkoutShippingTotal">Escolha no checkout</strong></div>
+                    </div>
+                    <div class="checkout-summary-total">
+                        <span>Total do pedido</span>
+                        <strong id="checkoutTotal">R$ 0,00</strong>
+                    </div>
+                    <button type="submit" form="checkoutForm" class="checkout-submit-button" id="checkoutSubmitButton">Finalizar compra</button>
+                    <p class="checkout-submit-note">Modo teste ativo: ao finalizar, o pedido será criado com pagamento confirmado automaticamente.</p>
+                </div>
+            </aside>
+        </section>
+
+        <section class="checkout-result" id="checkoutResult" hidden>
+            <div class="checkout-result-header">
+                <p class="checkout-page-kicker">Pagamento</p>
+                <h2 id="checkoutResultTitle">Resultado do pagamento</h2>
+                <p id="checkoutResultSubtitle"></p>
+            </div>
+            <div class="checkout-result-shell" id="checkoutResultShell"></div>
+        </section>
+    </main>
+
+        <footer class="simple-footer">
+        <div class="container simple-footer-grid">
+            <div class="simple-footer-brand">
+                <img src="/img/logo.png" alt="Logo V Santos" class="simple-footer-logo">
+            </div>
+
+            <div class="simple-footer-column">
+                <h3>Categorias</h3>
+                <ul id="footerCategoriesMenu"></ul>
+            </div>
+
+            <div class="simple-footer-column">
+                <h3>Informações</h3>
+                <ul>
+                    <li><a href="/quem-somos">Quem Somos</a></li>
+                    <li><a href="/blog">Blog</a></li>
+                    <li><a href="/contato">Contato</a></li>
+                    <li><a href="/trocas-e-devolucoes">Trocas e Devoluções</a></li>
+                </ul>
+            </div>
+
+            <div class="simple-footer-column">
+                <h3>Contato</h3>
+                <ul>
+                    <li><a href="#"></a></li>
+                    <li><a href="mailto:"></a></li>
+                    <li><a href="#">Instagram</a></li>
+                </ul>
+            </div>
+
+            <div class="simple-footer-column">
+                <h3>Pagamento</h3>
+                <div class="simple-footer-payments">
+                    <span>Visa</span>
+                    <span>Mastercard</span>
+                    <span>Pix</span>
+                    <span>Boleto</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <a href="#" class="whatsapp-float" aria-label="Falar no WhatsApp" target="_blank" rel="noopener noreferrer">
+        <span>Fale conosco</span>
+        <i class="fa-brands fa-whatsapp"></i>
+    </a>
+
+    <script src="/cart-drawer.js"></script>
+    <script src="/search-nav.js"></script>
+    <script src="/toast.js"></script>
+    <script src="/site-contact.js"></script>
+    <script src="/auth-nav.js"></script>
+    <script src="/personalization-image-store.js"></script>
+    <script src="/checkout.js"></script>
+</body>
+</html>
+
+

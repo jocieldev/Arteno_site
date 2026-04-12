@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categorias | Admin Arteno</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body class="admin-panel-body">
+    <div class="admin-layout">
+        <div class="admin-mobile-overlay" id="adminMobileOverlay"></div>
+
+        <aside class="admin-sidebar">
+            <div class="admin-sidebar-brand">
+                <img src="/img/logo.png" alt="Logo Arteno" class="admin-sidebar-logo">
+                <div>
+                    <strong>Arteno</strong>
+                    <span>Painel administrativo</span>
+                </div>
+
+                <button type="button" class="admin-sidebar-close" id="adminSidebarClose" aria-label="Fechar menu">
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+
+            <nav class="admin-sidebar-nav">
+                <a href="/admin" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-box"></i></span>
+                    <span>Produtos</span>
+                </a>
+                <a href="/admin/categories" class="admin-sidebar-link active">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-tags"></i></span>
+                    <span>Categorias</span>
+                </a>
+                <a href="/admin/orders" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-bag-shopping"></i></span>
+                    <span>Pedidos</span>
+                </a>
+                <a href="/admin/coupons" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-ticket"></i></span>
+                    <span>Cupons</span>
+                </a>
+                <a href="/admin/messages" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-envelope"></i></span>
+                    <span>Mensagens</span>
+                    <span class="admin-sidebar-badge" data-admin-message-badge hidden></span>
+                </a>
+                <a href="/admin/integrations" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-plug"></i></span>
+                    <span>Integrações</span>
+                </a>
+                <a href="/admin/settings" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-gear"></i></span>
+                    <span>Configurações</span>
+                </a>
+            </nav>
+
+            <div class="admin-sidebar-footer">
+                <a href="/" target="_blank" rel="noreferrer" class="admin-sidebar-secondary">Ver loja</a>
+                <form action="/admin/logout" method="get">
+                    <button type="submit" class="admin-sidebar-logout">Sair</button>
+                </form>
+            </div>
+        </aside>
+
+        <main class="admin-main admin-products-page">
+            <header class="admin-products-header">
+                <div class="admin-products-header-left">
+                    <button type="button" class="admin-mobile-menu-button" id="adminMobileMenuButton" aria-label="Abrir menu">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+
+                    <div class="admin-products-title-wrap">
+                        <span class="admin-products-title-icon"><i class="fa-solid fa-tags"></i></span>
+                        <h1>Categorias</h1>
+                    </div>
+                </div>
+
+                <div class="admin-products-actions">
+                    <button type="button" class="admin-primary-toolbar-button" id="openCreateCategoryButton">Adicionar categoria</button>
+                </div>
+            </header>
+
+            <div class="admin-feedback admin-products-feedback" id="adminCategoryFeedback" hidden></div>
+
+            <section class="admin-products-card admin-products-list-panel">
+                <div class="admin-empty-state" id="adminCategoryEmptyState" hidden>
+                    Ainda não há categorias cadastradas. Use o botão "Adicionar categoria" para criar a primeira categoria da Arteno.
+                </div>
+
+                <div class="admin-table-wrap" id="adminCategoryTableWrap">
+                    <table class="admin-products-table admin-products-table-shop">
+                        <thead>
+                            <tr>
+                                <th>Categoria</th>
+                                <th>Produtos</th>
+                                <th class="admin-products-actions-col">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminCategoriesTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="admin-product-editor-page" id="adminCategoryEditorPage" hidden>
+                <div class="admin-product-editor-topbar">
+                    <div class="admin-product-editor-heading">
+                        <p class="admin-card-kicker">Categorias</p>
+                        <div class="admin-product-editor-title-row">
+                            <h2 id="categoryFormTitle">Adicionar categoria</h2>
+                        </div>
+                    </div>
+
+                    <div class="admin-product-editor-toolbar">
+                        <button type="button" class="admin-secondary-button" id="cancelCategoryEditButton">Voltar</button>
+                        <button type="submit" class="admin-auth-submit" id="categorySubmitButton" form="categoryForm">Salvar categoria</button>
+                    </div>
+                </div>
+
+                <form id="categoryForm" class="admin-product-page-form">
+                    <div class="admin-product-page-grid">
+                        <div class="admin-product-main-column">
+                            <section class="admin-editor-card">
+                                <label class="admin-auth-field">
+                                    <span>Nome da categoria</span>
+                                    <input type="text" name="name" placeholder="Ex: Tábuas personalizadas" required>
+                                </label>
+                            </section>
+
+                            <section class="admin-editor-card">
+                                <div class="admin-editor-card-header">
+                                    <h3>Imagem da categoria</h3>
+                                </div>
+
+                                <div class="admin-category-image-preview" id="categoryImagePreview"></div>
+
+                                <label class="admin-media-add-tile admin-category-image-trigger" for="categoryImageInput">
+                                    <span>+</span>
+                                </label>
+
+                                <input type="file" name="image" id="categoryImageInput" accept="image/*" hidden>
+                                <small class="admin-field-help">Adicione a imagem que vai representar essa categoria na loja.</small>
+                            </section>
+                        </div>
+
+                        <aside class="admin-product-side-column">
+                            <section class="admin-editor-card">
+                                <div class="admin-editor-card-header">
+                                    <h3>Produtos da categoria</h3>
+                                </div>
+
+                                <div class="admin-category-products-picker" id="categoryProductsPicker"></div>
+                            </section>
+                        </aside>
+                    </div>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <script src="/admin/message-badge.js"></script>
+    <script src="/admin/categories.js"></script>
+</body>
+</html>

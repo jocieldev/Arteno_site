@@ -1,0 +1,59 @@
+.search-page-body {
+    --search-ink: #171717;
+    --search-ink-soft: #5f6268;
+    --search-accent: #b77946;
+    --search-accent-strong: #935b2f;
+    background:
+        radial-gradient(circle at top left, rgba(183, 121, 70, 0.18), transparent 28%),
+        radial-gradient(circle at top right, rgba(124, 91, 58, 0.12), transparent 26%),
+        linear-gradient(180deg, #f8f3eb 0%, #f4efe8 48%, #f8f6f2 100%);
+    min-height: 100vh;
+    color: var(--search-ink);
+}
+
+.search-main {
+    padding-top: 36px;
+    padding-bottom: 64px;
+}
+
+.search-hero {
+    margin-bottom: 28px;
+}
+
+.search-title {
+    font-size: clamp(34px, 4vw, 54px);
+}
+
+.search-subtitle {
+    max-width: 840px;
+    margin: 0 auto;
+    text-align: center;
+    color: var(--search-ink-soft);
+    font-size: 18px;
+    line-height: 1.8;
+}
+
+.search-results-grid {
+    margin-top: 12px;
+}
+
+.search-empty-state {
+    margin: 24px auto 0;
+    max-width: 720px;
+    text-align: center;
+    color: var(--search-ink-soft);
+    font-size: 18px;
+    line-height: 1.8;
+}
+
+@media (max-width: 640px) {
+    .search-main {
+        padding-top: 24px;
+        padding-bottom: 48px;
+    }
+
+    .search-subtitle,
+    .search-empty-state {
+        font-size: 16px;
+    }
+}

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integrações | Admin Arteno</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body class="admin-panel-body">
+    <div class="admin-layout">
+        <div class="admin-mobile-overlay" id="adminMobileOverlay"></div>
+
+        <aside class="admin-sidebar">
+            <div class="admin-sidebar-brand">
+                <img src="/img/logo.png" alt="Logo Arteno" class="admin-sidebar-logo">
+                <div>
+                    <strong>Arteno</strong>
+                    <span>Painel administrativo</span>
+                </div>
+
+                <button type="button" class="admin-sidebar-close" id="adminSidebarClose" aria-label="Fechar menu">
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+
+            <nav class="admin-sidebar-nav">
+                <a href="/admin" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-box"></i></span>
+                    <span>Produtos</span>
+                </a>
+                <a href="/admin/categories" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-tags"></i></span>
+                    <span>Categorias</span>
+                </a>
+                <a href="/admin/orders" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-bag-shopping"></i></span>
+                    <span>Pedidos</span>
+                </a>
+                <a href="/admin/coupons" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-ticket"></i></span>
+                    <span>Cupons</span>
+                </a>
+                <a href="/admin/messages" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-envelope"></i></span>
+                    <span>Mensagens</span>
+                    <span class="admin-sidebar-badge" data-admin-message-badge hidden></span>
+                </a>
+                <a href="/admin/integrations" class="admin-sidebar-link active">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-plug"></i></span>
+                    <span>Integrações</span>
+                </a>
+                <a href="/admin/settings" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-gear"></i></span>
+                    <span>Configurações</span>
+                </a>
+            </nav>
+
+            <div class="admin-sidebar-footer">
+                <a href="/" target="_blank" rel="noreferrer" class="admin-sidebar-secondary">Ver loja</a>
+                <form action="/admin/logout" method="get">
+                    <button type="submit" class="admin-sidebar-logout">Sair</button>
+                </form>
+            </div>
+        </aside>
+
+        <main class="admin-main admin-products-page">
+            <header class="admin-products-header">
+                <div class="admin-products-header-left">
+                    <button type="button" class="admin-mobile-menu-button" id="adminMobileMenuButton" aria-label="Abrir menu">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+
+                    <div class="admin-products-title-wrap">
+                        <span class="admin-products-title-icon"><i class="fa-solid fa-plug"></i></span>
+                        <h1>Integrações</h1>
+                    </div>
+                </div>
+            </header>
+
+            <div class="admin-feedback admin-products-feedback" id="integrationFeedback" hidden></div>
+
+            <section class="admin-editor-card admin-integration-card">
+                <div class="admin-editor-card-header">
+                    <h3>Melhor Envio</h3>
+                </div>
+
+                <p class="admin-panel-subtitle">
+                    Conecte sua conta oficial do Melhor Envio para usar cotação real, preparar compra de etiqueta e receber atualizações de rastreio.
+                </p>
+
+                <div class="admin-integration-status-grid">
+                    <article class="admin-integration-status-item">
+                        <span class="admin-integration-label">Ambiente</span>
+                        <strong id="melhorEnvioEnvironment">Carregando...</strong>
+                    </article>
+                    <article class="admin-integration-status-item">
+                        <span class="admin-integration-label">Conta conectada</span>
+                        <strong id="melhorEnvioConnectionState">Carregando...</strong>
+                    </article>
+                    <article class="admin-integration-status-item">
+                        <span class="admin-integration-label">Conta Melhor Envio</span>
+                        <strong id="melhorEnvioAccountInfo">-</strong>
+                    </article>
+                    <article class="admin-integration-status-item">
+                        <span class="admin-integration-label">CEP de origem</span>
+                        <strong id="melhorEnvioOriginZip">-</strong>
+                    </article>
+                    <article class="admin-integration-status-item">
+                        <span class="admin-integration-label">Callback OAuth</span>
+                        <strong id="melhorEnvioRedirectUri">-</strong>
+                    </article>
+                    <article class="admin-integration-status-item">
+                        <span class="admin-integration-label">Webhook de rastreio</span>
+                        <strong id="melhorEnvioWebhookUrl">-</strong>
+                    </article>
+                    <article class="admin-integration-status-item">
+                        <span class="admin-integration-label">Escopos concedidos</span>
+                        <strong id="melhorEnvioScope">-</strong>
+                    </article>
+                    <article class="admin-integration-status-item">
+                        <span class="admin-integration-label">Token válido até</span>
+                        <strong id="melhorEnvioExpiresAt">-</strong>
+                    </article>
+                </div>
+
+                <div class="admin-integration-checklist">
+                    <h4>O que precisa estar pronto</h4>
+                    <ul>
+                        <li id="melhorEnvioClientCheck">Client ID e Secret configurados</li>
+                        <li id="melhorEnvioRedirectCheck">Redirect URI configurada</li>
+                        <li id="melhorEnvioOriginCheck">CEP de origem configurado</li>
+                        <li id="melhorEnvioScopeCheck">Escopos completos para cotação, etiqueta e rastreio</li>
+                        <li id="melhorEnvioWebhookCheck">Webhook preparado para atualizações de rastreio</li>
+                    </ul>
+                </div>
+
+                <div class="admin-integration-actions">
+                    <a href="/api/admin/integrations/melhor-envio/connect" class="admin-auth-submit" id="melhorEnvioConnectButton">Conectar Melhor Envio</a>
+                    <button type="button" class="admin-secondary-button" id="melhorEnvioDisconnectButton">Desconectar</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/admin/message-badge.js"></script>
+    <script src="/admin/integrations.js"></script>
+</body>
+</html>

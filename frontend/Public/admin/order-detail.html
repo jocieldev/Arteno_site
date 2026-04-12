@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Pedido | Admin Arteno</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body class="admin-panel-body">
+    <div class="admin-layout">
+        <div class="admin-mobile-overlay" id="adminMobileOverlay"></div>
+
+        <aside class="admin-sidebar">
+            <div class="admin-sidebar-brand">
+                <img src="/img/logo.png" alt="Logo Arteno" class="admin-sidebar-logo">
+                <div>
+                    <strong>Arteno</strong>
+                    <span>Painel administrativo</span>
+                </div>
+
+                <button type="button" class="admin-sidebar-close" id="adminSidebarClose" aria-label="Fechar menu">
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+
+            <nav class="admin-sidebar-nav">
+                <a href="/admin" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-box"></i></span>
+                    <span>Produtos</span>
+                </a>
+                <a href="/admin/categories" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-tags"></i></span>
+                    <span>Categorias</span>
+                </a>
+                <a href="/admin/orders" class="admin-sidebar-link active">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-bag-shopping"></i></span>
+                    <span>Pedidos</span>
+                </a>
+                <a href="/admin/coupons" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-ticket"></i></span>
+                    <span>Cupons</span>
+                </a>
+                <a href="/admin/messages" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-envelope"></i></span>
+                    <span>Mensagens</span>
+                    <span class="admin-sidebar-badge" data-admin-message-badge hidden></span>
+                </a>
+                <a href="/admin/integrations" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-plug"></i></span>
+                    <span>Integrações</span>
+                </a>
+                <a href="/admin/settings" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-gear"></i></span>
+                    <span>Configurações</span>
+                </a>
+            </nav>
+
+            <div class="admin-sidebar-footer">
+                <a href="/" target="_blank" rel="noreferrer" class="admin-sidebar-secondary">Ver loja</a>
+                <form action="/admin/logout" method="get">
+                    <button type="submit" class="admin-sidebar-logout">Sair</button>
+                </form>
+            </div>
+        </aside>
+
+        <main class="admin-main admin-products-page">
+            <header class="admin-products-header">
+                <div class="admin-products-header-left">
+                    <button type="button" class="admin-mobile-menu-button" id="adminMobileMenuButton" aria-label="Abrir menu">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+
+                    <div class="admin-products-title-wrap">
+                        <span class="admin-products-title-icon"><i class="fa-solid fa-bag-shopping"></i></span>
+                        <h1>Detalhes do pedido</h1>
+                    </div>
+                </div>
+
+                <div class="admin-products-actions">
+                    <a href="/admin/orders" class="admin-primary-toolbar-button admin-primary-toolbar-button-secondary">Voltar para pedidos</a>
+                </div>
+            </header>
+
+            <div class="admin-feedback admin-products-feedback" id="adminOrderDetailFeedback" hidden></div>
+
+            <section class="admin-products-card admin-order-detail-shell" id="adminOrderDetailShell" hidden>
+                <div class="admin-order-detail-grid">
+                    <article class="admin-order-detail-card">
+                        <p class="admin-card-kicker">Pedido</p>
+                        <h2 id="adminOrderNumber">-</h2>
+                        <div class="admin-order-detail-meta" id="adminOrderMeta"></div>
+                    </article>
+
+                    <article class="admin-order-detail-card">
+                        <p class="admin-card-kicker">Status</p>
+                        <div class="admin-order-detail-status-row">
+                            <span class="admin-products-status-pill" id="adminOrderStatusPill">Pagamento confirmado</span>
+                            <select class="admin-order-status-select" id="adminOrderStatusSelect"></select>
+                        </div>
+                        <div class="admin-order-tracking-stack">
+                            <label class="admin-input-label" for="adminOrderTrackingCode">Código de rastreio</label>
+                            <input type="text" class="admin-input" id="adminOrderTrackingCode" placeholder="Ex.: NM123456789BR">
+                        </div>
+                        <button type="button" class="admin-auth-submit admin-order-status-save" id="adminOrderStatusSaveButton">Salvar atualizações</button>
+                    </article>
+
+                    <article class="admin-order-detail-card">
+                        <p class="admin-card-kicker">Cliente</p>
+                        <div class="admin-order-detail-list" id="adminOrderCustomer"></div>
+                    </article>
+
+                    <article class="admin-order-detail-card">
+                        <p class="admin-card-kicker">Entrega</p>
+                        <div class="admin-order-detail-list" id="adminOrderShipping"></div>
+                    </article>
+
+                    <article class="admin-order-detail-card">
+                        <p class="admin-card-kicker">Etiqueta Melhor Envio</p>
+                        <div class="admin-order-detail-list" id="adminOrderShipmentInfo"></div>
+                        <div class="admin-order-shipment-tools">
+                            <button type="button" class="admin-auth-submit admin-order-status-save" id="adminOrderPurchaseShippingButton">Comprar frete e gerar etiqueta</button>
+                            <button type="button" class="admin-secondary-button" id="adminOrderDownloadLabelButton">Baixar / imprimir PDF da etiqueta</button>
+                        </div>
+                    </article>
+                </div>
+
+                <section class="admin-order-items-section">
+                    <div class="admin-editor-card-header">
+                        <h3>Itens do pedido</h3>
+                    </div>
+                    <div class="admin-order-items-list" id="adminOrderItemsList"></div>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <script src="/admin/message-badge.js"></script>
+    <script src="/admin/order-detail.js"></script>
+</body>
+</html>

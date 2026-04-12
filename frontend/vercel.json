@@ -1,0 +1,88 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://YOUR_RENDER_BACKEND_URL.onrender.com/api/:path*"
+    },
+    {
+      "source": "/admin",
+      "destination": "https://YOUR_RENDER_BACKEND_URL.onrender.com/admin"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "https://YOUR_RENDER_BACKEND_URL.onrender.com/admin/:path*"
+    },
+    {
+      "source": "/",
+      "destination": "/Public/index.html"
+    },
+    {
+      "source": "/index.html",
+      "destination": "/Public/index.html"
+    },
+    {
+      "source": "/produto/:slug",
+      "destination": "/Public/product.html"
+    },
+    {
+      "source": "/categoria/:slug",
+      "destination": "/Public/category.html"
+    },
+    {
+      "source": "/quem-somos",
+      "destination": "/Public/about.html"
+    },
+    {
+      "source": "/contato",
+      "destination": "/Public/contact.html"
+    },
+    {
+      "source": "/blog/:slug",
+      "destination": "/Public/blog-article.html"
+    },
+    {
+      "source": "/blog",
+      "destination": "/Public/blog.html"
+    },
+    {
+      "source": "/entrar",
+      "destination": "/Public/auth.html"
+    },
+    {
+      "source": "/minha-conta",
+      "destination": "/Public/account.html"
+    },
+    {
+      "source": "/meus-pedidos/:orderId",
+      "destination": "/Public/order-detail.html"
+    },
+    {
+      "source": "/meus-pedidos",
+      "destination": "/Public/orders.html"
+    },
+    {
+      "source": "/busca",
+      "destination": "/Public/search.html"
+    },
+    {
+      "source": "/checkout",
+      "destination": "/Public/checkout.html"
+    },
+    {
+      "source": "/trocas-e-devolucoes",
+      "destination": "/Public/returns.html"
+    },
+    {
+      "source": "/trocas-e-devolu%C3%A7%C3%B5es",
+      "destination": "/Public/returns.html"
+    },
+    {
+      "source": "/img/:path*",
+      "destination": "/img/:path*"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/Public/:path*"
+    }
+  ]
+}

@@ -1,0 +1,271 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trocas e Devoluções | Arteno</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/cart-drawer.css">
+    <link rel="stylesheet" href="/returns.css">
+</head>
+<body class="returns-page-body">
+    <div class="top-bar">
+        <div class="top-container-bar container">
+            <div class="top-left">
+                <div class="contact-item">
+                    <i class="fa-brands fa-whatsapp icon-wp"></i>
+                    <span></span>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-regular fa-envelope icon-email"></i>
+                    <span></span>
+                </div>
+            </div>
+            <div class="top-right contact-item">
+                <i class="fa-brands fa-instagram"></i>
+            </div>
+        </div>
+    </div>
+
+    <header class="header">
+        <div class="header-top container">
+            <div class="menu-icon">
+                <svg width="28" height="28" viewBox="0 0 34 24" fill="none">
+                    <rect y="0" width="20" height="3" rx="2" fill="black" />
+                    <rect y="10" width="34" height="3" rx="2" fill="black" />
+                    <rect y="20" width="26" height="3" rx="2" fill="black" />
+                </svg>
+            </div>
+
+            <div class="logo">
+                <a href="/"><img src="/img/logo.png" alt="Logo" class="logo-img"></a>
+            </div>
+
+            <div class="search-container">
+                <input type="text" placeholder="Buscar">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
+                </svg>
+            </div>
+
+            <div class="header-right">
+                <div class="account">
+                    <i class="fa-regular fa-circle-user"></i>
+<span><a href="/entrar">Cadastre-se</a></span>
+<span style="cursor: default;">|</span>
+<span><a href="/entrar">Fazer Login</a></span>
+                </div>
+
+                <div class="cart" id="cart">
+                    <svg class="cart-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    <span class="cart-count" id="cart-count">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="navbar">
+        <ul class="list">
+            <li class="l1"><a class="links" href="/">Início</a></li>
+            <li class="l1"><a class="links" href="/quem-somos">Quem Somos</a></li>
+            <li class="nav-item-container l1">
+                <a class="links" href="#">
+                    Produtos
+                    <i class="fa-solid fa-chevron-down"></i>
+                </a>
+                <ul class="submenu-desktop">
+                    <li id="desktopCategoriesMenu"></li>
+                </ul>
+            </li>
+            <li class="l1"><a class="links" href="/blog">Blog</a></li>
+            <li class="l1"><a class="links" href="/contato">Contato</a></li>
+            <li class="l1"><a class="links" href="/trocas-e-devolucoes">Trocas e Devoluções</a></li>
+        </ul>
+    </nav>
+
+    <div class="overlay" id="overlay"></div>
+
+    <aside class="side-menu" id="sideMenu">
+        <div class="menu-top">
+            <a class="menu-enter" href="/entrar">
+                <svg class="login-icon" viewBox="0 0 24 24" fill="none">
+                    <path d="M14 4h4v16h-4" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M4 12h9" stroke="white" stroke-width="2.8" stroke-linecap="round" />
+                    <path d="M10 8l4 4-4 4" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <span>Entrar</span>
+            </a>
+
+            <button class="close-btn" id="closeMenu">X</button>
+        </div>
+
+        <nav class="menu-lateral">
+            <ul>
+                <li class="inicio"><a href="/">Início</a></li>
+                <li><a href="/quem-somos">Quem Somos</a></li>
+                <li class="produtos" id="abrir-submenu">
+                    <a href="#">Produtos</a>
+                    <span class="seta"></span>
+                </li>
+
+                <ul class="submenu">
+                    <li id="mobileCategoriesMenu" class="mobile-categories-menu"></li>
+                </ul>
+
+                <li><a href="/blog">Blog</a></li>
+                <li><a href="/contato">Contato</a></li>
+                <li><a href="/trocas-e-devolucoes">Trocas e Devoluções</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="container returns-main">
+        <section class="returns-intro">
+            <div class="section-title mx-auto row returns-title-row">
+                <div class="col-12 text-center">
+                    <h1 class="text-heading returns-main-title">Trocas e Devoluções</h1>
+                </div>
+            </div>
+            <div class="returns-copy returns-copy-intro">
+                <p>
+                    Queremos que sua experiência com a Arteno seja tranquila do início ao fim. Nesta página você encontra
+                    as orientações principais sobre prazos, condições e a melhor forma de falar com a loja caso precise
+                    de ajuda com seu pedido.
+                </p>
+            </div>
+        </section>
+
+        <section class="returns-text-section">
+            <h2 class="returns-section-subtitle">Prazo para solicitar</h2>
+            <div class="returns-copy">
+                <p>
+                    Caso seu produto apresente problema, avaria no transporte ou divergência em relação ao pedido,
+                    entre em contato assim que identificar a situação. Quanto antes você falar com a loja, mais rápido
+                    conseguimos orientar os próximos passos.
+                </p>
+            </div>
+        </section>
+
+        <section class="returns-text-section">
+            <h2 class="returns-section-subtitle">Condições do produto</h2>
+            <div class="returns-copy">
+                <p>
+                    Para análise de troca ou devolução, o item deve ser enviado com o máximo de cuidado possível,
+                    acompanhado das informações do pedido e, quando necessário, fotos que ajudem a identificar o ocorrido.
+                </p>
+            </div>
+        </section>
+
+        <section class="returns-text-section">
+            <h2 class="returns-section-subtitle">Como funciona</h2>
+            <div class="returns-copy returns-steps">
+                <p><span class="returns-step-number">1.</span><span>Entre em contato informando nome, número do pedido e o motivo da solicitação.</span></p>
+                <p><span class="returns-step-number">2.</span><span>Quando necessário, envie fotos ou vídeos para facilitar a análise do caso.</span></p>
+                <p><span class="returns-step-number">3.</span><span>Aguarde a orientação da nossa equipe com os próximos passos.</span></p>
+                <p><span class="returns-step-number">4.</span><span>Depois da confirmação, seguimos com a solução combinada da forma mais clara e segura possível.</span></p>
+            </div>
+        </section>
+
+        <section class="returns-faq">
+            <h2 class="returns-section-subtitle">Perguntas frequentes</h2>
+
+            <div class="faq-list returns-faq-list">
+                <div class="faq-item active">
+                    <button class="faq-question" type="button" aria-expanded="true">
+                        <span>Produtos personalizados podem ser trocados?</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Caso exista erro de produção, defeito ou divergência em relação ao combinado, entre em contato para avaliarmos o caso.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" type="button" aria-expanded="false">
+                        <span>Como falar com a loja?</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>O canal mais rápido é o WhatsApp. Ele ajuda a enviar detalhes, fotos e agilizar a orientação.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" type="button" aria-expanded="false">
+                        <span>Preciso guardar a embalagem?</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Sempre que possível, sim. Isso ajuda no envio e na conferência do item durante a análise.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+        <footer class="simple-footer">
+        <div class="container simple-footer-grid">
+            <div class="simple-footer-brand">
+                <img src="/img/logo.png" alt="Logo V Santos" class="simple-footer-logo">
+            </div>
+
+            <div class="simple-footer-column">
+                <h3>Categorias</h3>
+                <ul id="footerCategoriesMenu"></ul>
+            </div>
+
+            <div class="simple-footer-column">
+                <h3>Informações</h3>
+                <ul>
+                    <li><a href="/quem-somos">Quem Somos</a></li>
+                    <li><a href="/blog">Blog</a></li>
+                    <li><a href="/contato">Contato</a></li>
+                    <li><a href="/trocas-e-devolucoes">Trocas e Devoluções</a></li>
+                </ul>
+            </div>
+
+            <div class="simple-footer-column">
+                <h3>Contato</h3>
+                <ul>
+                    <li><a href="#"></a></li>
+                    <li><a href="mailto:"></a></li>
+                    <li><a href="#">Instagram</a></li>
+                </ul>
+            </div>
+
+            <div class="simple-footer-column">
+                <h3>Pagamento</h3>
+                <div class="simple-footer-payments">
+                    <span>Visa</span>
+                    <span>Mastercard</span>
+                    <span>Pix</span>
+                    <span>Boleto</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <a href="#" class="whatsapp-float" aria-label="Falar no WhatsApp" target="_blank" rel="noopener noreferrer">
+        <span>Fale conosco</span>
+        <i class="fa-brands fa-whatsapp"></i>
+    </a>
+
+    <script src="/cart-drawer.js"></script>
+    <script src="/search-nav.js"></script>
+    <script src="/toast.js"></script>
+    <script src="/site-contact.js"></script>
+    <script src="/auth-nav.js"></script>
+    <script src="/returns.js"></script>
+</body>
+</html>
+
+

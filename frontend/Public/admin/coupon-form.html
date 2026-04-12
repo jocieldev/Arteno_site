@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cupom | Admin Arteno</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body class="admin-panel-body">
+    <div class="admin-layout">
+        <div class="admin-mobile-overlay" id="adminMobileOverlay"></div>
+
+        <aside class="admin-sidebar">
+            <div class="admin-sidebar-brand">
+                <img src="/img/logo.png" alt="Logo Arteno" class="admin-sidebar-logo">
+                <div>
+                    <strong>Arteno</strong>
+                    <span>Painel administrativo</span>
+                </div>
+
+                <button type="button" class="admin-sidebar-close" id="adminSidebarClose" aria-label="Fechar menu">
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+
+            <nav class="admin-sidebar-nav">
+                <a href="/admin" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-box"></i></span>
+                    <span>Produtos</span>
+                </a>
+                <a href="/admin/categories" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-tags"></i></span>
+                    <span>Categorias</span>
+                </a>
+                <a href="/admin/orders" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-bag-shopping"></i></span>
+                    <span>Pedidos</span>
+                </a>
+                <a href="/admin/coupons" class="admin-sidebar-link active">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-ticket"></i></span>
+                    <span>Cupons</span>
+                </a>
+                <a href="/admin/messages" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-envelope"></i></span>
+                    <span>Mensagens</span>
+                    <span class="admin-sidebar-badge" data-admin-message-badge hidden></span>
+                </a>
+                <a href="/admin/integrations" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-plug"></i></span>
+                    <span>Integrações</span>
+                </a>
+                <a href="/admin/settings" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-gear"></i></span>
+                    <span>Configurações</span>
+                </a>
+            </nav>
+
+            <div class="admin-sidebar-footer">
+                <a href="/" target="_blank" rel="noreferrer" class="admin-sidebar-secondary">Ver loja</a>
+                <form action="/admin/logout" method="get">
+                    <button type="submit" class="admin-sidebar-logout">Sair</button>
+                </form>
+            </div>
+        </aside>
+
+        <main class="admin-main admin-products-page">
+            <header class="admin-products-header">
+                <div class="admin-products-header-left">
+                    <button type="button" class="admin-mobile-menu-button" id="adminMobileMenuButton" aria-label="Abrir menu">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+
+                    <div class="admin-products-title-wrap">
+                        <span class="admin-products-title-icon"><i class="fa-solid fa-ticket"></i></span>
+                        <h1 id="adminCouponFormPageTitle">Novo cupom</h1>
+                    </div>
+                </div>
+
+                <div class="admin-products-actions">
+                    <a href="/admin/coupons" class="admin-primary-toolbar-button admin-primary-toolbar-button-secondary">Voltar para cupons</a>
+                </div>
+            </header>
+
+            <div class="admin-feedback admin-products-feedback" id="adminCouponFormFeedback" hidden></div>
+
+            <section class="admin-products-card admin-coupon-form-card">
+                <form id="adminCouponForm" class="admin-coupon-form-grid">
+                    <section class="admin-editor-card">
+                        <div class="admin-editor-card-header">
+                            <h3>Identificação</h3>
+                        </div>
+
+                        <div class="admin-form-grid">
+                            <label class="admin-auth-field">
+                                <span>Nome do cupom</span>
+                                <input type="text" name="name" placeholder="Ex.: Campanha Mães" required>
+                            </label>
+
+                            <label class="admin-auth-field">
+                                <span>Código</span>
+                                <input type="text" name="code" placeholder="MAES10" required>
+                            </label>
+
+                            <label class="admin-auth-field admin-form-grid-full">
+                                <span>Descrição</span>
+                                <textarea name="description" rows="4" placeholder="Use esse espaço para explicar a campanha ou a intenção do cupom."></textarea>
+                            </label>
+                        </div>
+                    </section>
+
+                    <section class="admin-editor-card">
+                        <div class="admin-editor-card-header">
+                            <h3>Desconto</h3>
+                        </div>
+
+                        <div class="admin-form-grid">
+                            <label class="admin-auth-field">
+                                <span>Porcentagem de desconto</span>
+                                <input type="number" name="percentageOff" min="1" max="100" step="1" placeholder="10" required>
+                                <small class="admin-field-help">Ex.: 10 significa 10% de desconto.</small>
+                            </label>
+
+                            <label class="admin-checkbox admin-checkbox-surface admin-coupon-toggle">
+                                <input type="checkbox" name="isActive" checked>
+                                <span>Cupom ativo para uso no checkout</span>
+                            </label>
+                        </div>
+                    </section>
+
+                    <section class="admin-editor-card">
+                        <div class="admin-editor-card-header">
+                            <h3>Regras do cupom</h3>
+                        </div>
+
+                        <div class="admin-form-grid">
+                            <label class="admin-auth-field">
+                                <span>Compra mínima (R$)</span>
+                                <input type="number" name="minSubtotal" min="0" step="0.01" placeholder="200.00">
+                                <small class="admin-field-help">Defina 0 para liberar o cupom em qualquer valor de compra.</small>
+                            </label>
+
+                            <label class="admin-auth-field">
+                                <span>Limite total de usos</span>
+                                <input type="number" name="maxUsesTotal" min="0" step="1" placeholder="100">
+                                <small class="admin-field-help">Defina 0 para uso ilimitado.</small>
+                            </label>
+
+                            <label class="admin-auth-field">
+                                <span>Início da validade</span>
+                                <input type="datetime-local" name="startsAt">
+                            </label>
+
+                            <label class="admin-auth-field">
+                                <span>Fim da validade</span>
+                                <input type="datetime-local" name="endsAt">
+                            </label>
+                        </div>
+                    </section>
+
+                    <div class="admin-product-editor-toolbar">
+                        <a href="/admin/coupons" class="admin-secondary-button">Cancelar</a>
+                        <button type="submit" class="admin-auth-submit" id="adminCouponSubmitButton">Salvar cupom</button>
+                    </div>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <script src="/admin/message-badge.js"></script>
+    <script src="/admin/coupon-form.js"></script>
+</body>
+</html>

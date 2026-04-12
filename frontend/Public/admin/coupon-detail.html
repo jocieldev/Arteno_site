@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Cupom | Admin Arteno</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body class="admin-panel-body">
+    <div class="admin-layout">
+        <div class="admin-mobile-overlay" id="adminMobileOverlay"></div>
+
+        <aside class="admin-sidebar">
+            <div class="admin-sidebar-brand">
+                <img src="/img/logo.png" alt="Logo Arteno" class="admin-sidebar-logo">
+                <div>
+                    <strong>Arteno</strong>
+                    <span>Painel administrativo</span>
+                </div>
+
+                <button type="button" class="admin-sidebar-close" id="adminSidebarClose" aria-label="Fechar menu">
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+
+            <nav class="admin-sidebar-nav">
+                <a href="/admin" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-box"></i></span>
+                    <span>Produtos</span>
+                </a>
+                <a href="/admin/categories" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-tags"></i></span>
+                    <span>Categorias</span>
+                </a>
+                <a href="/admin/orders" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-bag-shopping"></i></span>
+                    <span>Pedidos</span>
+                </a>
+                <a href="/admin/coupons" class="admin-sidebar-link active">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-ticket"></i></span>
+                    <span>Cupons</span>
+                </a>
+                <a href="/admin/messages" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-envelope"></i></span>
+                    <span>Mensagens</span>
+                    <span class="admin-sidebar-badge" data-admin-message-badge hidden></span>
+                </a>
+                <a href="/admin/integrations" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-plug"></i></span>
+                    <span>Integrações</span>
+                </a>
+                <a href="/admin/settings" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-gear"></i></span>
+                    <span>Configurações</span>
+                </a>
+            </nav>
+
+            <div class="admin-sidebar-footer">
+                <a href="/" target="_blank" rel="noreferrer" class="admin-sidebar-secondary">Ver loja</a>
+                <form action="/admin/logout" method="get">
+                    <button type="submit" class="admin-sidebar-logout">Sair</button>
+                </form>
+            </div>
+        </aside>
+
+        <main class="admin-main admin-products-page">
+            <header class="admin-products-header">
+                <div class="admin-products-header-left">
+                    <button type="button" class="admin-mobile-menu-button" id="adminMobileMenuButton" aria-label="Abrir menu">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+
+                    <div class="admin-products-title-wrap">
+                        <span class="admin-products-title-icon"><i class="fa-solid fa-ticket"></i></span>
+                        <h1>Detalhes do cupom</h1>
+                    </div>
+                </div>
+
+                <div class="admin-products-actions">
+                    <a href="/admin/coupons" class="admin-primary-toolbar-button admin-primary-toolbar-button-secondary">Voltar</a>
+                    <a href="#" class="admin-primary-toolbar-button" id="adminCouponEditLink">Editar cupom</a>
+                </div>
+            </header>
+
+            <div class="admin-feedback admin-products-feedback" id="adminCouponDetailFeedback" hidden></div>
+
+            <section class="admin-products-card admin-coupon-detail-shell" id="adminCouponDetailShell" hidden>
+                <div class="admin-coupon-detail-grid">
+                    <article class="admin-order-detail-card">
+                        <p class="admin-card-kicker">Cupom</p>
+                        <h2 id="adminCouponCode">-</h2>
+                        <div class="admin-order-detail-meta" id="adminCouponMeta"></div>
+                    </article>
+
+                    <article class="admin-order-detail-card">
+                        <p class="admin-card-kicker">Resumo</p>
+                        <div class="admin-coupon-metric-grid" id="adminCouponMetrics"></div>
+                    </article>
+
+                    <article class="admin-order-detail-card">
+                        <p class="admin-card-kicker">Descrição</p>
+                        <div class="admin-order-detail-list" id="adminCouponDescription"></div>
+                    </article>
+
+                    <article class="admin-order-detail-card">
+                        <p class="admin-card-kicker">Regras</p>
+                        <div class="admin-coupon-rule-list" id="adminCouponRules"></div>
+                    </article>
+                </div>
+
+                <section class="admin-order-items-section">
+                    <div class="admin-editor-card-header">
+                        <h3>Compras realizadas com este cupom</h3>
+                    </div>
+                    <div class="admin-empty-state" id="adminCouponOrdersEmptyState" hidden>
+                        Ainda não há compras usando este cupom.
+                    </div>
+                    <div class="admin-table-wrap" id="adminCouponOrdersTableWrap">
+                        <table class="admin-products-table admin-products-table-shop">
+                            <thead>
+                                <tr>
+                                    <th>Pedido</th>
+                                    <th>Cliente</th>
+                                    <th>Desconto</th>
+                                    <th>Total</th>
+                                    <th>Data</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminCouponOrdersTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <script src="/admin/message-badge.js"></script>
+    <script src="/admin/coupon-detail.js"></script>
+</body>
+</html>
