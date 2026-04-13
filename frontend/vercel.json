@@ -2,15 +2,15 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://YOUR_RENDER_BACKEND_URL.onrender.com/api/:path*"
+      "destination": "https://arteno-site.onrender.com/api/:path*"
     },
     {
       "source": "/admin",
-      "destination": "https://YOUR_RENDER_BACKEND_URL.onrender.com/admin"
+      "destination": "https://arteno-site.onrender.com/admin"
     },
     {
       "source": "/admin/:path*",
-      "destination": "https://YOUR_RENDER_BACKEND_URL.onrender.com/admin/:path*"
+      "destination": "https://arteno-site.onrender.com/admin/:path*"
     },
     {
       "source": "/",
