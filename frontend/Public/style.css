@@ -6,9 +6,18 @@
 }
 
 body {
+    color-scheme: light;
     font-family: Arial, sans-serif;
     background-color: #fff;
+    color: #181818;
     font-family: "Barlow", sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+    color-scheme: light;
 }
 
 li {
@@ -2197,4 +2206,121 @@ a:focus {
     height: 10px !important;
     background-color: #111 !important;
     border-radius: 20px !important;
+}
+
+body.site-preloader-active {
+    overflow: hidden;
+}
+
+.site-preloader {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.98);
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.42s ease, visibility 0.42s ease;
+}
+
+.site-preloader.is-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.site-preloader-card {
+    width: min(100%, 280px);
+    padding: 12px 16px;
+    border-radius: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    text-align: center;
+}
+
+.site-preloader-spinner {
+    width: 42px;
+    height: 42px;
+    margin: 0 auto 16px;
+    border-radius: 999px;
+    border: 3px solid rgba(24, 24, 24, 0.14);
+    border-top-color: #181818;
+    animation: site-preloader-spin 0.8s linear infinite;
+}
+
+.site-preloader-title {
+    margin: 0;
+    color: #181818;
+    font-size: 16px;
+    line-height: 1.4;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+@keyframes site-preloader-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 768px) {
+    .site-preloader-card {
+        width: min(100%, 240px);
+        padding: 8px 12px;
+    }
+
+    .site-preloader-title {
+        font-size: 15px;
+    }
+}
+
+.site-skeleton {
+    position: relative;
+    overflow: hidden;
+    background: #ebe5dc;
+    border-radius: 16px;
+}
+
+.site-skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.65) 50%, transparent 100%);
+    animation: site-skeleton-shimmer 1.35s ease-in-out infinite;
+}
+
+.site-skeleton--text {
+    height: 14px;
+    border-radius: 999px;
+}
+
+.site-skeleton--title {
+    height: 24px;
+    border-radius: 999px;
+}
+
+.site-skeleton--image {
+    border-radius: 24px;
+}
+
+@keyframes site-skeleton-shimmer {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .site-preloader,
+    .site-preloader.is-hidden {
+        transition: none;
+    }
+
+    .site-preloader-spinner,
+    .site-skeleton::after {
+        animation: none;
+    }
 }

@@ -15,7 +15,13 @@
 
 </head>
 
-<body>
+<body data-preloader-ready="#featuredProductsGrid .item, #dynamicProductCarousel .swiper-slide, #categoriesCarousel .swiper-slide">
+    <div class="site-preloader" id="sitePreloader" aria-hidden="true">
+        <div class="site-preloader-card">
+            <div class="site-preloader-spinner" aria-hidden="true"></div>
+            <p class="site-preloader-title">Carregando informações</p>
+        </div>
+    </div>
     <div class="top-bar">
         <div class="top-container-bar container">
             <div class="top-left">
@@ -430,6 +436,7 @@
         <i class="fa-brands fa-whatsapp"></i>
     </a>
 
+    <script src="/preloader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="/cart-drawer.js"></script>
     <script src="/search-nav.js"></script>

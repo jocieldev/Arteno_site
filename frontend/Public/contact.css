@@ -1,3 +1,24 @@
+:root {
+    color-scheme: light;
+}
+
+html {
+    background-color: #f8f3eb;
+}
+
+body {
+    color-scheme: light;
+    background-color: #f8f3eb;
+    color: #1b1713;
+}
+
+button,
+input,
+select,
+textarea {
+    color-scheme: light;
+}
+
 .contact-page-body {
     --contact-ink: #171717;
     --contact-ink-soft: #5f6268;

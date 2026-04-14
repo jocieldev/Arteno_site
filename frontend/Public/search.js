@@ -138,6 +138,16 @@ async function loadSharedCategories() {
     }
 }
 
+function clearSearchSkeleton() {
+    if (!searchResultsGrid) {
+        return;
+    }
+
+    if (searchResultsGrid.querySelector(".search-skeleton-card")) {
+        searchResultsGrid.innerHTML = "";
+    }
+}
+
 function setupProductCardNavigation() {
     const isInteractiveElement = (target) => target.closest("a, button, input, select, textarea, label");
 
@@ -276,6 +286,8 @@ async function loadSearchResults() {
     }
 
     if (!term) {
+        clearSearchSkeleton();
+
         if (searchSummary) {
             searchSummary.textContent = "Digite o nome de um produto, categoria ou palavra relacionada para pesquisar.";
         }
@@ -300,6 +312,7 @@ async function loadSearchResults() {
         }
 
         const products = await response.json();
+        clearSearchSkeleton();
 
         if (searchSummary) {
             searchSummary.textContent = `${products.length} resultado(s) para "${term}".`;
@@ -325,6 +338,7 @@ async function loadSearchResults() {
         }
     } catch (error) {
         console.error("Erro ao buscar resultados:", error);
+        clearSearchSkeleton();
 
         if (searchResultsGrid) {
             searchResultsGrid.innerHTML = "";

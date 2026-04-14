@@ -1,3 +1,24 @@
+:root {
+    color-scheme: light;
+}
+
+html {
+    background-color: #f8f3eb;
+}
+
+body {
+    color-scheme: light;
+    background-color: #f8f3eb;
+    color: #1b1713;
+}
+
+button,
+input,
+select,
+textarea {
+    color-scheme: light;
+}
+
 .blog-page-body{min-height:100vh;background:radial-gradient(circle at top left,rgba(183,121,70,.18),transparent 28%),radial-gradient(circle at top right,rgba(124,91,58,.12),transparent 26%),linear-gradient(180deg,#f8f3eb 0%,#f4efe8 48%,#f8f6f2 100%)}
 .blog-main,.blog-article-main{padding-top:34px;padding-bottom:64px}
 .blog-hero{max-width:860px;margin:0 auto 34px;text-align:center}

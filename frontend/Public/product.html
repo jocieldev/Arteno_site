@@ -131,176 +131,206 @@
     <main class="container product-page-main">
         <div class="product-page-feedback" id="productPageFeedback" hidden></div>
 
-        <section class="product-page-shell" id="productPageShell" hidden>
-            <div class="product-page-media-column">
-                <div class="product-gallery">
-                    <div class="product-gallery-main-frame">
-                        <div class="product-gallery-arrows product-gallery-arrows-overlay">
-                            <button type="button" class="product-gallery-arrow" id="productGalleryPrev" aria-label="Imagem anterior">
-                                <i class="fa-solid fa-chevron-left"></i>
-                            </button>
-                            <button type="button" class="product-gallery-arrow" id="productGalleryNext" aria-label="Próxima imagem">
-                                <i class="fa-solid fa-chevron-right"></i>
-                            </button>
-                        </div>
-                        <div class="product-gallery-main-track" id="productGalleryMainTrack">
-                            <img src="" alt="" id="productMainImageCurrent" class="product-gallery-main-image">
-                            <img src="" alt="" id="productMainImageNext" class="product-gallery-main-image">
-                        </div>
-                    </div>
-                    <div class="product-gallery-controls">
-                        <div class="product-gallery-thumbs" id="productGalleryThumbs"></div>
-                    </div>
+        <section class="product-skeleton" id="productSkeleton" aria-hidden="true">
+            <div class="product-skeleton-media">
+                <div class="site-skeleton site-skeleton--image product-skeleton-image"></div>
+                <div class="product-skeleton-thumbs">
+                    <div class="site-skeleton product-skeleton-thumb"></div>
+                    <div class="site-skeleton product-skeleton-thumb"></div>
+                    <div class="site-skeleton product-skeleton-thumb"></div>
+                    <div class="site-skeleton product-skeleton-thumb"></div>
                 </div>
             </div>
-
-            <div class="product-page-info">
-                <div class="product-page-header">
-                    <p class="product-page-kicker" id="productCategory">Produto em destaque</p>
-                    <h1 id="productName"></h1>
-                </div>
-
-                <div class="product-page-price-panel">
-                    <div class="product-page-price-block">
-                        <span class="product-page-compare-price" id="productCompareAtPrice" hidden></span>
-                        <span class="product-page-price" id="productPrice"></span>
+            <div class="product-skeleton-info">
+                <div class="site-skeleton site-skeleton--text" style="width: 110px;"></div>
+                <div class="site-skeleton product-skeleton-title"></div>
+                <div class="site-skeleton product-skeleton-price"></div>
+                <div class="site-skeleton site-skeleton--text product-skeleton-copy"></div>
+                <div class="site-skeleton site-skeleton--text product-skeleton-copy"></div>
+                <div class="product-skeleton-card">
+                    <div class="site-skeleton site-skeleton--text" style="width: 140px;"></div>
+                    <div class="site-skeleton site-skeleton--text" style="width: 100%; height: 52px;"></div>
+                    <div class="product-skeleton-actions">
+                        <div class="site-skeleton product-skeleton-button"></div>
+                        <div class="site-skeleton product-skeleton-button"></div>
                     </div>
-                    <p class="product-page-installments" id="productInstallments"></p>
-                    <p class="product-page-stock" id="productStock"></p>
-                </div>
-
-                <div class="product-page-purchase-card">
-                    <div class="product-page-purchase-header">
-                        <div>
-                            <span class="product-page-field-label">Finalizar compra</span>
-                        </div>
-                    </div>
-
-                    <div class="product-page-variation-wrap" id="productVariationWrap" hidden>
-                        <div class="product-page-variation-groups" id="productVariationGroups"></div>
-                    </div>
-
-                    <div class="product-page-personalization-wrap" id="productPersonalizationWrap" hidden>
-                        <div class="product-page-personalization-name-field" id="productPersonalizationNameField">
-                            <label class="product-page-personalization-label" for="productPersonalizationInput" id="productPersonalizationLabel">
-                                <span class="product-page-field-label">Nome para gravar</span>
-                                <span class="product-page-personalization-note">Informe o nome que será gravado antes de continuar</span>
-                            </label>
-                            <input type="text" id="productPersonalizationInput" class="product-page-personalization-input" placeholder="Digite o nome da gravação">
-                        </div>
-
-                        <div class="product-page-image-overlay-wrap" id="productImageOverlayWrap" hidden>
-                            <div class="product-page-personalization-preview-header">
-                                <span class="product-page-field-label">Imagem para aplicar</span>
-                                <span class="product-page-personalization-note">Escolha uma imagem pronta ou envie a sua para visualizar sobre o produto.</span>
-                            </div>
-                            <div class="product-page-image-overlay-options" id="productImageOverlayOptions"></div>
-                            <input type="file" id="productImageOverlayUploadInput" accept="image/*" hidden>
-                        </div>
-
-                        <div class="product-page-personalization-preview" id="productPersonalizationPreview" hidden>
-                            <div class="product-page-personalization-preview-header">
-                                <span class="product-page-field-label">Prévia da gravação</span>
-                                <span class="product-page-personalization-note">Veja uma simulação de como o nome pode aparecer no produto.</span>
-                            </div>
-                            <div class="product-page-personalization-preview-canvas">
-                                <img src="" alt="Prévia do produto personalizado" id="productPersonalizationPreviewImage">
-                                <img src="" alt="" id="productPersonalizationOverlayImage" class="product-page-personalization-overlay-image" hidden>
-                                <div class="product-page-personalization-preview-text" id="productPersonalizationPreviewText"></div>
-                            </div>
-                            <div class="product-page-personalization-controls" id="productPersonalizationControls" hidden>
-                                <div class="product-page-adjust-tabs" id="productPersonalizationTabs">
-                                    <button type="button" class="product-page-adjust-tab is-active" data-adjust-panel-tab="text" aria-pressed="true">Texto</button>
-                                    <button type="button" class="product-page-adjust-tab" data-adjust-panel-tab="image" aria-pressed="false">Imagem</button>
-                                </div>
-                                <div class="product-page-adjust-control" id="productTextAdjustControls" hidden>
-                                    <div class="product-page-personalization-preview-header">
-                                        <span class="product-page-field-label">Ajustar nome</span>
-                                        <span class="product-page-personalization-note">Use as setas para mover e os botões para aumentar ou diminuir.</span>
-                                    </div>
-                                    <div class="product-page-adjust-actions">
-                                        <div class="product-page-adjust-pad">
-                                            <button type="button" class="product-page-adjust-button" data-adjust-target="text" data-adjust-action="up" aria-label="Mover nome para cima">&uarr;</button>
-                                            <button type="button" class="product-page-adjust-button" data-adjust-target="text" data-adjust-action="left" aria-label="Mover nome para a esquerda">&larr;</button>
-                                            <button type="button" class="product-page-adjust-button" data-adjust-target="text" data-adjust-action="down" aria-label="Mover nome para baixo">&darr;</button>
-                                            <button type="button" class="product-page-adjust-button" data-adjust-target="text" data-adjust-action="right" aria-label="Mover nome para a direita">&rarr;</button>
-                                        </div>
-                                        <div class="product-page-adjust-scale">
-                                            <button type="button" class="product-page-adjust-button" data-adjust-target="text" data-adjust-action="smaller">Menor</button>
-                                            <button type="button" class="product-page-adjust-button" data-adjust-target="text" data-adjust-action="bigger">Maior</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="product-page-adjust-control" id="productImageAdjustControls" hidden>
-                                    <div class="product-page-personalization-preview-header">
-                                        <span class="product-page-field-label">Ajustar imagem</span>
-                                        <span class="product-page-personalization-note">Use as setas para mover e os botões para aumentar ou diminuir.</span>
-                                    </div>
-                                    <div class="product-page-adjust-actions">
-                                        <div class="product-page-adjust-pad">
-                                            <button type="button" class="product-page-adjust-button" data-adjust-target="image" data-adjust-action="up" aria-label="Mover imagem para cima">&uarr;</button>
-                                            <button type="button" class="product-page-adjust-button" data-adjust-target="image" data-adjust-action="left" aria-label="Mover imagem para a esquerda">&larr;</button>
-                                            <button type="button" class="product-page-adjust-button" data-adjust-target="image" data-adjust-action="down" aria-label="Mover imagem para baixo">&darr;</button>
-                                            <button type="button" class="product-page-adjust-button" data-adjust-target="image" data-adjust-action="right" aria-label="Mover imagem para a direita">&rarr;</button>
-                                        </div>
-                                        <div class="product-page-adjust-scale">
-                                            <button type="button" class="product-page-adjust-button" data-adjust-target="image" data-adjust-action="smaller">Menor</button>
-                                            <button type="button" class="product-page-adjust-button" data-adjust-target="image" data-adjust-action="bigger">Maior</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="product-page-quantity-wrap">
-                        <span class="product-page-field-label">Quantidade</span>
-                        <div class="product-quantity-selector">
-                            <button type="button" class="product-quantity-button" id="decreaseQuantityButton" aria-label="Diminuir quantidade">-</button>
-                            <input type="number" id="productQuantityInput" min="1" step="1" value="1">
-                            <button type="button" class="product-quantity-button" id="increaseQuantityButton" aria-label="Aumentar quantidade">+</button>
-                        </div>
-                    </div>
-
-                    <div class="product-page-actions">
-                        <button type="button" class="product-page-buy-button" id="buyNowButton">Comprar agora</button>
-                        <button type="button" class="product-page-cart-button" id="addToCartButton">
-                            <i class="fa-solid fa-bag-shopping product-page-cart-button-icon"></i>
-                            <span class="product-page-cart-button-label">Adicionar ao carrinho</span>
-                            <span class="product-page-cart-button-confirmation" aria-hidden="true">
-                                <span class="product-page-cart-button-check">&#10003;</span>
-                            </span>
-                        </button>
-                    </div>
-
-                    <div class="product-page-shipping-card">
-                        <div class="product-page-shipping-header">
-                            <span class="product-page-field-label">Simular entrega</span>
-                            <span class="product-page-shipping-note">Informe seu CEP</span>
-                        </div>
-                        <div class="product-page-shipping-form">
-                            <input type="text" id="shippingZipCodeInput" placeholder="Digite seu CEP">
-                            <button type="button" class="product-page-shipping-button" id="shippingQuoteButton">Calcular</button>
-                        </div>
-                        <p class="product-page-shipping-help" id="shippingHelpText">Consulte frete com PAC e SEDEX informando seu CEP.</p>
-                        <p class="product-page-shipping-feedback" id="shippingQuoteFeedback" hidden></p>
-                        <div class="product-page-shipping-results" id="shippingQuoteResults" hidden></div>
-                    </div>
-
-                    <p class="product-page-cart-feedback" id="productCartFeedback" hidden></p>
+                    <div class="site-skeleton product-skeleton-button"></div>
                 </div>
             </div>
         </section>
 
-        <section class="product-page-description-section" id="productDescriptionSection" hidden>
-            <div class="product-page-description-card">
-                <div class="product-page-description-header">
-                    <p class="product-page-kicker">Detalhes do produto</p>
-                    <h2>Descrição e informações importantes</h2>
+        <div class="product-page-content" id="productPageContent" hidden>
+            <section class="product-page-shell" id="productPageShell" hidden>
+                <div class="product-page-media-column">
+                    <div class="product-gallery">
+                        <div class="product-gallery-main-frame">
+                            <div class="product-gallery-arrows product-gallery-arrows-overlay">
+                                <button type="button" class="product-gallery-arrow" id="productGalleryPrev" aria-label="Imagem anterior">
+                                    <i class="fa-solid fa-chevron-left"></i>
+                                </button>
+                                <button type="button" class="product-gallery-arrow" id="productGalleryNext" aria-label="Próxima imagem">
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                            </div>
+                            <div class="product-gallery-main-track" id="productGalleryMainTrack">
+                                <img src="" alt="" id="productMainImageCurrent" class="product-gallery-main-image">
+                                <img src="" alt="" id="productMainImageNext" class="product-gallery-main-image">
+                            </div>
+                        </div>
+                        <div class="product-gallery-controls">
+                            <div class="product-gallery-thumbs" id="productGalleryThumbs"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="product-page-description" id="productDescription"></div>
-            </div>
-        </section>
+
+                <div class="product-page-info">
+                    <div class="product-page-header">
+                        <p class="product-page-kicker" id="productCategory">Produto em destaque</p>
+                        <h1 id="productName"></h1>
+                    </div>
+
+                    <div class="product-page-price-panel">
+                        <div class="product-page-price-block">
+                            <span class="product-page-compare-price" id="productCompareAtPrice" hidden></span>
+                            <span class="product-page-price" id="productPrice"></span>
+                        </div>
+                        <p class="product-page-installments" id="productInstallments"></p>
+                        <p class="product-page-stock" id="productStock"></p>
+                    </div>
+
+                    <div class="product-page-purchase-card">
+                        <div class="product-page-purchase-header">
+                            <div>
+                                <span class="product-page-field-label">Finalizar compra</span>
+                            </div>
+                        </div>
+
+                        <div class="product-page-variation-wrap" id="productVariationWrap" hidden>
+                            <div class="product-page-variation-groups" id="productVariationGroups"></div>
+                        </div>
+
+                        <div class="product-page-personalization-wrap" id="productPersonalizationWrap" hidden>
+                            <div class="product-page-personalization-name-field" id="productPersonalizationNameField">
+                                <label class="product-page-personalization-label" for="productPersonalizationInput" id="productPersonalizationLabel">
+                                    <span class="product-page-field-label">Nome para gravar</span>
+                                    <span class="product-page-personalization-note">Informe o nome que será gravado antes de continuar</span>
+                                </label>
+                                <input type="text" id="productPersonalizationInput" class="product-page-personalization-input" placeholder="Digite o nome da gravação">
+                            </div>
+
+                            <div class="product-page-image-overlay-wrap" id="productImageOverlayWrap" hidden>
+                                <div class="product-page-personalization-preview-header">
+                                    <span class="product-page-field-label">Imagem para aplicar</span>
+                                    <span class="product-page-personalization-note">Escolha uma imagem pronta ou envie a sua para visualizar sobre o produto.</span>
+                                </div>
+                                <div class="product-page-image-overlay-options" id="productImageOverlayOptions"></div>
+                                <input type="file" id="productImageOverlayUploadInput" accept="image/*" hidden>
+                            </div>
+
+                            <div class="product-page-personalization-preview" id="productPersonalizationPreview" hidden>
+                                <div class="product-page-personalization-preview-header">
+                                    <span class="product-page-field-label">Prévia da gravação</span>
+                                    <span class="product-page-personalization-note">Veja uma simulação de como o nome pode aparecer no produto.</span>
+                                </div>
+                                <div class="product-page-personalization-preview-canvas">
+                                    <img src="" alt="Prévia do produto personalizado" id="productPersonalizationPreviewImage">
+                                    <img src="" alt="" id="productPersonalizationOverlayImage" class="product-page-personalization-overlay-image" hidden>
+                                    <div class="product-page-personalization-preview-text" id="productPersonalizationPreviewText"></div>
+                                </div>
+                                <div class="product-page-personalization-controls" id="productPersonalizationControls" hidden>
+                                    <div class="product-page-adjust-tabs" id="productPersonalizationTabs">
+                                        <button type="button" class="product-page-adjust-tab is-active" data-adjust-panel-tab="text" aria-pressed="true">Texto</button>
+                                        <button type="button" class="product-page-adjust-tab" data-adjust-panel-tab="image" aria-pressed="false">Imagem</button>
+                                    </div>
+                                    <div class="product-page-adjust-control" id="productTextAdjustControls" hidden>
+                                        <div class="product-page-personalization-preview-header">
+                                            <span class="product-page-field-label">Ajustar nome</span>
+                                            <span class="product-page-personalization-note">Use as setas para mover e os botões para aumentar ou diminuir.</span>
+                                        </div>
+                                        <div class="product-page-adjust-actions">
+                                            <div class="product-page-adjust-pad">
+                                                <button type="button" class="product-page-adjust-button" data-adjust-target="text" data-adjust-action="up" aria-label="Mover nome para cima">&uarr;</button>
+                                                <button type="button" class="product-page-adjust-button" data-adjust-target="text" data-adjust-action="left" aria-label="Mover nome para a esquerda">&larr;</button>
+                                                <button type="button" class="product-page-adjust-button" data-adjust-target="text" data-adjust-action="down" aria-label="Mover nome para baixo">&darr;</button>
+                                                <button type="button" class="product-page-adjust-button" data-adjust-target="text" data-adjust-action="right" aria-label="Mover nome para a direita">&rarr;</button>
+                                            </div>
+                                            <div class="product-page-adjust-scale">
+                                                <button type="button" class="product-page-adjust-button" data-adjust-target="text" data-adjust-action="smaller">Menor</button>
+                                                <button type="button" class="product-page-adjust-button" data-adjust-target="text" data-adjust-action="bigger">Maior</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="product-page-adjust-control" id="productImageAdjustControls" hidden>
+                                        <div class="product-page-personalization-preview-header">
+                                            <span class="product-page-field-label">Ajustar imagem</span>
+                                            <span class="product-page-personalization-note">Use as setas para mover e os botões para aumentar ou diminuir.</span>
+                                        </div>
+                                        <div class="product-page-adjust-actions">
+                                            <div class="product-page-adjust-pad">
+                                                <button type="button" class="product-page-adjust-button" data-adjust-target="image" data-adjust-action="up" aria-label="Mover imagem para cima">&uarr;</button>
+                                                <button type="button" class="product-page-adjust-button" data-adjust-target="image" data-adjust-action="left" aria-label="Mover imagem para a esquerda">&larr;</button>
+                                                <button type="button" class="product-page-adjust-button" data-adjust-target="image" data-adjust-action="down" aria-label="Mover imagem para baixo">&darr;</button>
+                                                <button type="button" class="product-page-adjust-button" data-adjust-target="image" data-adjust-action="right" aria-label="Mover imagem para a direita">&rarr;</button>
+                                            </div>
+                                            <div class="product-page-adjust-scale">
+                                                <button type="button" class="product-page-adjust-button" data-adjust-target="image" data-adjust-action="smaller">Menor</button>
+                                                <button type="button" class="product-page-adjust-button" data-adjust-target="image" data-adjust-action="bigger">Maior</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="product-page-quantity-wrap">
+                            <span class="product-page-field-label">Quantidade</span>
+                            <div class="product-quantity-selector">
+                                <button type="button" class="product-quantity-button" id="decreaseQuantityButton" aria-label="Diminuir quantidade">-</button>
+                                <input type="number" id="productQuantityInput" min="1" step="1" value="1">
+                                <button type="button" class="product-quantity-button" id="increaseQuantityButton" aria-label="Aumentar quantidade">+</button>
+                            </div>
+                        </div>
+
+                        <div class="product-page-actions">
+                            <button type="button" class="product-page-buy-button" id="buyNowButton">Comprar agora</button>
+                            <button type="button" class="product-page-cart-button" id="addToCartButton">
+                                <i class="fa-solid fa-bag-shopping product-page-cart-button-icon"></i>
+                                <span class="product-page-cart-button-label">Adicionar ao carrinho</span>
+                                <span class="product-page-cart-button-confirmation" aria-hidden="true">
+                                    <span class="product-page-cart-button-check">&#10003;</span>
+                                </span>
+                            </button>
+                        </div>
+
+                        <div class="product-page-shipping-card">
+                            <div class="product-page-shipping-header">
+                                <span class="product-page-field-label">Simular entrega</span>
+                                <span class="product-page-shipping-note">Informe seu CEP</span>
+                            </div>
+                            <div class="product-page-shipping-form">
+                                <input type="text" id="shippingZipCodeInput" placeholder="Digite seu CEP">
+                                <button type="button" class="product-page-shipping-button" id="shippingQuoteButton">Calcular</button>
+                            </div>
+                            <p class="product-page-shipping-help" id="shippingHelpText">Consulte frete com PAC e SEDEX informando seu CEP.</p>
+                            <p class="product-page-shipping-feedback" id="shippingQuoteFeedback" hidden></p>
+                            <div class="product-page-shipping-results" id="shippingQuoteResults" hidden></div>
+                        </div>
+
+                        <p class="product-page-cart-feedback" id="productCartFeedback" hidden></p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="product-page-description-section" id="productDescriptionSection" hidden>
+                <div class="product-page-description-card">
+                    <div class="product-page-description-header">
+                        <p class="product-page-kicker">Detalhes do produto</p>
+                        <h2>Descrição e informações importantes</h2>
+                    </div>
+                    <div class="product-page-description" id="productDescription"></div>
+                </div>
+            </section>
+        </div>
     </main>
 
         <footer class="simple-footer">

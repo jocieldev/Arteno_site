@@ -1,3 +1,24 @@
+:root {
+    color-scheme: light;
+}
+
+html {
+    background-color: #f8f3eb;
+}
+
+body {
+    color-scheme: light;
+    background-color: #f8f3eb;
+    color: #171717;
+}
+
+button,
+input,
+select,
+textarea {
+    color-scheme: light;
+}
+
 .search-page-body {
     --search-ink: #171717;
     --search-ink-soft: #5f6268;
@@ -44,6 +65,28 @@
     color: var(--search-ink-soft);
     font-size: 18px;
     line-height: 1.8;
+}
+
+.search-skeleton-card {
+    padding: 10px;
+    border-radius: 18px;
+    border: 1px solid #1818181A;
+    background: #ffffff;
+}
+
+.search-skeleton-thumb {
+    aspect-ratio: 1 / 1;
+    margin-bottom: 14px;
+    background: #f1ebe3;
+}
+
+.search-skeleton-line {
+    margin-bottom: 10px;
+}
+
+.search-skeleton-line:last-child {
+    width: 58%;
+    margin-bottom: 0;
 }
 
 @media (max-width: 640px) {

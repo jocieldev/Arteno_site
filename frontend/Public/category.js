@@ -271,6 +271,7 @@ function hideProductGridLoadMoreButton(gridElement) {
 async function loadCategoryPage() {
     const feedback = document.getElementById("categoryPageFeedback");
     const shell = document.getElementById("categoryDetailShell");
+    const skeleton = document.getElementById("categorySkeleton");
     const slug = decodeURIComponent(window.location.pathname.split("/").filter(Boolean).pop() || "");
 
     try {
@@ -298,8 +299,16 @@ async function loadCategoryPage() {
             categoryProductsGrid.innerHTML = `<p class="category-page-empty">Nenhum produto ativo está vinculado a esta categoria.</p>`;
         }
 
+        if (skeleton) {
+            skeleton.hidden = true;
+        }
+
         shell.hidden = false;
     } catch (error) {
+        if (skeleton) {
+            skeleton.hidden = true;
+        }
+
         feedback.hidden = false;
         feedback.textContent = error.message;
     }

@@ -31,6 +31,7 @@ let addToCartButtonSuccessTimeoutId = null;
 let addToCartInteractionLocked = false;
 let buyNowRequestInFlight = false;
 let selectedProductVariationItems = {};
+let activeProductLoadRequestId = 0;
 const SHIPPING_ZIP_STORAGE_KEY = "arteno-shipping-zip-code";
 let personalizationAdjustments = {
     text: { offsetXPercent: 0, offsetYPercent: 0, scalePercent: 100 },
@@ -604,7 +605,7 @@ function getSelectedPersonalizationOverlayImage() {
 
 async function preparePersonalizationImagePreview(file) {
     if (!window.personalizationImageStore?.saveFile) {
-        throw new Error("O armazenamento temporario de imagens nao esta disponivel.");
+        throw new Error("O armazenamento temporário de imagens não está disponível.");
     }
 
     if (uploadedPersonalizationOverlayImage?.storageKey && window.personalizationImageStore?.deleteFile) {
@@ -878,7 +879,7 @@ function buildShippingHelpText({ productionDays = 0, isDemo = false } = {}) {
         return shippingMessage;
     }
 
-    return `Prazo de producao: ${productionDays} dia(s) uteis. ${shippingMessage}`;
+    return `Prazo de produção: ${productionDays} dia(s) úteis. ${shippingMessage}`;
 }
 
 function formatShippingDeadlineLabel(option = {}) {
@@ -887,10 +888,10 @@ function formatShippingDeadlineLabel(option = {}) {
     const totalDeliveryDays = Number(option.totalDeliveryDays || (productionDays + deliveryDays));
 
     if (!productionDays) {
-        return `${deliveryDays} dia(s) uteis`;
+        return `${deliveryDays} dia(s) úteis`;
     }
 
-    return `${productionDays} dia(s) de producao + ${deliveryDays} dia(s) de entrega = ${totalDeliveryDays} dia(s) uteis`;
+    return `${productionDays} dia(s) de produção + ${deliveryDays} dia(s) de entrega = ${totalDeliveryDays} dia(s) úteis`;
 }
 
 function renderShippingOptions(options = []) {
@@ -1124,7 +1125,7 @@ function validatePersonalizationImageSelection() {
     const selectedOverlayImage = getSelectedPersonalizationOverlayImage();
 
     if (personalizationImageUploadRequestInFlight) {
-        showCartFeedback("A imagem ainda esta sendo enviada. Aguarde um instante.", "error");
+        showCartFeedback("A imagem ainda está sendo enviada. Aguarde um instante.", "error");
         return false;
     }
 
@@ -1136,7 +1137,7 @@ function validatePersonalizationImageSelection() {
         return true;
     }
 
-    showCartFeedback("Escolha ou envie uma imagem antes de continuará", "error");
+    showCartFeedback("Escolha ou envie uma imagem antes de continuar.", "error");
     return false;
 }
 
@@ -1198,6 +1199,74 @@ function renderGallery(product) {
     setMainGalleryImage(0);
 }
 
+function setProductPageLoadingState({ isLoading = false, errorMessage = "" } = {}) {
+    const feedback = document.getElementById("productPageFeedback");
+    const skeleton = document.getElementById("productSkeleton");
+    const content = document.getElementById("productPageContent");
+    const shell = document.getElementById("productPageShell");
+    const descriptionSection = document.getElementById("productDescriptionSection");
+
+    document.body.classList.toggle("product-page-is-loading", isLoading);
+    document.body.setAttribute("aria-busy", isLoading ? "true" : "false");
+
+    if (skeleton) {
+        skeleton.hidden = !isLoading;
+        skeleton.setAttribute("aria-hidden", isLoading ? "false" : "true");
+    }
+
+    if (content) {
+        content.hidden = isLoading || Boolean(errorMessage);
+    }
+
+    if (shell) {
+        shell.hidden = isLoading || Boolean(errorMessage);
+    }
+
+    if (descriptionSection) {
+        descriptionSection.hidden = isLoading || Boolean(errorMessage);
+    }
+
+    if (feedback) {
+        feedback.hidden = !errorMessage;
+        feedback.textContent = errorMessage;
+    }
+}
+
+function preloadImage(url) {
+    return new Promise((resolve) => {
+        const normalizedUrl = String(url || "").trim();
+
+        if (!normalizedUrl) {
+            resolve(false);
+            return;
+        }
+
+        const image = new Image();
+        let settled = false;
+        const finalize = () => {
+            if (settled) {
+                return;
+            }
+
+            settled = true;
+            resolve(true);
+        };
+
+        image.onload = finalize;
+        image.onerror = finalize;
+        image.src = normalizedUrl;
+
+        if (typeof image.decode === "function") {
+            image.decode().then(finalize).catch(finalize);
+        }
+    });
+}
+
+async function preloadProductAssets(product) {
+    const primaryImageUrl = getProductImages(product)?.[0]?.imageUrl || "";
+    await preloadImage(primaryImageUrl);
+}
+
 function renderProduct(product) {
     const productName = document.getElementById("productName");
     const productCategory = document.getElementById("productCategory");
@@ -1207,6 +1276,7 @@ function renderProduct(product) {
     const productStock = document.getElementById("productStock");
     const productDescription = document.getElementById("productDescription");
     const productDescriptionSection = document.getElementById("productDescriptionSection");
+    const productPageContent = document.getElementById("productPageContent");
     const productPageShell = document.getElementById("productPageShell");
 
     currentProduct = product;
@@ -1277,6 +1347,9 @@ function renderProduct(product) {
     }));
 
     updatePurchaseButtonsState(product);
+    if (productPageContent) {
+        productPageContent.hidden = false;
+    }
     productPageShell.hidden = false;
     if (productDescriptionSection) {
         productDescriptionSection.hidden = false;
@@ -1690,8 +1763,10 @@ function bindProductInteractions() {
 }
 
 async function loadProductPage() {
-    const feedback = document.getElementById("productPageFeedback");
     const slug = decodeURIComponent(window.location.pathname.split("/").filter(Boolean).pop() || "");
+    const requestId = ++activeProductLoadRequestId;
+
+    setProductPageLoadingState({ isLoading: true });
 
     try {
         const response = await fetch(`/api/products/${encodeURIComponent(slug)}`);
@@ -1701,10 +1776,29 @@ async function loadProductPage() {
         }
 
         const product = await response.json();
+        await preloadProductAssets(product);
+
+        if (requestId !== activeProductLoadRequestId) {
+            return;
+        }
+
         renderProduct(product);
+        window.requestAnimationFrame(() => {
+            if (requestId !== activeProductLoadRequestId) {
+                return;
+            }
+
+            setProductPageLoadingState({ isLoading: false });
+        });
     } catch (error) {
-        feedback.hidden = false;
-        feedback.textContent = error.message;
+        if (requestId !== activeProductLoadRequestId) {
+            return;
+        }
+
+        setProductPageLoadingState({
+            isLoading: false,
+            errorMessage: error?.message || "Não foi possível carregar o produto."
+        });
     }
 }
 

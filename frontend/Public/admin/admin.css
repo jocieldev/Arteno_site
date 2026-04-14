@@ -3,6 +3,7 @@
 }
 
 :root {
+    color-scheme: light;
     --admin-bg: #f3f3f2;
     --admin-surface: #ffffff;
     --admin-surface-soft: #f7f7f7;
@@ -21,9 +22,17 @@
 
 body {
     margin: 0;
+    color-scheme: light;
     font-family: "Barlow", sans-serif;
     color: var(--admin-text);
     background: var(--admin-bg);
+}
+
+button,
+input,
+select,
+textarea {
+    color-scheme: light;
 }
 
 .admin-auth-body,

@@ -32,6 +32,7 @@ const checkoutResultSubtitle = document.getElementById("checkoutResultSubtitle")
 const checkoutResultShell = document.getElementById("checkoutResultShell");
 const checkoutModeBadge = document.getElementById("checkoutModeBadge");
 const checkoutCardFields = document.getElementById("checkoutCardFields");
+const checkoutSkeleton = document.getElementById("checkoutSkeleton");
 const checkoutCouponCodeInput = document.getElementById("checkoutCouponCode");
 const checkoutCouponApplyButton = document.getElementById("checkoutCouponApplyButton");
 const checkoutCouponFeedback = document.getElementById("checkoutCouponFeedback");
@@ -96,10 +97,10 @@ function formatShippingDeadlineLabel(option = {}) {
     const totalDeliveryDays = Number(option.totalDeliveryDays || (productionDays + deliveryDays));
 
     if (!productionDays) {
-        return `${deliveryDays} dia(s) uteis`;
+        return `${deliveryDays} dia(s) úteis`;
     }
 
-    return `${productionDays} dia(s) produção + ${deliveryDays} dia(s) entrega = ${totalDeliveryDays} dia(s) uteis`;
+    return `${productionDays} dia(s) de produção + ${deliveryDays} dia(s) de entrega = ${totalDeliveryDays} dia(s) úteis`;
 }
 
 function getCategoryUrl(category) {
@@ -253,12 +254,12 @@ function revokeCheckoutPersonalizationPreviewUrls() {
 function openCheckoutPersonalizationImageDatabase() {
     return new Promise((resolve, reject) => {
         if (!window.indexedDB) {
-            reject(new Error("IndexedDB indisponivel"));
+            reject(new Error("IndexedDB indisponível"));
             return;
         }
 
         const request = window.indexedDB.open(PERSONALIZATION_IMAGE_DB_NAME, 1);
-        request.onerror = () => reject(request.error || new Error("Nao foi possivel abrir o IndexedDB."));
+        request.onerror = () => reject(request.error || new Error("Não foi possível abrir o IndexedDB."));
         request.onsuccess = () => resolve(request.result);
     });
 }
@@ -285,7 +286,7 @@ async function getCheckoutStoredPersonalizationImageFile(storageKey) {
         };
         request.onerror = () => {
             database.close();
-            reject(request.error || new Error("Nao foi possivel carregar a imagem temporaria."));
+            reject(request.error || new Error("Não foi possível carregar a imagem temporária."));
         };
     });
 }
@@ -334,7 +335,7 @@ async function hydrateCheckoutPersonalizationThumbs() {
             node.hidden = false;
             node.innerHTML = `<img src="${escapeHtml(objectUrl)}" alt="Imagem da personalizacao">`;
         } catch (_error) {
-            // Se a imagem temporaria nao existir mais, mantemos apenas o texto.
+            // Se a imagem temporária não existir mais, mantemos apenas o texto.
         }
     }));
 }
@@ -342,6 +343,10 @@ async function hydrateCheckoutPersonalizationThumbs() {
 function renderCheckoutSummary() {
     checkoutItems = getStoredCartItems();
     updateCartCount();
+
+    if (checkoutSkeleton) {
+        checkoutSkeleton.hidden = true;
+    }
 
     if (!checkoutItems.length) {
         revokeCheckoutPersonalizationPreviewUrls();
@@ -431,7 +436,7 @@ function renderShippingOptions() {
                 <input type="radio" name="checkoutShippingOption" value="${escapeHtml(optionId)}" ${isSelected ? "checked" : ""}>
                 <div>
                     <strong>${escapeHtml(option.company || "Correios")} - ${escapeHtml(option.name || "Frete")}</strong>
-                    <span>${escapeHtml(String(option.deliveryTime || 0))} dia(s) uteis</span>
+                    <span>${escapeHtml(String(option.deliveryTime || 0))} dia(s) úteis</span>
                 </div>
                 <span class="checkout-shipping-option-price">${escapeHtml(formatCurrency(option.price || 0))}</span>
             </label>
@@ -450,7 +455,7 @@ function renderShippingOptions() {
 
 async function calculateCheckoutShipping() {
     if (!checkoutItems.length) {
-        showShippingFeedback("Seu carrinho esta vazio.");
+        showShippingFeedback("Seu carrinho está vazio.");
         return;
     }
 
@@ -744,7 +749,7 @@ function renderApprovedResult(result) {
 
     checkoutResultShell.innerHTML = `
         <article class="checkout-result-card success">
-            <h3>Compra concluida</h3>
+            <h3>Compra concluída</h3>
             <p>${escapeHtml(result.payment?.details?.message || "Pagamento confirmado automaticamente para testes.")}</p>
             <div class="checkout-result-meta">
                 <div><span>Pedido</span><strong>${escapeHtml(result.order?.orderNumber || "-")}</strong></div>
@@ -761,7 +766,7 @@ function renderPixResult(result) {
     const expiresAt = result.payment?.details?.expiresAt || "";
 
     checkoutResultTitle.textContent = "Pix gerado com sucesso";
-    checkoutResultSubtitle.textContent = "Seu pedido foi criado e esta aguardando o pagamento via Pix.";
+    checkoutResultSubtitle.textContent = "Seu pedido foi criado e está aguardando o pagamento via Pix.";
 
     checkoutResultShell.innerHTML = `
         <article class="checkout-result-card pending">
@@ -795,7 +800,7 @@ function renderBoletoResult(result) {
     const expiresAt = result.payment?.details?.expiresAt || "";
 
     checkoutResultTitle.textContent = "Boleto gerado com sucesso";
-    checkoutResultSubtitle.textContent = "Seu pedido foi criado e esta aguardando o pagamento do boleto.";
+    checkoutResultSubtitle.textContent = "Seu pedido foi criado e está aguardando o pagamento do boleto.";
 
     checkoutResultShell.innerHTML = `
         <article class="checkout-result-card pending">
@@ -882,7 +887,7 @@ async function uploadCheckoutPersonalizationImage(file) {
     const result = await response.json();
 
     if (!response.ok) {
-        throw new Error(result.message || "Nao foi possivel enviar a imagem de personalizacao.");
+        throw new Error(result.message || "Não foi possível enviar a imagem de personalização.");
     }
 
     return {
@@ -908,17 +913,17 @@ async function resolveCheckoutItemsForSubmission(items = checkoutItems) {
         const storageKey = String(item.personalizationImageStorageKey || "").trim();
 
         if (!storageKey) {
-            throw new Error(`A imagem do item "${item.name || "Produto"}" nao esta mais disponivel no navegador. Envie novamente antes de finalizar.`);
+            throw new Error(`A imagem do item "${item.name || "Produto"}" não está mais disponível no navegador. Envie novamente antes de finalizar.`);
         }
 
         if (!window.personalizationImageStore?.getFile) {
-            throw new Error("O armazenamento temporario de imagens nao esta disponivel neste navegador.");
+            throw new Error("O armazenamento temporário de imagens não está disponível neste navegador.");
         }
 
         const file = await window.personalizationImageStore.getFile(storageKey);
 
         if (!file) {
-            throw new Error(`A imagem do item "${item.name || "Produto"}" nao foi encontrada. Envie novamente antes de finalizar.`);
+            throw new Error(`A imagem do item "${item.name || "Produto"}" não foi encontrada. Envie novamente antes de finalizar.`);
         }
 
         const uploadedImage = await uploadCheckoutPersonalizationImage(file);
@@ -1040,7 +1045,7 @@ async function handleCheckoutSubmit(event) {
     clearCheckoutFeedback();
 
     if (!checkoutItems.length) {
-        showCheckoutFeedback("Seu carrinho esta vazio.", "error");
+        showCheckoutFeedback("Seu carrinho está vazio.", "error");
         return;
     }
 

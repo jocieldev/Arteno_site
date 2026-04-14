@@ -1,3 +1,24 @@
+:root {
+    color-scheme: light;
+}
+
+html {
+    background-color: #f7f1e7;
+}
+
+body {
+    color-scheme: light;
+    background-color: #f7f1e7;
+    color: #1b1713;
+}
+
+button,
+input,
+select,
+textarea {
+    color-scheme: light;
+}
+
 .checkout-page-body {
     background:
         radial-gradient(circle at top left, rgba(204, 171, 132, 0.18), transparent 28%),
@@ -63,6 +84,81 @@
     background: rgba(145, 43, 43, 0.08);
     border: 1px solid rgba(145, 43, 43, 0.14);
     color: #7b2323;
+}
+
+.checkout-skeleton {
+    display: grid;
+    grid-template-columns: minmax(0, 1.16fr) minmax(320px, 0.84fr);
+    gap: 24px;
+    align-items: start;
+}
+
+.checkout-skeleton[hidden] {
+    display: none !important;
+}
+
+.checkout-skeleton-form,
+.checkout-skeleton-summary {
+    display: grid;
+    gap: 18px;
+}
+
+.checkout-skeleton-block,
+.checkout-skeleton-summary-card {
+    padding: 24px;
+    border-radius: 26px;
+    background: rgba(255, 255, 255, 0.84);
+    border: 1px solid rgba(28, 23, 19, 0.06);
+}
+
+.checkout-skeleton-header {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.checkout-skeleton-header .site-skeleton:first-child {
+    width: 120px;
+}
+
+.checkout-skeleton-header .site-skeleton:last-child {
+    width: min(280px, 100%);
+}
+
+.checkout-skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.checkout-skeleton-field {
+    height: 52px;
+}
+
+.checkout-skeleton-field.is-full {
+    grid-column: 1 / -1;
+}
+
+.checkout-skeleton-item {
+    display: grid;
+    grid-template-columns: 74px 1fr;
+    gap: 14px;
+    align-items: start;
+    margin-bottom: 16px;
+}
+
+.checkout-skeleton-thumb {
+    aspect-ratio: 1 / 1;
+}
+
+.checkout-skeleton-copy {
+    display: grid;
+    gap: 10px;
+}
+
+.checkout-skeleton-total {
+    margin-top: 18px;
+    height: 52px;
 }
 
 .checkout-empty-state[hidden],
@@ -726,6 +822,10 @@
     .checkout-summary {
         position: static;
     }
+
+    .checkout-skeleton {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 768px) {
@@ -771,5 +871,13 @@
         width: min(100%, 240px);
         height: auto;
         aspect-ratio: 1 / 1;
+    }
+
+    .checkout-skeleton-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .checkout-skeleton-field.is-full {
+        grid-column: auto;
     }
 }
