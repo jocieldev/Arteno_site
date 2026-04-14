@@ -30,6 +30,41 @@ const frontendPublicPath = path.join(__dirname, "..", "..", "frontend", "Public"
 const frontendImagesPath = path.join(__dirname, "..", "..", "frontend", "img");
 const adminViewsPath = path.join(frontendPublicPath, "admin");
 
+function setUtf8ContentType(res, filePath = "") {
+    const normalizedPath = String(filePath || "").toLowerCase();
+
+    if (normalizedPath.endsWith(".html")) {
+        res.setHeader("Content-Type", "text/html; charset=UTF-8");
+        return;
+    }
+
+    if (normalizedPath.endsWith(".css")) {
+        res.setHeader("Content-Type", "text/css; charset=UTF-8");
+        return;
+    }
+
+    if (normalizedPath.endsWith(".js")) {
+        res.setHeader("Content-Type", "application/javascript; charset=UTF-8");
+        return;
+    }
+
+    if (normalizedPath.endsWith(".svg")) {
+        res.setHeader("Content-Type", "image/svg+xml; charset=UTF-8");
+    }
+}
+
+function sendHtmlFile(res, fileName) {
+    const filePath = path.join(frontendPublicPath, fileName);
+    setUtf8ContentType(res, filePath);
+    res.sendFile(filePath);
+}
+
+function sendAdminHtmlFile(res, fileName) {
+    const filePath = path.join(adminViewsPath, fileName);
+    setUtf8ContentType(res, filePath);
+    res.sendFile(filePath);
+}
+
 app.set("trust proxy", 1);
 
 const allowedCorsOrigins = String(process.env.CORS_ALLOWED_ORIGINS || "")
@@ -59,6 +94,10 @@ app.use(express.json({
     }
 }));
 app.use(express.urlencoded({ extended: true }));
+app.use((_req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    next();
+});
 
 app.get("/api/health", (_req, res) => {
     res.json({
@@ -112,58 +151,58 @@ app.use("/api/admin/site-settings", requireAdminAuth, adminSiteSettingRoutes);
 app.post("/api/integrations/melhor-envio/webhook", handleMelhorEnvioWebhook);
 
 app.get("/", (_req, res) => {
-    res.sendFile(path.join(frontendPublicPath, "index.html"));
+    sendHtmlFile(res, "index.html");
 });
 
 app.get("/produto/:slug", (_req, res) => {
-    res.sendFile(path.join(frontendPublicPath, "product.html"));
+    sendHtmlFile(res, "product.html");
 });
 
 app.get("/quem-somos", (_req, res) => {
-    res.sendFile(path.join(frontendPublicPath, "about.html"));
+    sendHtmlFile(res, "about.html");
 });
 
 app.get("/contato", (_req, res) => {
-    res.sendFile(path.join(frontendPublicPath, "contact.html"));
+    sendHtmlFile(res, "contact.html");
 });
 
 app.get("/blog", (_req, res) => {
-    res.sendFile(path.join(frontendPublicPath, "blog.html"));
+    sendHtmlFile(res, "blog.html");
 });
 
 app.get("/blog/:slug", (_req, res) => {
-    res.sendFile(path.join(frontendPublicPath, "blog-article.html"));
+    sendHtmlFile(res, "blog-article.html");
 });
 
 app.get("/entrar", (_req, res) => {
-    res.sendFile(path.join(frontendPublicPath, "auth.html"));
+    sendHtmlFile(res, "auth.html");
 });
 
 app.get("/minha-conta", (_req, res) => {
-    res.sendFile(path.join(frontendPublicPath, "account.html"));
+    sendHtmlFile(res, "account.html");
 });
 
 app.get("/meus-pedidos", (_req, res) => {
-    res.sendFile(path.join(frontendPublicPath, "orders.html"));
+    sendHtmlFile(res, "orders.html");
 });
 
 app.get("/meus-pedidos/:orderId", (_req, res) => {
-    res.sendFile(path.join(frontendPublicPath, "order-detail.html"));
+    sendHtmlFile(res, "order-detail.html");
 });
 
 app.get("/busca", (_req, res) => {
-    res.sendFile(path.join(frontendPublicPath, "search.html"));
+    sendHtmlFile(res, "search.html");
 });
 
 app.get("/checkout", (_req, res) => {
-    res.sendFile(path.join(frontendPublicPath, "checkout.html"));
+    sendHtmlFile(res, "checkout.html");
 });
 
 app.get(["/trocas-e-devolucoes", "/trocas-e-devolu%C3%A7%C3%B5es"], (_req, res) => {
-    res.sendFile(path.join(frontendPublicPath, "returns.html"));
+    sendHtmlFile(res, "returns.html");
 });
 app.get("/categoria/:slug", (_req, res) => {
-    res.sendFile(path.join(frontendPublicPath, "category.html"));
+    sendHtmlFile(res, "category.html");
 });
 
 app.get("/admin/login", (req, res) => {
@@ -171,7 +210,7 @@ app.get("/admin/login", (req, res) => {
         return res.redirect("/admin");
     }
 
-    return res.sendFile(path.join(adminViewsPath, "login.html"));
+    return sendAdminHtmlFile(res, "login.html");
 });
 
 app.post("/admin/login", (req, res) => {
@@ -200,7 +239,7 @@ app.get("/admin", (req, res) => {
         return res.redirect("/admin/login");
     }
 
-    return res.sendFile(path.join(adminViewsPath, "index.html"));
+    return sendAdminHtmlFile(res, "index.html");
 });
 
 app.get("/admin/products/new", (req, res) => {
@@ -208,7 +247,7 @@ app.get("/admin/products/new", (req, res) => {
         return res.redirect("/admin/login");
     }
 
-    return res.sendFile(path.join(adminViewsPath, "index.html"));
+    return sendAdminHtmlFile(res, "index.html");
 });
 
 app.get("/admin/products/:id/edit", (req, res) => {
@@ -216,7 +255,7 @@ app.get("/admin/products/:id/edit", (req, res) => {
         return res.redirect("/admin/login");
     }
 
-    return res.sendFile(path.join(adminViewsPath, "index.html"));
+    return sendAdminHtmlFile(res, "index.html");
 });
 
 app.get("/admin/categories", (req, res) => {
@@ -224,7 +263,7 @@ app.get("/admin/categories", (req, res) => {
         return res.redirect("/admin/login");
     }
 
-    return res.sendFile(path.join(adminViewsPath, "categories.html"));
+    return sendAdminHtmlFile(res, "categories.html");
 });
 
 app.get("/admin/categories/new", (req, res) => {
@@ -232,7 +271,7 @@ app.get("/admin/categories/new", (req, res) => {
         return res.redirect("/admin/login");
     }
 
-    return res.sendFile(path.join(adminViewsPath, "categories.html"));
+    return sendAdminHtmlFile(res, "categories.html");
 });
 
 app.get("/admin/categories/:id/edit", (req, res) => {
@@ -240,7 +279,7 @@ app.get("/admin/categories/:id/edit", (req, res) => {
         return res.redirect("/admin/login");
     }
 
-    return res.sendFile(path.join(adminViewsPath, "categories.html"));
+    return sendAdminHtmlFile(res, "categories.html");
 });
 
 app.get("/admin/integrations", (req, res) => {
@@ -248,7 +287,7 @@ app.get("/admin/integrations", (req, res) => {
         return res.redirect("/admin/login");
     }
 
-    return res.sendFile(path.join(adminViewsPath, "integrations.html"));
+    return sendAdminHtmlFile(res, "integrations.html");
 });
 
 app.get("/admin/settings", (req, res) => {
@@ -256,7 +295,7 @@ app.get("/admin/settings", (req, res) => {
         return res.redirect("/admin/login");
     }
 
-    return res.sendFile(path.join(adminViewsPath, "settings.html"));
+    return sendAdminHtmlFile(res, "settings.html");
 });
 
 app.get("/admin/orders", (req, res) => {
@@ -264,7 +303,7 @@ app.get("/admin/orders", (req, res) => {
         return res.redirect("/admin/login");
     }
 
-    return res.sendFile(path.join(adminViewsPath, "orders.html"));
+    return sendAdminHtmlFile(res, "orders.html");
 });
 
 app.get("/admin/messages", (req, res) => {
@@ -272,7 +311,7 @@ app.get("/admin/messages", (req, res) => {
         return res.redirect("/admin/login");
     }
 
-    return res.sendFile(path.join(adminViewsPath, "messages.html"));
+    return sendAdminHtmlFile(res, "messages.html");
 });
 
 app.get("/admin/coupons", (req, res) => {
@@ -280,7 +319,7 @@ app.get("/admin/coupons", (req, res) => {
         return res.redirect("/admin/login");
     }
 
-    return res.sendFile(path.join(adminViewsPath, "coupons.html"));
+    return sendAdminHtmlFile(res, "coupons.html");
 });
 
 app.get("/admin/coupons/new", (req, res) => {
@@ -288,7 +327,7 @@ app.get("/admin/coupons/new", (req, res) => {
         return res.redirect("/admin/login");
     }
 
-    return res.sendFile(path.join(adminViewsPath, "coupon-form.html"));
+    return sendAdminHtmlFile(res, "coupon-form.html");
 });
 
 app.get("/admin/coupons/:id", (req, res) => {
@@ -296,7 +335,7 @@ app.get("/admin/coupons/:id", (req, res) => {
         return res.redirect("/admin/login");
     }
 
-    return res.sendFile(path.join(adminViewsPath, "coupon-detail.html"));
+    return sendAdminHtmlFile(res, "coupon-detail.html");
 });
 
 app.get("/admin/coupons/:id/edit", (req, res) => {
@@ -304,7 +343,7 @@ app.get("/admin/coupons/:id/edit", (req, res) => {
         return res.redirect("/admin/login");
     }
 
-    return res.sendFile(path.join(adminViewsPath, "coupon-form.html"));
+    return sendAdminHtmlFile(res, "coupon-form.html");
 });
 
 app.get("/admin/orders/:id", (req, res) => {
@@ -312,7 +351,7 @@ app.get("/admin/orders/:id", (req, res) => {
         return res.redirect("/admin/login");
     }
 
-    return res.sendFile(path.join(adminViewsPath, "order-detail.html"));
+    return sendAdminHtmlFile(res, "order-detail.html");
 });
 
 app.get("/admin/integrations/melhor-envio/callback", (req, res, next) => {
@@ -323,9 +362,13 @@ app.get("/admin/integrations/melhor-envio/callback", (req, res, next) => {
     return next();
 }, require("./controllers/adminIntegrationController").handleMelhorEnvioCallback);
 
-app.use("/admin", express.static(adminViewsPath, { index: false, redirect: false }));
-app.use("/img", express.static(frontendImagesPath));
-app.use(express.static(frontendPublicPath));
+app.use("/admin", express.static(adminViewsPath, {
+    index: false,
+    redirect: false,
+    setHeaders: setUtf8ContentType
+}));
+app.use("/img", express.static(frontendImagesPath, { setHeaders: setUtf8ContentType }));
+app.use(express.static(frontendPublicPath, { setHeaders: setUtf8ContentType }));
 
 app.use((error, _req, res, _next) => {
     console.error("Erro na aplicação:", error);
