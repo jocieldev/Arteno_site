@@ -325,6 +325,24 @@ textarea {
     gap: 14px;
 }
 
+.checkout-mercado-pago-panel[hidden] {
+    display: none !important;
+}
+
+.checkout-mercado-pago-panel {
+    display: grid;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.checkout-mercado-pago-shell {
+    min-height: 92px;
+    padding: 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(28, 23, 19, 0.08);
+    background: #fffdfa;
+}
+
 .checkout-payment-option {
     display: flex;
     align-items: center;

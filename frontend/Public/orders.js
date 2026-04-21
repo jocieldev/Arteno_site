@@ -195,7 +195,7 @@ function getOrderItemsCount(order) {
 function getNormalizedPersonalizationPreviews(item = {}) {
     return (Array.isArray(item.personalizationPreviews) ? item.personalizationPreviews : [])
         .map((preview = {}, index) => ({
-            name: String(preview.name || `PrÃ©via ${index + 1}`).trim() || `PrÃ©via ${index + 1}`,
+            name: String(preview.name || `Prévia ${index + 1}`).trim() || `Prévia ${index + 1}`,
             textValue: String(preview.textValue || item.personalizationName || "").trim(),
             overlayImageKind: String(preview.overlayImageKind || "").trim(),
             overlayImageUrl: String(preview.overlayImageUrl || "").trim(),
@@ -229,7 +229,7 @@ function renderPersonalizationSummary(item = {}) {
     }
 
     if (item.personalizationName) {
-        return `<p>PersonalizaÃ§Ã£o: ${escapeHtml(item.personalizationName)}</p>`;
+        return `<p>Personalização: ${escapeHtml(item.personalizationName)}</p>`;
     }
 
     return "";

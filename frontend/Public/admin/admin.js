@@ -1009,6 +1009,7 @@ function serializeProductFormState() {
         compareAtPrice: productForm.elements.compareAtPrice.value,
         installmentQuantity: productForm.elements.installmentQuantity.value,
         installmentValue: productForm.elements.installmentValue.value,
+        shippingAllowMotoboy: productForm.elements.shippingAllowMotoboy.value,
         shippingProductionDays: productForm.elements.shippingProductionDays.value,
         shippingWeightKg: productForm.elements.shippingWeightKg.value,
         shippingLengthCm: productForm.elements.shippingLengthCm.value,
@@ -1371,6 +1372,7 @@ function resetProductForm() {
     renderCategoryOptions("");
     productForm.elements.installmentQuantity.value = 1;
     productForm.elements.installmentValue.value = 0;
+    productForm.elements.shippingAllowMotoboy.value = "true";
     productForm.elements.shippingProductionDays.value = "";
     productForm.elements.shippingWeightKg.value = "";
     productForm.elements.shippingLengthCm.value = "";
@@ -1485,6 +1487,7 @@ function populateProductForm(product) {
     productForm.elements.compareAtPrice.value = product.compareAtPrice ?? "";
     productForm.elements.installmentQuantity.value = product.installments?.quantity ?? 1;
     productForm.elements.installmentValue.value = product.installments?.value ?? 0;
+    productForm.elements.shippingAllowMotoboy.value = product.shipping?.allowMotoboy === false ? "false" : "true";
     productForm.elements.shippingProductionDays.value = product.shipping?.productionDays ?? "";
     productForm.elements.shippingWeightKg.value = product.shipping?.weightKg ?? "";
     productForm.elements.shippingLengthCm.value = product.shipping?.lengthCm ?? "";
@@ -1685,6 +1688,7 @@ function getFormPayload(form) {
     formData.append("compareAtPrice", form.elements.compareAtPrice.value);
     formData.append("installmentQuantity", form.elements.installmentQuantity.value);
     formData.append("installmentValue", form.elements.installmentValue.value);
+    formData.append("shippingAllowMotoboy", form.elements.shippingAllowMotoboy.value);
     formData.append("shippingProductionDays", form.elements.shippingProductionDays.value);
     formData.append("shippingWeightKg", form.elements.shippingWeightKg.value);
     formData.append("shippingLengthCm", form.elements.shippingLengthCm.value);

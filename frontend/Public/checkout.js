@@ -32,6 +32,11 @@ const checkoutResultSubtitle = document.getElementById("checkoutResultSubtitle")
 const checkoutResultShell = document.getElementById("checkoutResultShell");
 const checkoutModeBadge = document.getElementById("checkoutModeBadge");
 const checkoutCardFields = document.getElementById("checkoutCardFields");
+const checkoutMercadoPagoPanel = document.getElementById("checkoutMercadoPagoPanel");
+const checkoutPaymentBrick = document.getElementById("checkoutPaymentBrick");
+const checkoutMercadoPagoHint = document.getElementById("checkoutMercadoPagoHint");
+const checkoutLegacyPaymentOptions = document.getElementById("checkoutLegacyPaymentOptions");
+const checkoutSubmitNote = document.getElementById("checkoutSubmitNote");
 const checkoutSkeleton = document.getElementById("checkoutSkeleton");
 const checkoutCouponCodeInput = document.getElementById("checkoutCouponCode");
 const checkoutCouponApplyButton = document.getElementById("checkoutCouponApplyButton");
@@ -50,6 +55,10 @@ let lastAutoQuotedCartSignature = "";
 let lastObservedZipCode = "";
 let checkoutSubmitRequestInFlight = false;
 let appliedCoupon = null;
+let checkoutConfig = null;
+let mercadoPagoInstance = null;
+let mercadoPagoBrickController = null;
+let mercadoPagoBrickReady = false;
 const checkoutPersonalizationPreviewObjectUrls = new Map();
 
 if (menuIcon && sideMenu && overlay) {
@@ -299,7 +308,7 @@ async function getCheckoutStoredPersonalizationImageFile(storageKey) {
 function getNormalizedPersonalizationPreviews(item = {}) {
     return (Array.isArray(item.personalizationPreviews) ? item.personalizationPreviews : [])
         .map((preview = {}, index) => ({
-            name: String(preview.name || `PrÃ©via ${index + 1}`).trim() || `PrÃ©via ${index + 1}`,
+            name: String(preview.name || `Prévia ${index + 1}`).trim() || `Prévia ${index + 1}`,
             textValue: String(preview.textValue || item.personalizationName || "").trim(),
             overlayImageKind: String(preview.overlayImageKind || "").trim(),
             overlayImageUrl: String(preview.overlayImageUrl || "").trim(),
@@ -339,7 +348,7 @@ function getCheckoutPersonalizationSummaryEntries(item = {}) {
 
     if (item.personalizationName) {
         fallbackEntries.push({
-            label: "PersonalizaÃ§Ã£o",
+            label: "Personalização",
             description: `Texto: ${String(item.personalizationName || "").trim()}`
         });
     }
@@ -372,7 +381,7 @@ function renderCheckoutPersonalizationPreview(item = {}) {
             storageKey: preview.overlayImageStorageKey
         }))
         : [{
-            label: "PersonalizaÃ§Ã£o",
+            label: "Personalização",
             kind: String(item.personalizationImageKind || "").trim(),
             imageUrl: String(item.personalizationImageUrl || "").trim(),
             storageKey: String(item.personalizationImageStorageKey || "").trim()
@@ -490,6 +499,10 @@ function renderCheckoutSummary() {
         </article>
     `).join("");
     void hydrateCheckoutPersonalizationThumbs();
+
+    if (isMercadoPagoCheckoutActive()) {
+        void renderMercadoPagoBrick();
+    }
 }
 
 function showShippingFeedback(message, type = "error") {
@@ -722,7 +735,175 @@ function applyCardExpiryMask(value = "") {
     return digits.length <= 2 ? digits : `${digits.slice(0, 2)}/${digits.slice(2)}`;
 }
 
+function isMercadoPagoCheckoutActive() {
+    return Boolean(checkoutConfig?.isConfigured && checkoutPaymentBrick && window.MercadoPago);
+}
+
+function setCheckoutSubmitAvailability() {
+    if (!checkoutSubmitButton) {
+        return;
+    }
+
+    if (isMercadoPagoCheckoutActive()) {
+        checkoutSubmitButton.disabled = true;
+        return;
+    }
+
+    checkoutSubmitButton.disabled = false;
+}
+
+function setMercadoPagoCheckoutVisibility() {
+    const enabled = isMercadoPagoCheckoutActive();
+
+    if (checkoutMercadoPagoPanel) {
+        checkoutMercadoPagoPanel.hidden = !enabled;
+    }
+
+    if (checkoutLegacyPaymentOptions) {
+        checkoutLegacyPaymentOptions.hidden = enabled;
+    }
+
+    if (checkoutSubmitNote) {
+        checkoutSubmitNote.textContent = enabled
+            ? "Checkout transparente ativo: finalize usando o formulário seguro do Mercado Pago acima."
+            : "Modo teste ativo: ao finalizar, o pedido será criado com pagamento confirmado automaticamente.";
+    }
+
+    if (checkoutMercadoPagoHint) {
+        checkoutMercadoPagoHint.textContent = enabled
+            ? "Preencha o método desejado no formulário seguro do Mercado Pago para concluir a compra."
+            : "Conecte suas credenciais de teste do Mercado Pago para renderizar o Payment Brick aqui.";
+    }
+
+    setCheckoutSubmitAvailability();
+}
+
+async function submitCheckoutOrder(extraPayload = {}) {
+    if (checkoutSubmitRequestInFlight) {
+        return;
+    }
+
+    if (!checkoutItems.length) {
+        throw new Error("Seu carrinho está vazio.");
+    }
+
+    if (!selectedShippingOption?.serviceId) {
+        throw new Error("Selecione uma opção de frete antes de finalizar a compra.");
+    }
+
+    checkoutSubmitRequestInFlight = true;
+    setCheckoutSubmitButtonLoading(true);
+
+    try {
+        showCheckoutFeedback("Preparando seu pedido...", "info");
+        const payload = {
+            ...(await buildCheckoutPayload()),
+            ...extraPayload
+        };
+        const response = await fetch("/api/checkout/orders", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || "Não foi possível finalizar a compra.");
+        }
+
+        renderCheckoutResult(result);
+
+        if (result.payment?.status === "approved" || result.payment?.status === "pending") {
+            await cleanupStoredPersonalizationImages(payload.items);
+            checkoutCompleted = true;
+            checkoutLayout.hidden = true;
+            checkoutEmptyState.hidden = true;
+            setStoredCartItems([]);
+            updateCartCount();
+        }
+
+        return result;
+    } finally {
+        checkoutSubmitRequestInFlight = false;
+        setCheckoutSubmitButtonLoading(false);
+    }
+}
+
+async function renderMercadoPagoBrick() {
+    if (!isMercadoPagoCheckoutActive()) {
+        return;
+    }
+
+    if (!checkoutItems.length) {
+        return;
+    }
+
+    if (!window.MercadoPago || !checkoutConfig?.publicKey || !checkoutPaymentBrick) {
+        return;
+    }
+
+    if (!mercadoPagoInstance) {
+        mercadoPagoInstance = new window.MercadoPago(checkoutConfig.publicKey, {
+            locale: "pt-BR"
+        });
+    }
+
+    if (mercadoPagoBrickController?.unmount) {
+        await mercadoPagoBrickController.unmount();
+    }
+
+    checkoutPaymentBrick.innerHTML = "";
+    mercadoPagoBrickReady = false;
+
+    const bricksBuilder = mercadoPagoInstance.bricks();
+    mercadoPagoBrickController = await bricksBuilder.create("payment", "checkoutPaymentBrick", {
+        initialization: {
+            amount: Number((getCartSubtotal(checkoutItems) - getCouponDiscountAmount() + Number(selectedShippingOption?.price || 0)).toFixed(2))
+        },
+        customization: {
+            paymentMethods: {
+                creditCard: "all",
+                debitCard: "all",
+                prepaidCard: "all",
+                ticket: "all",
+                bankTransfer: "all"
+            }
+        },
+        callbacks: {
+            onReady: () => {
+                mercadoPagoBrickReady = true;
+            },
+            onSubmit: ({ selectedPaymentMethod, formData }, additionalData) => {
+                return submitCheckoutOrder({
+                    paymentMethod: selectedPaymentMethod === "bankTransfer" ? "pix" : selectedPaymentMethod === "ticket" ? "boleto" : "card",
+                    mercadoPagoPayment: {
+                        selectedPaymentMethod,
+                        formData,
+                        additionalData: additionalData || {}
+                    }
+                }).catch((error) => {
+                    showCheckoutFeedback(error.message, "error");
+                    throw error;
+                });
+            },
+            onError: (error) => {
+                const message = error?.message || "Não foi possível carregar o formulário do Mercado Pago.";
+                showCheckoutFeedback(message, "error");
+            }
+        }
+    });
+}
+
 function setPaymentMethodUI() {
+    if (isMercadoPagoCheckoutActive()) {
+        if (checkoutCardFields) {
+            checkoutCardFields.hidden = true;
+        }
+        return;
+    }
+
     const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || "pix";
 
     document.querySelectorAll(".checkout-payment-option").forEach((option) => {
@@ -741,10 +922,17 @@ async function loadCheckoutConfig() {
         throw new Error("Não foi possível carregar a configuração do checkout.");
         }
 
-        const config = await response.json();
-        checkoutModeBadge.textContent = config.isDevelopmentMode ? "Modo desenvolvimento" : "Mercado Pago ativo";
+        checkoutConfig = await response.json();
+        checkoutModeBadge.textContent = checkoutConfig.isDevelopmentMode
+            ? "Modo desenvolvimento"
+            : checkoutConfig.mode === "production"
+                ? "Mercado Pago produção"
+                : "Mercado Pago sandbox";
+        setMercadoPagoCheckoutVisibility();
+        await renderMercadoPagoBrick();
     } catch (_error) {
         checkoutModeBadge.textContent = "Modo desenvolvimento";
+        setMercadoPagoCheckoutVisibility();
     }
 }
 
@@ -846,7 +1034,9 @@ function buildResultActions() {
 
 function renderApprovedResult(result) {
     checkoutResultTitle.textContent = "Pagamento confirmado";
-    checkoutResultSubtitle.textContent = "Seu pedido foi concluido automaticamente no modo de teste.";
+    checkoutResultSubtitle.textContent = checkoutConfig?.isDevelopmentMode
+        ? "Seu pedido foi concluido automaticamente no modo de teste."
+        : "Seu pedido foi confirmado com sucesso pelo Mercado Pago.";
 
     checkoutResultShell.innerHTML = `
         <article class="checkout-result-card success">
@@ -897,7 +1087,7 @@ function renderPixResult(result) {
 }
 
 function renderBoletoResult(result) {
-    const boletoLine = result.payment?.details?.boletoLine || "";
+    const boletoLine = result.payment?.details?.boletoLine || result.payment?.details?.ticketUrl || "";
     const expiresAt = result.payment?.details?.expiresAt || "";
 
     checkoutResultTitle.textContent = "Boleto gerado com sucesso";
@@ -1262,12 +1452,29 @@ async function handleCheckoutSubmit(event) {
     }
 }
 
+async function handleCheckoutSubmitReal(event) {
+    event.preventDefault();
+
+    try {
+        clearCheckoutFeedback();
+
+        if (isMercadoPagoCheckoutActive()) {
+            showCheckoutFeedback("Use o formulário seguro do Mercado Pago para concluir o pagamento.", "info");
+            return;
+        }
+
+        await submitCheckoutOrder();
+    } catch (error) {
+        showCheckoutFeedback(error.message, "error");
+    }
+}
+
 function bindCheckoutInteractions() {
     document.querySelectorAll('input[name="paymentMethod"]').forEach((input) => {
         input.addEventListener("change", setPaymentMethodUI);
     });
 
-    checkoutForm.addEventListener("submit", handleCheckoutSubmit);
+    checkoutForm.addEventListener("submit", handleCheckoutSubmitReal);
 
     document.getElementById("checkoutZipCode").addEventListener("input", (event) => {
         event.target.value = applyZipCodeMask(event.target.value);

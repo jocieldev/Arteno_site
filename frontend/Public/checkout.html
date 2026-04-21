@@ -133,7 +133,7 @@
             <div>
                 <p class="checkout-page-kicker">Finalizar compra</p>
                 <h1>Checkout da sua compra</h1>
-                <p class="checkout-page-subtitle">Monte o pedido completo e finalize em modo de teste, com confirmação automática para validar o fluxo da loja.</p>
+                <p class="checkout-page-subtitle">Monte o pedido completo e finalize com checkout transparente. Quando o Mercado Pago estiver configurado, o pagamento acontece no formulário seguro oficial.</p>
             </div>
             <div class="checkout-mode-badge" id="checkoutModeBadge">Modo desenvolvimento</div>
         </section>
@@ -312,10 +312,14 @@
                         <span>4</span>
                         <div>
                             <h2>Forma de pagamento</h2>
-                            <p>Fluxo visual inspirado no Mercado Pago, em modo de desenvolvimento.</p>
+                            <p>Use o formulário seguro do Mercado Pago quando ele estiver ativo. Sem credenciais, o checkout continua em modo de desenvolvimento.</p>
                         </div>
                     </div>
-                    <div class="checkout-payment-options">
+                    <div class="checkout-mercado-pago-panel" id="checkoutMercadoPagoPanel" hidden>
+                        <div class="checkout-mercado-pago-shell" id="checkoutPaymentBrick"></div>
+                        <p class="checkout-dev-tip" id="checkoutMercadoPagoHint">Conecte suas credenciais de teste do Mercado Pago para renderizar o Payment Brick aqui.</p>
+                    </div>
+                    <div class="checkout-payment-options" id="checkoutLegacyPaymentOptions">
                         <label class="checkout-payment-option active">
                             <input type="radio" name="paymentMethod" value="pix" checked>
                             <div><strong>Pix</strong><span>Gera QR Code e copia e cola</span></div>
@@ -381,7 +385,7 @@
                         <strong id="checkoutTotal">R$ 0,00</strong>
                     </div>
                     <button type="submit" form="checkoutForm" class="checkout-submit-button" id="checkoutSubmitButton">Finalizar compra</button>
-                    <p class="checkout-submit-note">Modo teste ativo: ao finalizar, o pedido será criado com pagamento confirmado automaticamente.</p>
+                    <p class="checkout-submit-note" id="checkoutSubmitNote">Modo teste ativo: ao finalizar, o pedido será criado com pagamento confirmado automaticamente.</p>
                 </div>
             </aside>
         </section>
@@ -449,8 +453,8 @@
     <script src="/site-contact.js"></script>
     <script src="/auth-nav.js"></script>
     <script src="/personalization-image-store.js"></script>
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
     <script src="/checkout.js"></script>
 </body>
 </html>
-
 

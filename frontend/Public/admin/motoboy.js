@@ -159,7 +159,6 @@ function fillForm(settings) {
     document.getElementById("motoboyEstimatedHours").value = settings.estimatedDeliveryHours || 4;
     document.getElementById("motoboySameDayEnabled").checked = Boolean(settings.sameDayEnabled);
     document.getElementById("motoboySameDayCutoffTime").value = settings.sameDayCutoffTime || "";
-    document.getElementById("motoboyNotes").value = settings.notes || "";
 
     const enabledDays = new Set(Array.isArray(settings.operatingDays) ? settings.operatingDays : []);
     document.querySelectorAll('.motoboy-day-pill input[type="checkbox"]').forEach((input) => {
@@ -191,8 +190,7 @@ function buildPayload() {
         estimatedDeliveryHours: document.getElementById("motoboyEstimatedHours").value,
         sameDayEnabled: document.getElementById("motoboySameDayEnabled").checked,
         sameDayCutoffTime: document.getElementById("motoboySameDayCutoffTime").value,
-        operatingDays: getCheckedOperatingDays(),
-        notes: document.getElementById("motoboyNotes").value.trim()
+        operatingDays: getCheckedOperatingDays()
     };
 }
 

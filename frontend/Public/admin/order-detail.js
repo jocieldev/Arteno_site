@@ -423,7 +423,7 @@ function renderOrder(order) {
             renderListItem("Prazo estimado", order.shippingIntegration?.deliveryTime ? `${Number(order.shippingIntegration.deliveryTime)} dia(s)` : "-"),
             renderListItem("Distância", order.shippingIntegration?.distanceKm ? `${Number(order.shippingIntegration.distanceKm).toFixed(2)} km` : "-"),
             renderListItem("Origem", order.shippingIntegration?.originLabel || "-"),
-            renderListItem(isMotoboy ? "Janela operacional" : "ID Melhor Envio", isMotoboy ? (order.shippingIntegration?.deliveryWindowLabel || order.shippingIntegration?.payload?.notes || "-") : (order.shippingIntegration?.melhorEnvioCartId || "-"))
+            renderListItem(isMotoboy ? "Janela operacional" : "ID Melhor Envio", isMotoboy ? (order.shippingIntegration?.deliveryWindowLabel || "-") : (order.shippingIntegration?.melhorEnvioCartId || "-"))
         ].join("");
     }
 

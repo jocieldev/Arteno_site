@@ -110,30 +110,30 @@
         });
     }
 
-    function renderSelectedVariations(item = {}) {
-        if (!Array.isArray(item.selectedVariations) || !item.selectedVariations.length) {
-            return "";
-        }
-
-        return item.selectedVariations.map((variation) => `
-            <p class="cart-drawer-item-detail">${escapeHtml(variation.variationName || "Variação")}: ${escapeHtml(variation.itemLabel || "-")}${variation.price !== null && variation.price !== undefined ? ` (${escapeHtml(formatCurrency(variation.price))})` : ""}</p>
-        `).join("");
+function renderSelectedVariations(item = {}) {
+    if (!Array.isArray(item.selectedVariations) || !item.selectedVariations.length) {
+        return "";
     }
 
-    function getNormalizedPersonalizationPreviews(item = {}) {
-        return (Array.isArray(item.personalizationPreviews) ? item.personalizationPreviews : [])
-            .map((preview = {}, index) => ({
-                name: String(preview.name || `PrÃ©via ${index + 1}`).trim() || `PrÃ©via ${index + 1}`,
-                textValue: String(preview.textValue || item.personalizationName || "").trim(),
-                overlayImageKind: String(preview.overlayImageKind || "").trim(),
-                overlayImageUrl: String(preview.overlayImageUrl || "").trim(),
-                overlayImageStorageKey: String(preview.overlayImageStorageKey || "").trim()
-            }))
-            .filter((preview) => (
-                preview.textValue
-                || preview.overlayImageKind
-                || preview.overlayImageUrl
-                || preview.overlayImageStorageKey
+    return item.selectedVariations.map((variation) => `
+        <p class="cart-drawer-item-detail">${escapeHtml(variation.variationName || "Variação")}: ${escapeHtml(variation.itemLabel || "-")}${variation.price !== null && variation.price !== undefined ? ` (${escapeHtml(formatCurrency(variation.price))})` : ""}</p>
+    `).join("");
+}
+
+function getNormalizedPersonalizationPreviews(item = {}) {
+    return (Array.isArray(item.personalizationPreviews) ? item.personalizationPreviews : [])
+        .map((preview = {}, index) => ({
+            name: String(preview.name || `Prévia ${index + 1}`).trim() || `Prévia ${index + 1}`,
+            textValue: String(preview.textValue || item.personalizationName || "").trim(),
+            overlayImageKind: String(preview.overlayImageKind || "").trim(),
+            overlayImageUrl: String(preview.overlayImageUrl || "").trim(),
+            overlayImageStorageKey: String(preview.overlayImageStorageKey || "").trim()
+        }))
+        .filter((preview) => (
+            preview.textValue
+            || preview.overlayImageKind
+            || preview.overlayImageUrl
+            || preview.overlayImageStorageKey
             ));
     }
 
@@ -165,7 +165,7 @@
 
         if (personalizationName) {
             fallbackEntries.push({
-                label: "PersonalizaÃ§Ã£o",
+                label: "Personalização",
                 description: `Texto: ${personalizationName}`
             });
         }
@@ -251,7 +251,7 @@
 
         if (item.personalizationImageKind === "upload" && item.personalizationImageStorageKey) {
             return [{
-                label: "PersonalizaÃ§Ã£o",
+                label: "Personalização",
                 kind: "upload",
                 imageUrl: "",
                 storageKey: String(item.personalizationImageStorageKey || "").trim()
@@ -260,7 +260,7 @@
 
         if (item.personalizationImageUrl) {
             return [{
-                label: "PersonalizaÃ§Ã£o",
+                label: "Personalização",
                 kind: String(item.personalizationImageKind || "").trim(),
                 imageUrl: String(item.personalizationImageUrl || "").trim(),
                 storageKey: ""
