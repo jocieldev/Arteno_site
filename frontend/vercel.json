@@ -13,6 +13,58 @@
       "destination": "https://artenosite-production.up.railway.app/admin/integrations/melhor-envio/callback"
     },
     {
+      "source": "/admin/admin.css",
+      "destination": "/Public/admin/admin.css"
+    },
+    {
+      "source": "/admin/admin.js",
+      "destination": "/Public/admin/admin.js"
+    },
+    {
+      "source": "/admin/message-badge.js",
+      "destination": "/Public/admin/message-badge.js"
+    },
+    {
+      "source": "/admin/orders.js",
+      "destination": "/Public/admin/orders.js"
+    },
+    {
+      "source": "/admin/order-detail.js",
+      "destination": "/Public/admin/order-detail.js"
+    },
+    {
+      "source": "/admin/categories.js",
+      "destination": "/Public/admin/categories.js"
+    },
+    {
+      "source": "/admin/coupons.js",
+      "destination": "/Public/admin/coupons.js"
+    },
+    {
+      "source": "/admin/coupon-form.js",
+      "destination": "/Public/admin/coupon-form.js"
+    },
+    {
+      "source": "/admin/coupon-detail.js",
+      "destination": "/Public/admin/coupon-detail.js"
+    },
+    {
+      "source": "/admin/messages.js",
+      "destination": "/Public/admin/messages.js"
+    },
+    {
+      "source": "/admin/integrations.js",
+      "destination": "/Public/admin/integrations.js"
+    },
+    {
+      "source": "/admin/motoboy.js",
+      "destination": "/Public/admin/motoboy.js"
+    },
+    {
+      "source": "/admin/settings.js",
+      "destination": "/Public/admin/settings.js"
+    },
+    {
       "source": "/admin",
       "destination": "/Public/admin/index.html"
     },
