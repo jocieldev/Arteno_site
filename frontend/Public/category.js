@@ -14,6 +14,19 @@ const cartCount = document.getElementById("cart-count");
 const desktopCategoriesMenu = document.getElementById("desktopCategoriesMenu");
 const mobileCategoriesMenu = document.getElementById("mobileCategoriesMenu");
 const footerCategoriesMenu = document.getElementById("footerCategoriesMenu");
+const categoryFiltersForm = document.getElementById("categoryFiltersForm");
+const categoryMinPriceFilter = document.getElementById("categoryMinPriceFilter");
+const categoryMaxPriceFilter = document.getElementById("categoryMaxPriceFilter");
+const categorySortFilter = document.getElementById("categorySortFilter");
+const categoryPersonalizableFilter = document.getElementById("categoryPersonalizableFilter");
+const categoryClearFiltersButton = document.getElementById("categoryClearFiltersButton");
+const categoryOpenFiltersButton = document.getElementById("categoryOpenFiltersButton");
+const categoryOpenFiltersInlineButton = document.getElementById("categoryOpenFiltersInlineButton");
+const categoryCloseFiltersButton = document.getElementById("categoryCloseFiltersButton");
+const categoryFiltersBackdrop = document.getElementById("categoryFiltersBackdrop");
+const categoryActiveFiltersBar = document.getElementById("categoryActiveFiltersBar");
+const categoryActiveFiltersChips = document.getElementById("categoryActiveFiltersChips");
+const categoryClearAllChipsButton = document.getElementById("categoryClearAllChipsButton");
 const PRODUCTS_PER_BATCH = 9;
 
 if (menuIcon && sideMenu && overlay) {
@@ -110,6 +123,215 @@ function renderSharedCategories(categories) {
     }
 }
 
+function readCategoryFiltersFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+
+    return {
+        minPrice: String(params.get("minPrice") || "").trim(),
+        maxPrice: String(params.get("maxPrice") || "").trim(),
+        personalizable: params.get("personalizable") === "true",
+        sort: String(params.get("sort") || "").trim()
+    };
+}
+
+function syncCategoryFilterForm() {
+    const filters = readCategoryFiltersFromUrl();
+
+    if (categoryMinPriceFilter) {
+        categoryMinPriceFilter.value = filters.minPrice;
+    }
+
+    if (categoryMaxPriceFilter) {
+        categoryMaxPriceFilter.value = filters.maxPrice;
+    }
+
+    if (categorySortFilter) {
+        categorySortFilter.value = filters.sort;
+    }
+
+    if (categoryPersonalizableFilter) {
+        categoryPersonalizableFilter.checked = filters.personalizable;
+    }
+}
+
+function buildCategoryQueryString() {
+    const params = new URLSearchParams();
+
+    if (categoryMinPriceFilter?.value) {
+        params.set("minPrice", categoryMinPriceFilter.value);
+    }
+
+    if (categoryMaxPriceFilter?.value) {
+        params.set("maxPrice", categoryMaxPriceFilter.value);
+    }
+
+    if (categoryPersonalizableFilter?.checked) {
+        params.set("personalizable", "true");
+    }
+
+    if (categorySortFilter?.value) {
+        params.set("sort", categorySortFilter.value);
+    }
+
+    return params.toString();
+}
+
+function isCategoryMobileLayout() {
+    return window.matchMedia("(max-width: 991px)").matches;
+}
+
+function openCategoryFiltersDrawer() {
+    if (!categoryFiltersForm || !isCategoryMobileLayout()) {
+        return;
+    }
+
+    categoryFiltersForm.classList.add("is-open");
+
+    if (categoryFiltersBackdrop) {
+        categoryFiltersBackdrop.hidden = false;
+    }
+
+    document.body.classList.add("filters-drawer-open");
+}
+
+function closeCategoryFiltersDrawer() {
+    if (!categoryFiltersForm) {
+        return;
+    }
+
+    categoryFiltersForm.classList.remove("is-open");
+
+    if (categoryFiltersBackdrop) {
+        categoryFiltersBackdrop.hidden = true;
+    }
+
+    document.body.classList.remove("filters-drawer-open");
+}
+
+function updateCategoryPageUrl() {
+    const pathname = window.location.pathname;
+    const queryString = buildCategoryQueryString();
+    const nextUrl = queryString ? `${pathname}?${queryString}` : pathname;
+
+    window.history.replaceState({}, "", nextUrl);
+}
+
+function bindCategoryFilterForm() {
+    if (categoryFiltersForm) {
+        categoryFiltersForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            updateCategoryPageUrl();
+            closeCategoryFiltersDrawer();
+            loadCategoryPage();
+        });
+    }
+
+    if (categoryClearFiltersButton) {
+        categoryClearFiltersButton.addEventListener("click", () => {
+            if (categoryMinPriceFilter) {
+                categoryMinPriceFilter.value = "";
+            }
+
+            if (categoryMaxPriceFilter) {
+                categoryMaxPriceFilter.value = "";
+            }
+
+            if (categorySortFilter) {
+                categorySortFilter.value = "";
+            }
+
+            if (categoryPersonalizableFilter) {
+                categoryPersonalizableFilter.checked = false;
+            }
+
+            updateCategoryPageUrl();
+            syncCategoryFilterForm();
+            closeCategoryFiltersDrawer();
+            loadCategoryPage();
+        });
+    }
+
+    [categoryOpenFiltersButton, categoryOpenFiltersInlineButton].forEach((button) => {
+        if (!button) {
+            return;
+        }
+
+        button.addEventListener("click", openCategoryFiltersDrawer);
+    });
+
+    if (categoryCloseFiltersButton) {
+        categoryCloseFiltersButton.addEventListener("click", closeCategoryFiltersDrawer);
+    }
+
+    if (categoryFiltersBackdrop) {
+        categoryFiltersBackdrop.addEventListener("click", closeCategoryFiltersDrawer);
+    }
+
+    if (categoryClearAllChipsButton) {
+        categoryClearAllChipsButton.addEventListener("click", () => {
+            if (categoryMinPriceFilter) {
+                categoryMinPriceFilter.value = "";
+            }
+
+            if (categoryMaxPriceFilter) {
+                categoryMaxPriceFilter.value = "";
+            }
+
+            if (categorySortFilter) {
+                categorySortFilter.value = "";
+            }
+
+            if (categoryPersonalizableFilter) {
+                categoryPersonalizableFilter.checked = false;
+            }
+
+            updateCategoryPageUrl();
+            syncCategoryFilterForm();
+            renderCategoryActiveFilterChips();
+            loadCategoryPage();
+        });
+    }
+
+    if (categoryActiveFiltersChips) {
+        categoryActiveFiltersChips.addEventListener("click", (event) => {
+            const button = event.target.closest("[data-filter-key]");
+
+            if (!button) {
+                return;
+            }
+
+            const filterKey = button.dataset.filterKey;
+
+            if (filterKey === "minPrice" && categoryMinPriceFilter) {
+                categoryMinPriceFilter.value = "";
+            }
+
+            if (filterKey === "maxPrice" && categoryMaxPriceFilter) {
+                categoryMaxPriceFilter.value = "";
+            }
+
+            if (filterKey === "sort" && categorySortFilter) {
+                categorySortFilter.value = "";
+            }
+
+            if (filterKey === "personalizable" && categoryPersonalizableFilter) {
+                categoryPersonalizableFilter.checked = false;
+            }
+
+            updateCategoryPageUrl();
+            syncCategoryFilterForm();
+            renderCategoryActiveFilterChips();
+            loadCategoryPage();
+        });
+    }
+
+    window.addEventListener("resize", () => {
+        if (!isCategoryMobileLayout()) {
+            closeCategoryFiltersDrawer();
+        }
+    });
+}
+
 async function loadSharedCategories() {
     try {
         const response = await fetch("/api/categories");
@@ -131,6 +353,53 @@ function getProductImageUrl(product) {
 
 function getProductUrl(product) {
     return `/produto/${encodeURIComponent(product.slug || "")}`;
+}
+
+function buildCategoryActiveFilterItems() {
+    const filters = readCategoryFiltersFromUrl();
+    const activeFilters = [];
+
+    if (filters.minPrice) {
+        activeFilters.push({ key: "minPrice", label: `Min: ${formatCurrency(filters.minPrice)}` });
+    }
+
+    if (filters.maxPrice) {
+        activeFilters.push({ key: "maxPrice", label: `Max: ${formatCurrency(filters.maxPrice)}` });
+    }
+
+    if (filters.sort === "price_asc") {
+        activeFilters.push({ key: "sort", label: "Menor preço" });
+    } else if (filters.sort === "price_desc") {
+        activeFilters.push({ key: "sort", label: "Maior preço" });
+    }
+
+    if (filters.personalizable) {
+        activeFilters.push({ key: "personalizable", label: "Personalizável" });
+    }
+
+    return activeFilters;
+}
+
+function renderCategoryActiveFilterChips() {
+    if (!categoryActiveFiltersBar || !categoryActiveFiltersChips) {
+        return;
+    }
+
+    const activeFilters = buildCategoryActiveFilterItems();
+
+    if (!activeFilters.length) {
+        categoryActiveFiltersBar.hidden = true;
+        categoryActiveFiltersChips.innerHTML = "";
+        return;
+    }
+
+    categoryActiveFiltersBar.hidden = false;
+    categoryActiveFiltersChips.innerHTML = activeFilters.map((filter) => `
+        <button type="button" class="active-filter-chip" data-filter-key="${escapeHtml(filter.key)}">
+            <span>${escapeHtml(filter.label)}</span>
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    `).join("");
 }
 
 function setupProductCardNavigation() {
@@ -176,13 +445,22 @@ function buildProductCard(product) {
     const productUrl = escapeHtml(getProductUrl(product));
     const name = escapeHtml(product.name || "");
     const price = formatCurrency(product.price);
+    const rawPrice = Number(product.price || 0);
+    const rawCompareAtPrice = Number(product.compareAtPrice || 0);
+    const discountPercent = rawCompareAtPrice > rawPrice && rawPrice > 0
+        ? Math.round(((rawCompareAtPrice - rawPrice) / rawCompareAtPrice) * 100)
+        : 0;
     const compareAtPrice = product.compareAtPrice ? `<span class="price-compare">${formatCurrency(product.compareAtPrice)}</span>` : "";
+    const discountBadge = discountPercent > 0
+        ? `<span class="product-discount-badge">${discountPercent}% OFF</span>`
+        : "";
     const installmentQuantity = product.installments?.quantity || 1;
     const installmentValue = product.installments?.value || product.price || 0;
 
     return `
         <div>
             <div class="produto-content item js-product-card" data-product-url="${productUrl}" role="link" tabindex="0" aria-label="Abrir produto ${name}">
+                ${discountBadge}
                 <a href="${productUrl}">
                     <img src="${imageUrl}" alt="${name}">
                 </a>
@@ -273,9 +551,13 @@ async function loadCategoryPage() {
     const shell = document.getElementById("categoryDetailShell");
     const skeleton = document.getElementById("categorySkeleton");
     const slug = decodeURIComponent(window.location.pathname.split("/").filter(Boolean).pop() || "");
+    const filtersQueryString = buildCategoryQueryString();
+
+    syncCategoryFilterForm();
+    renderCategoryActiveFilterChips();
 
     try {
-        const response = await fetch(`/api/categories/${encodeURIComponent(slug)}`);
+        const response = await fetch(`/api/categories/${encodeURIComponent(slug)}${filtersQueryString ? `?${filtersQueryString}` : ""}`);
 
         if (!response.ok) {
             throw new Error("Não foi possível carregar a categoria.");
@@ -315,6 +597,7 @@ async function loadCategoryPage() {
 }
 
 updateCartCount();
+bindCategoryFilterForm();
 loadSharedCategories();
 loadCategoryPage();
 setupProductCardNavigation();

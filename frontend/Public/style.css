@@ -1424,12 +1424,32 @@ a:focus {
 }
 
 .produto-content {
+    position: relative;
     background-color: white;
     padding: 10px;
     border-radius: 10px;
     border: 1px solid #1818181A;
     text-align: center;
     min-width: 0;
+    overflow: hidden;
+}
+
+.product-discount-badge {
+    position: absolute;
+    top: 10px;
+    right: 0;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    padding: 0 10px 0 12px;
+    border-radius: 8px 0 0 8px;
+    background: linear-gradient(135deg, #2dbb69 0%, #1f9a52 100%);
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    box-shadow: 0 6px 14px rgba(31, 154, 82, 0.24);
 }
 
 .js-product-card {
@@ -1578,6 +1598,13 @@ a:focus {
     font-weight: 700 !important;
     box-shadow: 0 0 0 0 #2563eb77, 0 4px 12px #2563eb33 !important;
 
+}
+
+.add-to-cart:visited,
+.add-to-cart:active,
+.add-to-cart:focus,
+.add-to-cart:hover {
+    color: #ffffff !important;
 }
 
 .add-to-cart:hover {

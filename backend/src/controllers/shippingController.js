@@ -1,5 +1,8 @@
 const Product = require("../models/Product");
 const { quoteShipmentByProducts } = require("../services/melhorEnvioService");
+const { quoteMotoboyOption } = require("../services/motoboyService");
+const { getMelhorEnvioOAuthConfig } = require("../services/melhorEnvioOAuthService");
+const { getMotoboySettings } = require("../services/motoboySettingsService");
 
 function normalizeZipCode(value = "") {
     return String(value).replace(/\D/g, "").slice(0, 8);
@@ -83,12 +86,97 @@ function mapShippingOption(service = {}) {
 function enrichShippingOption(option = {}, productionDays = 0) {
     const normalizedProductionDays = normalizeQuantity(productionDays, 0);
     const normalizedDeliveryTime = normalizeQuantity(option.deliveryTime, 0);
+    const normalizedDispatchDays = normalizeQuantity(option.dispatchDays, 0);
 
     return {
         ...option,
         productionDays: normalizedProductionDays,
-        totalDeliveryDays: normalizedProductionDays + normalizedDeliveryTime
+        dispatchDays: normalizedDispatchDays,
+        totalDeliveryDays: normalizedProductionDays + normalizedDispatchDays + normalizedDeliveryTime
     };
+}
+
+async function resolveOriginZipCodes() {
+    const zipCodes = new Set();
+    const melhorEnvioConfig = getMelhorEnvioOAuthConfig();
+
+    if (melhorEnvioConfig?.fromPostalCode) {
+        zipCodes.add(normalizeZipCode(melhorEnvioConfig.fromPostalCode));
+    }
+
+    try {
+        const motoboySettings = await getMotoboySettings();
+
+        if (motoboySettings?.origin?.zipCode) {
+            zipCodes.add(normalizeZipCode(motoboySettings.origin.zipCode));
+        }
+    } catch (_error) {
+        // Ignora falhas ao consultar o CEP de origem do motoboy.
+    }
+
+    return zipCodes;
+}
+
+async function isOriginZipCode(zipCode) {
+    const normalizedZipCode = normalizeZipCode(zipCode);
+    const originZipCodes = await resolveOriginZipCodes();
+    return originZipCodes.has(normalizedZipCode);
+}
+
+async function buildMotoboyOption(zipCode, orderSubtotal, productionDays) {
+    try {
+        const option = await quoteMotoboyOption({
+            zipCode,
+            orderSubtotal
+        });
+
+        if (!option) {
+            return null;
+        }
+
+        return enrichShippingOption(option, productionDays);
+    } catch (error) {
+        console.error("Motoboy indisponivel nesta consulta:", error.message);
+        return null;
+    }
+}
+
+async function buildSameZipMotoboyOption(orderSubtotal, productionDays) {
+    try {
+        const settings = await getMotoboySettings();
+
+        if (!settings?.isReady) {
+            return null;
+        }
+
+        const normalizedSubtotal = Number(orderSubtotal || 0);
+        const minimumOrderSubtotal = Number(settings.minimumOrderSubtotal || 0);
+
+        if (normalizedSubtotal < minimumOrderSubtotal) {
+            return null;
+        }
+
+        return enrichShippingOption({
+            provider: "motoboy",
+            serviceId: "motoboy-local",
+            name: settings.serviceName || "Motoboy",
+            company: settings.companyName || "Entrega local",
+            price: Number(Number(settings.minimumFee || 0).toFixed(2)),
+            currency: "BRL",
+            deliveryTime: Math.max(1, Number(settings.transitDays || 1)),
+            dispatchDays: Math.max(0, Number(settings.dispatchDaysAfterReady || 0)),
+            distanceKm: 0,
+            estimatedDurationMinutes: 0,
+            deliveryWindowLabel: settings.sameDayEnabled && settings.sameDayCutoffTime
+                ? `Pedidos finalizados ate ${settings.sameDayCutoffTime} podem sair no mesmo dia util depois de prontos.`
+                : "",
+            originLabel: settings.originLabel || "",
+            notes: settings.notes || ""
+        }, productionDays);
+    } catch (error) {
+        console.error("Motoboy indisponivel para CEP igual ao da origem:", error.message);
+        return null;
+    }
 }
 
 function shouldUseDemoShippingMode() {
@@ -258,17 +346,59 @@ async function quoteShipping(req, res) {
 
         if (shouldUseDemoShippingMode()) {
             const productionDays = getProductProductionDays(product);
+
+            if (await isOriginZipCode(zipCode)) {
+                const sameZipMotoboyOption = await buildSameZipMotoboyOption(
+                    Number(product?.price || 0) * quantity,
+                    productionDays
+                );
+
+                return res.json({
+                    zipCode,
+                    productId,
+                    quantity,
+                    isDemo: true,
+                    productionDays,
+                    options: sameZipMotoboyOption ? [sameZipMotoboyOption] : []
+                });
+            }
+
+            const motoboyOption = await buildMotoboyOption(
+                zipCode,
+                Number(product?.price || 0) * quantity,
+                productionDays
+            );
+
             return res.json({
                 zipCode,
                 productId,
                 quantity,
                 isDemo: true,
                 productionDays,
-                options: buildDemoShippingOptions({
-                    zipCode,
-                    quantity,
-                    product
-                })
+                options: [
+                    ...(motoboyOption ? [motoboyOption] : []),
+                    ...buildDemoShippingOptions({
+                        zipCode,
+                        quantity,
+                        product
+                    })
+                ].sort((left, right) => left.price - right.price)
+            });
+        }
+
+        if (await isOriginZipCode(zipCode)) {
+            const sameZipMotoboyOption = await buildSameZipMotoboyOption(
+                Number(product?.price || 0) * quantity,
+                getProductProductionDays(product)
+            );
+
+            return res.json({
+                zipCode,
+                productId,
+                quantity,
+                isDemo: false,
+                productionDays: getProductProductionDays(product),
+                options: sameZipMotoboyOption ? [sameZipMotoboyOption] : []
             });
         }
 
@@ -282,6 +412,11 @@ async function quoteShipping(req, res) {
             .map(mapShippingOption)
             .map((option) => enrichShippingOption(option, getProductProductionDays(product)))
             .sort((left, right) => left.price - right.price);
+        const motoboyOption = await buildMotoboyOption(
+            zipCode,
+            Number(product?.price || 0) * quantity,
+            getProductProductionDays(product)
+        );
 
         return res.json({
             zipCode,
@@ -289,7 +424,10 @@ async function quoteShipping(req, res) {
             quantity,
             isDemo: false,
             productionDays: getProductProductionDays(product),
-            options: filteredOptions
+            options: [
+                ...(motoboyOption ? [motoboyOption] : []),
+                ...filteredOptions
+            ].sort((left, right) => left.price - right.price)
         });
     } catch (error) {
         return res.status(error.status || 500).json({
@@ -318,18 +456,45 @@ async function quoteCheckoutShipping(req, res) {
         const { payloadProducts, totalQuantity, referencePrice, productionDays } = await buildCheckoutProductsPayload(items);
 
         if (shouldUseDemoShippingMode()) {
+            if (await isOriginZipCode(zipCode)) {
+                const sameZipMotoboyOption = await buildSameZipMotoboyOption(referencePrice, productionDays);
+
+                return res.json({
+                    zipCode,
+                    isDemo: true,
+                    productionDays,
+                    options: sameZipMotoboyOption ? [sameZipMotoboyOption] : []
+                });
+            }
+
+            const motoboyOption = await buildMotoboyOption(zipCode, referencePrice, productionDays);
+
             return res.json({
                 zipCode,
                 isDemo: true,
                 productionDays,
-                options: buildDemoShippingOptions({
-                    zipCode,
-                    quantity: totalQuantity,
-                    product: {
-                        price: referencePrice,
-                        shipping: { productionDays }
-                    }
-                })
+                options: [
+                    ...(motoboyOption ? [motoboyOption] : []),
+                    ...buildDemoShippingOptions({
+                        zipCode,
+                        quantity: totalQuantity,
+                        product: {
+                            price: referencePrice,
+                            shipping: { productionDays }
+                        }
+                    })
+                ].sort((left, right) => left.price - right.price)
+            });
+        }
+
+        if (await isOriginZipCode(zipCode)) {
+            const sameZipMotoboyOption = await buildSameZipMotoboyOption(referencePrice, productionDays);
+
+            return res.json({
+                zipCode,
+                isDemo: false,
+                productionDays,
+                options: sameZipMotoboyOption ? [sameZipMotoboyOption] : []
             });
         }
 
@@ -343,12 +508,16 @@ async function quoteCheckoutShipping(req, res) {
             .map(mapShippingOption)
             .map((option) => enrichShippingOption(option, productionDays))
             .sort((left, right) => left.price - right.price);
+        const motoboyOption = await buildMotoboyOption(zipCode, referencePrice, productionDays);
 
         return res.json({
             zipCode,
             isDemo: false,
             productionDays,
-            options: filteredOptions
+            options: [
+                ...(motoboyOption ? [motoboyOption] : []),
+                ...filteredOptions
+            ].sort((left, right) => left.price - right.price)
         });
     } catch (error) {
         return res.status(error.status || 500).json({

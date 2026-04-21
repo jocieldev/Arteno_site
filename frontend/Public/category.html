@@ -141,12 +141,12 @@
                 <div class="site-skeleton site-skeleton--image category-skeleton-image"></div>
             </div>
             <div class="category-skeleton-grid">
-                <div class="category-skeleton-card"><div class="site-skeleton site-skeleton--image category-skeleton-thumb"></div><div class="site-skeleton site-skeleton--text category-skeleton-line"></div><div class="site-skeleton site-skeleton--text category-skeleton-line"></div><div class="site-skeleton site-skeleton--text category-skeleton-line"></div></div>
-                <div class="category-skeleton-card"><div class="site-skeleton site-skeleton--image category-skeleton-thumb"></div><div class="site-skeleton site-skeleton--text category-skeleton-line"></div><div class="site-skeleton site-skeleton--text category-skeleton-line"></div><div class="site-skeleton site-skeleton--text category-skeleton-line"></div></div>
-                <div class="category-skeleton-card"><div class="site-skeleton site-skeleton--image category-skeleton-thumb"></div><div class="site-skeleton site-skeleton--text category-skeleton-line"></div><div class="site-skeleton site-skeleton--text category-skeleton-line"></div><div class="site-skeleton site-skeleton--text category-skeleton-line"></div></div>
-                <div class="category-skeleton-card"><div class="site-skeleton site-skeleton--image category-skeleton-thumb"></div><div class="site-skeleton site-skeleton--text category-skeleton-line"></div><div class="site-skeleton site-skeleton--text category-skeleton-line"></div><div class="site-skeleton site-skeleton--text category-skeleton-line"></div></div>
-                <div class="category-skeleton-card"><div class="site-skeleton site-skeleton--image category-skeleton-thumb"></div><div class="site-skeleton site-skeleton--text category-skeleton-line"></div><div class="site-skeleton site-skeleton--text category-skeleton-line"></div><div class="site-skeleton site-skeleton--text category-skeleton-line"></div></div>
-                <div class="category-skeleton-card"><div class="site-skeleton site-skeleton--image category-skeleton-thumb"></div><div class="site-skeleton site-skeleton--text category-skeleton-line"></div><div class="site-skeleton site-skeleton--text category-skeleton-line"></div><div class="site-skeleton site-skeleton--text category-skeleton-line"></div></div>
+                <div class="category-skeleton-card"><div class="site-skeleton site-skeleton--image category-skeleton-thumb"></div><div class="category-skeleton-card-copy"><div class="site-skeleton site-skeleton--text category-skeleton-line category-skeleton-line--title"></div><div class="site-skeleton site-skeleton--text category-skeleton-line category-skeleton-line--title"></div></div><div class="category-skeleton-meta"><div class="site-skeleton site-skeleton--text category-skeleton-price"></div><div class="site-skeleton site-skeleton--text category-skeleton-installment"></div><div class="site-skeleton category-skeleton-button"></div></div></div>
+                <div class="category-skeleton-card"><div class="site-skeleton site-skeleton--image category-skeleton-thumb"></div><div class="category-skeleton-card-copy"><div class="site-skeleton site-skeleton--text category-skeleton-line category-skeleton-line--title"></div><div class="site-skeleton site-skeleton--text category-skeleton-line category-skeleton-line--title"></div></div><div class="category-skeleton-meta"><div class="site-skeleton site-skeleton--text category-skeleton-price"></div><div class="site-skeleton site-skeleton--text category-skeleton-installment"></div><div class="site-skeleton category-skeleton-button"></div></div></div>
+                <div class="category-skeleton-card"><div class="site-skeleton site-skeleton--image category-skeleton-thumb"></div><div class="category-skeleton-card-copy"><div class="site-skeleton site-skeleton--text category-skeleton-line category-skeleton-line--title"></div><div class="site-skeleton site-skeleton--text category-skeleton-line category-skeleton-line--title"></div></div><div class="category-skeleton-meta"><div class="site-skeleton site-skeleton--text category-skeleton-price"></div><div class="site-skeleton site-skeleton--text category-skeleton-installment"></div><div class="site-skeleton category-skeleton-button"></div></div></div>
+                <div class="category-skeleton-card"><div class="site-skeleton site-skeleton--image category-skeleton-thumb"></div><div class="category-skeleton-card-copy"><div class="site-skeleton site-skeleton--text category-skeleton-line category-skeleton-line--title"></div><div class="site-skeleton site-skeleton--text category-skeleton-line category-skeleton-line--title"></div></div><div class="category-skeleton-meta"><div class="site-skeleton site-skeleton--text category-skeleton-price"></div><div class="site-skeleton site-skeleton--text category-skeleton-installment"></div><div class="site-skeleton category-skeleton-button"></div></div></div>
+                <div class="category-skeleton-card"><div class="site-skeleton site-skeleton--image category-skeleton-thumb"></div><div class="category-skeleton-card-copy"><div class="site-skeleton site-skeleton--text category-skeleton-line category-skeleton-line--title"></div><div class="site-skeleton site-skeleton--text category-skeleton-line category-skeleton-line--title"></div></div><div class="category-skeleton-meta"><div class="site-skeleton site-skeleton--text category-skeleton-price"></div><div class="site-skeleton site-skeleton--text category-skeleton-installment"></div><div class="site-skeleton category-skeleton-button"></div></div></div>
+                <div class="category-skeleton-card"><div class="site-skeleton site-skeleton--image category-skeleton-thumb"></div><div class="category-skeleton-card-copy"><div class="site-skeleton site-skeleton--text category-skeleton-line category-skeleton-line--title"></div><div class="site-skeleton site-skeleton--text category-skeleton-line category-skeleton-line--title"></div></div><div class="category-skeleton-meta"><div class="site-skeleton site-skeleton--text category-skeleton-price"></div><div class="site-skeleton site-skeleton--text category-skeleton-installment"></div><div class="site-skeleton category-skeleton-button"></div></div></div>
             </div>
         </section>
 
@@ -168,7 +168,78 @@
                         <h2 class="text-heading">Produtos desta categoria</h2>
                     </div>
                 </div>
-                <div class="produtos-grid" id="categoryProductsGrid"></div>
+
+                <section class="category-layout">
+                    <div class="product-filters-backdrop" id="categoryFiltersBackdrop" hidden></div>
+
+                    <aside class="category-filters-sidebar">
+                        <button type="button" class="mobile-filters-trigger" id="categoryOpenFiltersButton">
+                            <i class="fa-solid fa-sliders"></i>
+                            <span>Filtrar</span>
+                        </button>
+
+                        <form class="product-filters" id="categoryFiltersForm">
+                            <div class="product-filters-mobile-top">
+                                <div>
+                                    <p class="product-filters-kicker">Refinar categoria</p>
+                                    <h2>Filtros</h2>
+                                </div>
+                                <button type="button" class="product-filters-close" id="categoryCloseFiltersButton" aria-label="Fechar filtros">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+
+                            <div class="product-filters-grid">
+                                <label class="product-filter-field">
+                                    <span>Preço mínimo</span>
+                                    <input type="number" id="categoryMinPriceFilter" name="minPrice" min="0" step="0.01" placeholder="0,00">
+                                </label>
+
+                                <label class="product-filter-field">
+                                    <span>Preço máximo</span>
+                                    <input type="number" id="categoryMaxPriceFilter" name="maxPrice" min="0" step="0.01" placeholder="0,00">
+                                </label>
+
+                                <label class="product-filter-field">
+                                    <span>Ordenar por</span>
+                                    <select id="categorySortFilter" name="sort">
+                                        <option value="">Mais recentes</option>
+                                        <option value="price_asc">Menor preço</option>
+                                        <option value="price_desc">Maior preço</option>
+                                    </select>
+                                </label>
+                            </div>
+
+                            <div class="product-filters-toggle-row">
+                                <label class="product-filter-check">
+                                    <input type="checkbox" id="categoryPersonalizableFilter" name="personalizable">
+                                    <span>Personalizável</span>
+                                </label>
+                            </div>
+
+                            <div class="product-filters-actions">
+                                <button type="submit" class="product-filters-apply">Aplicar filtros</button>
+                                <button type="button" class="product-filters-clear" id="categoryClearFiltersButton">Limpar</button>
+                            </div>
+                        </form>
+                    </aside>
+
+                    <div class="category-results-panel">
+                        <div class="filters-toolbar">
+                            <button type="button" class="mobile-filters-trigger mobile-filters-trigger-inline" id="categoryOpenFiltersInlineButton">
+                                <i class="fa-solid fa-sliders"></i>
+                                <span>Filtrar</span>
+                            </button>
+                        </div>
+
+                        <div class="active-filters-bar" id="categoryActiveFiltersBar" hidden>
+                            <div class="active-filters-chips" id="categoryActiveFiltersChips"></div>
+                            <button type="button" class="active-filters-clear-all" id="categoryClearAllChipsButton">Limpar filtros</button>
+                        </div>
+
+                        <div class="produtos-grid" id="categoryProductsGrid"></div>
+                    </div>
+                </section>
             </section>
         </section>
     </main>

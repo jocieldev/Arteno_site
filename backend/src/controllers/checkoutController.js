@@ -46,11 +46,18 @@ function normalizeShippingOption(option = {}) {
     const serviceId = normalizeText(option.serviceId || option.id);
 
     return {
+        provider: normalizeText(option.provider || "melhor-envio"),
         serviceId,
         serviceName: normalizeText(option.serviceName || option.name || "Frete"),
         companyName: normalizeText(option.companyName || option.company || "Correios"),
         price: normalizePrice(option.price),
-        deliveryTime: normalizeQuantity(option.deliveryTime || 1)
+        deliveryTime: normalizeQuantity(option.deliveryTime || 1),
+        dispatchDays: normalizeQuantity(option.dispatchDays || 0),
+        distanceKm: normalizeSignedNumber(option.distanceKm, 0),
+        estimatedDurationMinutes: normalizeQuantity(option.estimatedDurationMinutes || 0, 0),
+        deliveryWindowLabel: normalizeText(option.deliveryWindowLabel),
+        originLabel: normalizeText(option.originLabel),
+        notes: normalizeText(option.notes)
     };
 }
 
@@ -237,6 +244,48 @@ function buildPaymentSimulation({ paymentMethod, card, orderNumber, total }) {
 function serializeItem(item = {}) {
     const quantity = normalizeQuantity(item.quantity);
     const price = normalizePrice(item.price);
+    const personalizationPreviews = Array.isArray(item.personalizationPreviews)
+        ? item.personalizationPreviews
+            .map((preview) => ({
+                name: normalizeText(preview.name) || "Prévia",
+                textValue: normalizeText(preview.textValue),
+                imageUrl: normalizeText(preview.imageUrl),
+                textBaseXPercent: normalizeSignedNumber(preview.textBaseXPercent, 50),
+                textBaseYPercent: normalizeSignedNumber(preview.textBaseYPercent, 50),
+                textWidthPercent: normalizeSignedNumber(preview.textWidthPercent, 60),
+                textFontSizePx: normalizeSignedNumber(preview.textFontSizePx, 28),
+                referenceWidthPx: normalizeSignedNumber(preview.referenceWidthPx, 0),
+                textColor: normalizeText(preview.textColor),
+                textFontFamily: normalizeText(preview.textFontFamily),
+                textFontWeight: normalizeText(preview.textFontWeight),
+                textTransform: normalizeText(preview.textTransform),
+                letterSpacingEm: normalizeSignedNumber(preview.letterSpacingEm, 0.04),
+                textShadow: normalizeText(preview.textShadow),
+                textRotationDeg: normalizeSignedNumber(preview.textRotationDeg, 0),
+                textOffsetXPercent: normalizeSignedNumber(preview.textOffsetXPercent),
+                textOffsetYPercent: normalizeSignedNumber(preview.textOffsetYPercent),
+                textScalePercent: normalizeSignedNumber(preview.textScalePercent, 100) || 100,
+                overlayImageUrl: normalizeText(preview.overlayImageUrl),
+                overlayImagePublicId: normalizeText(preview.overlayImagePublicId),
+                overlayImageStorageKey: normalizeText(preview.overlayImageStorageKey),
+                overlayImageKind: normalizeText(preview.overlayImageKind),
+                overlayBaseXPercent: normalizeSignedNumber(preview.overlayBaseXPercent, 50),
+                overlayBaseYPercent: normalizeSignedNumber(preview.overlayBaseYPercent, 50),
+                overlayBaseMaxWidthPercent: normalizeSignedNumber(preview.overlayBaseMaxWidthPercent, 34),
+                overlayBaseMaxHeightPercent: normalizeSignedNumber(preview.overlayBaseMaxHeightPercent, 34),
+                overlayBaseRotationDeg: normalizeSignedNumber(preview.overlayBaseRotationDeg, 0),
+                overlayImageIsRound: Boolean(preview.overlayImageIsRound),
+                overlayImageOffsetXPercent: normalizeSignedNumber(preview.overlayImageOffsetXPercent),
+                overlayImageOffsetYPercent: normalizeSignedNumber(preview.overlayImageOffsetYPercent),
+                overlayImageScalePercent: normalizeSignedNumber(preview.overlayImageScalePercent, 100) || 100
+            }))
+            .filter((preview) => (
+                preview.imageUrl
+                || preview.textValue
+                || preview.overlayImageUrl
+                || preview.overlayImageStorageKey
+            ))
+        : [];
 
     return {
         cartKey: normalizeText(item.cartKey),
@@ -272,6 +321,7 @@ function serializeItem(item = {}) {
         personalizationImageOffsetXPercent: normalizeSignedNumber(item.personalizationImageOffsetXPercent),
         personalizationImageOffsetYPercent: normalizeSignedNumber(item.personalizationImageOffsetYPercent),
         personalizationImageScalePercent: normalizeSignedNumber(item.personalizationImageScalePercent, 100) || 100,
+        personalizationPreviews,
         imageUrl: normalizeText(item.imageUrl),
         price,
         quantity,
@@ -454,16 +504,23 @@ async function createCheckoutOrder(req, res) {
                 total
             },
             shippingIntegration: {
-                provider: "melhor-envio",
+                provider: shippingOption.provider || "melhor-envio",
                 serviceId: shippingOption.serviceId,
                 serviceName: shippingOption.serviceName,
                 companyName: shippingOption.companyName,
                 quotePrice: shippingOption.price,
                 deliveryTime: shippingOption.deliveryTime,
-                status: "customer_selected",
+                dispatchDays: shippingOption.dispatchDays,
+                distanceKm: shippingOption.distanceKm,
+                estimatedDurationMinutes: shippingOption.estimatedDurationMinutes,
+                deliveryWindowLabel: shippingOption.deliveryWindowLabel,
+                originLabel: shippingOption.originLabel,
+                status: shippingOption.provider === "motoboy" ? "awaiting_dispatch" : "customer_selected",
                 purchasedAt: null,
                 labelGeneratedAt: null,
-                payload: {}
+                payload: {
+                    notes: shippingOption.notes
+                }
             },
             payment: {
                 provider: "mercado_pago",

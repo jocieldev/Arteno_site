@@ -239,6 +239,19 @@
                                 </div>
 
                                 <div class="admin-personalization-preview-grid" id="personalizationPreviewFields" hidden>
+                                    <div class="admin-form-grid-full admin-preview-items-toolbar">
+                                        <div class="admin-preview-items-list" id="personalizationPreviewItems"></div>
+                                        <div class="admin-preview-items-actions">
+                                            <button type="button" class="admin-secondary-button" id="removePersonalizationPreviewButton">Remover atual</button>
+                                            <button type="button" class="admin-secondary-button" id="addPersonalizationPreviewButton">Adicionar prévia</button>
+                                        </div>
+                                    </div>
+
+                                    <label class="admin-auth-field">
+                                        <span>Nome da prévia</span>
+                                        <input type="text" name="personalizationPreviewName" id="personalizationPreviewName" value="Prévia" placeholder="Ex: Faca">
+                                    </label>
+
                                     <label class="admin-auth-field">
                                         <span>Texto de exemplo</span>
                                         <input type="text" name="personalizationPreviewSampleText" id="personalizationPreviewSampleText" value="Maria" placeholder="Ex: Maria">

@@ -144,26 +144,62 @@ function normalizeProductStatus(value, fallback = "active") {
     return fallback;
 }
 
-function normalizePersonalizationPreview(data) {
+function normalizePersonalizationPreviewEntry(data = {}) {
+    const normalizedUploadIndex = data.uploadIndex === null || data.uploadIndex === ""
+        ? null
+        : (Number.isInteger(Number(data.uploadIndex)) ? Number(data.uploadIndex) : undefined);
+
     return {
-        enabled: normalizeBoolean(data.personalizationPreviewEnabled),
-        imageUrl: String(data.personalizationPreviewImageUrl || "").trim(),
-        imagePublicId: String(data.personalizationPreviewImagePublicId || "").trim(),
-        positionXPercent: normalizeClampedNumber(data.personalizationPreviewPositionXPercent, { fallback: 50, min: 0, max: 100 }),
-        positionYPercent: normalizeClampedNumber(data.personalizationPreviewPositionYPercent, { fallback: 50, min: 0, max: 100 }),
-        widthPercent: normalizeClampedNumber(data.personalizationPreviewWidthPercent, { fallback: 60, min: 10, max: 100 }),
-        allowCustomerAdjust: normalizeBoolean(data.personalizationPreviewAllowCustomerAdjust),
-        fontSizePx: normalizeClampedNumber(data.personalizationPreviewFontSizePx, { fallback: 28, min: 8, max: 120 }),
-        referenceWidthPx: normalizeClampedNumber(data.personalizationPreviewReferenceWidthPx, { fallback: 0, min: 0, max: 4000 }),
-        sampleText: String(data.personalizationPreviewSampleText || "Maria").trim() || "Maria",
-        textColor: String(data.personalizationPreviewTextColor || "#ffffff").trim() || "#ffffff",
-        fontFamily: String(data.personalizationPreviewFontFamily || "'Georgia', 'Times New Roman', serif").trim() || "'Georgia', 'Times New Roman', serif",
-        fontWeight: String(data.personalizationPreviewFontWeight || "700").trim() || "700",
-        letterSpacingEm: normalizeClampedNumber(data.personalizationPreviewLetterSpacingEm, { fallback: 0.04, min: -0.2, max: 1 }),
-        rotationDeg: normalizeClampedNumber(data.personalizationPreviewRotationDeg, { fallback: 0, min: -180, max: 180 }),
-        textTransform: data.personalizationPreviewTextTransform === "none" ? "none" : "uppercase",
-        textShadow: String(data.personalizationPreviewTextShadow || "0 2px 10px rgba(0, 0, 0, 0.35)").trim() || "0 2px 10px rgba(0, 0, 0, 0.35)"
+        name: String(data.name || data.label || "Prévia").trim() || "Prévia",
+        enabled: normalizeBoolean(data.enabled ?? data.personalizationPreviewEnabled),
+        uploadIndex: normalizedUploadIndex,
+        imageUrl: String((data.imageUrl ?? data.personalizationPreviewImageUrl) || "").trim(),
+        imagePublicId: String((data.imagePublicId ?? data.personalizationPreviewImagePublicId) || "").trim(),
+        positionXPercent: normalizeClampedNumber(data.positionXPercent ?? data.personalizationPreviewPositionXPercent, { fallback: 50, min: 0, max: 100 }),
+        positionYPercent: normalizeClampedNumber(data.positionYPercent ?? data.personalizationPreviewPositionYPercent, { fallback: 50, min: 0, max: 100 }),
+        widthPercent: normalizeClampedNumber(data.widthPercent ?? data.personalizationPreviewWidthPercent, { fallback: 60, min: 10, max: 100 }),
+        allowCustomerAdjust: normalizeBoolean(data.allowCustomerAdjust ?? data.personalizationPreviewAllowCustomerAdjust),
+        fontSizePx: normalizeClampedNumber(data.fontSizePx ?? data.personalizationPreviewFontSizePx, { fallback: 28, min: 8, max: 120 }),
+        referenceWidthPx: normalizeClampedNumber(data.referenceWidthPx ?? data.personalizationPreviewReferenceWidthPx, { fallback: 0, min: 0, max: 4000 }),
+        sampleText: String((data.sampleText ?? data.personalizationPreviewSampleText) || "Maria").trim() || "Maria",
+        textColor: String((data.textColor ?? data.personalizationPreviewTextColor) || "#ffffff").trim() || "#ffffff",
+        fontFamily: String((data.fontFamily ?? data.personalizationPreviewFontFamily) || "'Georgia', 'Times New Roman', serif").trim() || "'Georgia', 'Times New Roman', serif",
+        fontWeight: String((data.fontWeight ?? data.personalizationPreviewFontWeight) || "700").trim() || "700",
+        letterSpacingEm: normalizeClampedNumber(data.letterSpacingEm ?? data.personalizationPreviewLetterSpacingEm, { fallback: 0.04, min: -0.2, max: 1 }),
+        rotationDeg: normalizeClampedNumber(data.rotationDeg ?? data.personalizationPreviewRotationDeg, { fallback: 0, min: -180, max: 180 }),
+        textTransform: (data.textTransform ?? data.personalizationPreviewTextTransform) === "none" ? "none" : "uppercase",
+        textShadow: String((data.textShadow ?? data.personalizationPreviewTextShadow) || "0 2px 10px rgba(0, 0, 0, 0.35)").trim() || "0 2px 10px rgba(0, 0, 0, 0.35)"
     };
+}
+
+function normalizePersonalizationPreview(data) {
+    return normalizePersonalizationPreviewEntry(data);
+}
+
+function parsePersonalizationPreviews(value) {
+    if (!value) {
+        return [];
+    }
+
+    try {
+        const parsed = typeof value === "string" ? JSON.parse(value) : value;
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (_error) {
+        return [];
+    }
+}
+
+function normalizePersonalizationPreviews(data = {}) {
+    const parsedPreviews = parsePersonalizationPreviews(data.personalizationPreviews)
+        .map((preview) => normalizePersonalizationPreviewEntry(preview))
+        .filter((preview) => preview.enabled || preview.imageUrl);
+
+    if (parsedPreviews.length) {
+        return parsedPreviews;
+    }
+
+    const legacyPreview = normalizePersonalizationPreview(data);
+    return legacyPreview.enabled || legacyPreview.imageUrl ? [legacyPreview] : [];
 }
 
 function normalizePersonalizationImageOverlay(data) {
@@ -274,7 +310,8 @@ async function buildProductPayload(data) {
             enabled: false,
             requireName: normalizePersonalizationRequireName(data),
             imageOverlay: normalizePersonalizationImageOverlay(data),
-            preview: normalizePersonalizationPreview(data)
+            preview: normalizePersonalizationPreview(data),
+            previews: normalizePersonalizationPreviews(data)
         },
         shipping: {
             productionDays: normalizeIntegerNumber(data.shippingProductionDays, 0),
@@ -293,8 +330,13 @@ async function buildProductPayload(data) {
         isActive: status === "active"
     };
 
+    if (payload.personalization.previews.length) {
+        payload.personalization.preview = payload.personalization.previews[0];
+    }
+
     payload.personalization.enabled = Boolean(
         payload.personalization.requireName ||
+        payload.personalization.previews.some((preview) => preview.enabled) ||
         payload.personalization.preview.enabled ||
         payload.personalization.imageOverlay.enabled
     );
@@ -395,12 +437,47 @@ function extractUploadedFiles(requestFiles) {
     ];
 }
 
-function extractPreviewImageFile(requestFiles) {
-    if (!requestFiles || !Array.isArray(requestFiles.previewImage)) {
-        return null;
+function extractPreviewImageFiles(requestFiles) {
+    if (!requestFiles) {
+        return [];
     }
 
-    return requestFiles.previewImage[0] || null;
+    const legacyPreviewFile = Array.isArray(requestFiles.previewImage) ? requestFiles.previewImage.slice(0, 1) : [];
+    const multiplePreviewFiles = Array.isArray(requestFiles.previewImages) ? requestFiles.previewImages : [];
+
+    return [...legacyPreviewFile, ...multiplePreviewFiles];
+}
+
+function applyUploadedPreviewImages(previews = [], uploadedImages = []) {
+    let uploadCursor = 0;
+
+    return previews.map((preview) => {
+        const nextPreview = { ...preview };
+
+        if (typeof preview.uploadIndex === "number") {
+            const uploadedImage = uploadedImages[uploadCursor];
+            uploadCursor += 1;
+
+            nextPreview.imageUrl = uploadedImage?.imageUrl || "";
+            nextPreview.imagePublicId = uploadedImage?.imagePublicId || "";
+        }
+
+        delete nextPreview.uploadIndex;
+        return nextPreview;
+    });
+}
+
+function getExistingPersonalizationPreviews(product = {}) {
+    const previews = Array.isArray(product.personalization?.previews)
+        ? product.personalization.previews.filter((preview) => preview?.imageUrl || preview?.enabled)
+        : [];
+
+    if (previews.length) {
+        return previews.map((preview) => normalizePersonalizationPreviewEntry(preview));
+    }
+
+    const legacyPreview = normalizePersonalizationPreviewEntry(product.personalization?.preview || {});
+    return legacyPreview.imageUrl || legacyPreview.enabled ? [legacyPreview] : [];
 }
 
 function extractOverlayOptionFiles(requestFiles) {
@@ -574,27 +651,120 @@ function buildActiveProductsFilter() {
     };
 }
 
-async function listProducts(req, res) {
-    try {
-        const searchTerm = String(req.query.q || req.query.search || "").trim();
-        const requestedLimit = Number.parseInt(req.query.limit, 10);
-        const filters = buildActiveProductsFilter();
+function parseBooleanQueryValue(value) {
+    if (value === true || value === "true" || value === "1" || value === "on") {
+        return true;
+    }
 
-        if (searchTerm) {
-            const safeRegex = new RegExp(escapeRegex(searchTerm), "i");
+    if (value === false || value === "false" || value === "0" || value === "off") {
+        return false;
+    }
 
-            filters.$and = [
-                {
-                    $or: [
-                        { name: safeRegex },
-                        { description: safeRegex },
-                        { category: safeRegex }
-                    ]
-                }
-            ];
+    return null;
+}
+
+function parsePositiveQueryNumber(value) {
+    const rawValue = String(value ?? "").trim();
+
+    if (!rawValue) {
+        return null;
+    }
+
+    const normalized = Number(rawValue.replace(",", "."));
+    return Number.isFinite(normalized) && normalized >= 0 ? normalized : null;
+}
+
+function buildProductListingQueryOptions(query = {}, { categorySlug = "" } = {}) {
+    const filters = {
+        ...buildActiveProductsFilter()
+    };
+    const searchTerm = String(query.q || query.search || "").trim();
+    const selectedCategory = String(categorySlug || query.category || "").trim();
+    const minPrice = parsePositiveQueryNumber(query.minPrice);
+    const maxPrice = parsePositiveQueryNumber(query.maxPrice);
+    const onSale = parseBooleanQueryValue(query.onSale);
+    const personalizable = parseBooleanQueryValue(query.personalizable);
+    const sort = String(query.sort || "").trim();
+    const andFilters = [];
+
+    if (searchTerm) {
+        const safeRegex = new RegExp(escapeRegex(searchTerm), "i");
+        andFilters.push({
+            $or: [
+                { name: safeRegex },
+                { description: safeRegex },
+                { category: safeRegex }
+            ]
+        });
+    }
+
+    if (selectedCategory) {
+        andFilters.push({
+            $or: [
+                { categorySlug: selectedCategory },
+                { category: new RegExp(`^${escapeRegex(selectedCategory)}$`, "i") }
+            ]
+        });
+    }
+
+    if (minPrice !== null || maxPrice !== null) {
+        const priceFilter = {};
+
+        if (minPrice !== null) {
+            priceFilter.$gte = minPrice;
         }
 
-        let query = Product.find(filters).sort({ createdAt: -1 });
+        if (maxPrice !== null) {
+            priceFilter.$lte = maxPrice;
+        }
+
+        andFilters.push({ price: priceFilter });
+    }
+
+    if (onSale === true) {
+        andFilters.push({
+            compareAtPrice: {
+                $ne: null,
+                $gt: 0
+            }
+        });
+    }
+
+    if (personalizable === true) {
+        andFilters.push({
+            $or: [
+                { "personalization.enabled": true },
+                { "personalization.requireName": true },
+                { "personalization.preview.enabled": true },
+                { "personalization.imageOverlay.enabled": true }
+            ]
+        });
+    }
+
+    if (andFilters.length) {
+        filters.$and = andFilters;
+    }
+
+    let sortOptions = { createdAt: -1 };
+
+    if (sort === "price_asc") {
+        sortOptions = { price: 1, createdAt: -1 };
+    } else if (sort === "price_desc") {
+        sortOptions = { price: -1, createdAt: -1 };
+    }
+
+    return {
+        filters,
+        sortOptions
+    };
+}
+
+async function listProducts(req, res) {
+    try {
+        const requestedLimit = Number.parseInt(req.query.limit, 10);
+        const { filters, sortOptions } = buildProductListingQueryOptions(req.query);
+
+        let query = Product.find(filters).sort(sortOptions);
 
         if (Number.isInteger(requestedLimit) && requestedLimit > 0) {
             query = query.limit(requestedLimit);
@@ -654,8 +824,8 @@ async function createProduct(req, res) {
     try {
         const payload = await buildProductPayload(req.body);
         const uploadedImages = await uploadImagesToCloudinary(extractUploadedFiles(req.files));
-        const previewImageFile = extractPreviewImageFile(req.files);
-        const uploadedPreviewImages = await uploadImagesToCloudinary(previewImageFile ? [previewImageFile] : []);
+        const previewImageFiles = extractPreviewImageFiles(req.files);
+        const uploadedPreviewImages = await uploadImagesToCloudinary(previewImageFiles);
         const uploadedOverlayOptionImages = await uploadImagesToCloudinary(extractOverlayOptionFiles(req.files));
         const variationItemFiles = extractVariationItemFiles(req.files);
         const variationItemPreviewFiles = extractVariationItemPreviewFiles(req.files);
@@ -663,10 +833,8 @@ async function createProduct(req, res) {
         const variationItemPreviewUploadMap = parseVariationItemUploadMap(req.body.variationItemPreviewUploadMap);
 
         applyProductImages(payload, uploadedImages);
-        if (uploadedPreviewImages[0]) {
-            payload.personalization.preview.imageUrl = uploadedPreviewImages[0].imageUrl;
-            payload.personalization.preview.imagePublicId = uploadedPreviewImages[0].imagePublicId;
-        }
+        payload.personalization.previews = applyUploadedPreviewImages(payload.personalization.previews, uploadedPreviewImages);
+        payload.personalization.preview = payload.personalization.previews[0] || payload.personalization.preview;
         payload.personalization.imageOverlay.optionImages = payload.personalization.imageOverlay.allowOptionImages
             ? uploadedOverlayOptionImages
             : [];
@@ -690,7 +858,7 @@ async function updateProduct(req, res) {
         const payload = await buildProductPayload(req.body);
         const existingProduct = await Product.findById(req.params.id);
         const uploadedFiles = extractUploadedFiles(req.files);
-        const previewImageFile = extractPreviewImageFile(req.files);
+        const previewImageFiles = extractPreviewImageFiles(req.files);
         const overlayOptionFiles = extractOverlayOptionFiles(req.files);
         const variationItemFiles = extractVariationItemFiles(req.files);
         const variationItemPreviewFiles = extractVariationItemPreviewFiles(req.files);
@@ -720,8 +888,20 @@ async function updateProduct(req, res) {
             applyProductImages(payload, uploadedImages);
         }
 
-        payload.personalization.preview.imageUrl = existingProduct.personalization?.preview?.imageUrl || "";
-        payload.personalization.preview.imagePublicId = existingProduct.personalization?.preview?.imagePublicId || "";
+        const existingPersonalizationPreviews = getExistingPersonalizationPreviews(existingProduct);
+        const retainedPreviewPublicIds = payload.personalization.previews
+            .map((preview) => preview.imagePublicId)
+            .filter(Boolean);
+        const removedPreviewPublicIds = existingPersonalizationPreviews
+            .filter((preview) => preview.imagePublicId && !retainedPreviewPublicIds.includes(preview.imagePublicId))
+            .map((preview) => preview.imagePublicId);
+
+        await destroyCloudinaryImages(removedPreviewPublicIds);
+        payload.personalization.previews = applyUploadedPreviewImages(
+            payload.personalization.previews,
+            await uploadImagesToCloudinary(previewImageFiles)
+        );
+        payload.personalization.preview = payload.personalization.previews[0] || normalizePersonalizationPreviewEntry(existingProduct.personalization?.preview || {});
         const existingOverlayOptionImages = Array.isArray(existingProduct.personalization?.imageOverlay?.optionImages)
             ? existingProduct.personalization.imageOverlay.optionImages.filter((image) => image?.imageUrl)
             : [];
@@ -734,14 +914,6 @@ async function updateProduct(req, res) {
             .map((image) => image.imagePublicId);
 
         await destroyCloudinaryImages(removedOverlayPublicIds);
-
-        if (previewImageFile) {
-            const uploadedPreviewImages = await uploadImagesToCloudinary([previewImageFile]);
-
-            await destroyCloudinaryImages([existingProduct.personalization?.preview?.imagePublicId]);
-            payload.personalization.preview.imageUrl = uploadedPreviewImages[0]?.imageUrl || "";
-            payload.personalization.preview.imagePublicId = uploadedPreviewImages[0]?.imagePublicId || "";
-        }
 
         if (payload.personalization.imageOverlay.allowOptionImages && overlayOptionFiles.length) {
             const uploadedOverlayOptionImages = await uploadImagesToCloudinary(overlayOptionFiles);
@@ -814,6 +986,7 @@ async function deleteProduct(req, res) {
 }
 
 module.exports = {
+    buildProductListingQueryOptions,
     listProducts,
     getFeaturedProducts,
     getProductBySlug,

@@ -22,6 +22,7 @@ module.exports = uploadProductImage.fields([
     { name: "images", maxCount: 8 },
     { name: "image", maxCount: 8 },
     { name: "previewImage", maxCount: 1 },
+    { name: "previewImages", maxCount: 20 },
     { name: "overlayOptionImages", maxCount: 8 },
     { name: "variationItemImages", maxCount: 40 },
     { name: "variationItemPreviewImages", maxCount: 40 }

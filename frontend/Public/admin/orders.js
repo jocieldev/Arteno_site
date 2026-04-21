@@ -5,6 +5,7 @@ const ordersFeedbackBox = document.getElementById("adminOrdersFeedback");
 const ordersEmptyState = document.getElementById("adminOrdersEmptyState");
 const ordersTableWrap = document.getElementById("adminOrdersTableWrap");
 const ordersTableBody = document.getElementById("adminOrdersTableBody");
+let deleteOrderRequestInFlight = false;
 
 const ORDER_STATUS_META = {
     payment_pending: { label: "Pagamento pendente", pillClass: "inactive" },
@@ -118,6 +119,7 @@ function renderOrders(orders) {
                 <td data-label="Detalhes">
                     <div class="admin-table-actions">
                         <a href="/admin/orders/${escapeHtml(order._id || "")}" class="admin-table-action">Ver detalhes</a>
+                        <button type="button" class="admin-secondary-button admin-order-delete-button" data-delete-order-id="${escapeHtml(order._id || "")}">Excluir</button>
                     </div>
                 </td>
             </tr>
@@ -144,6 +146,26 @@ async function fetchOrders() {
     return Array.isArray(result) ? result : [];
 }
 
+async function deleteOrder(orderId) {
+    const response = await fetch(`/api/admin/orders/${encodeURIComponent(orderId)}`, {
+        method: "DELETE",
+        credentials: "same-origin"
+    });
+
+    if (response.status === 401) {
+        window.location.href = "/admin/login";
+        return null;
+    }
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.message || "Não foi possível excluir o pedido.");
+    }
+
+    return result;
+}
+
 async function loadOrders() {
     clearFeedback();
 
@@ -165,6 +187,42 @@ if (adminSidebarClose) {
 
 if (adminMobileOverlay) {
     adminMobileOverlay.addEventListener("click", closeAdminSidebar);
+}
+
+if (ordersTableBody) {
+    ordersTableBody.addEventListener("click", async (event) => {
+        const deleteButton = event.target.closest("[data-delete-order-id]");
+
+        if (!deleteButton || deleteOrderRequestInFlight) {
+            return;
+        }
+
+        const orderId = String(deleteButton.getAttribute("data-delete-order-id") || "").trim();
+
+        if (!orderId) {
+            return;
+        }
+
+        const confirmed = window.confirm("Deseja excluir este pedido permanentemente? Esta ação remove as informações e as imagens vinculadas.");
+
+        if (!confirmed) {
+            return;
+        }
+
+        deleteOrderRequestInFlight = true;
+        deleteButton.disabled = true;
+        clearFeedback();
+
+        try {
+            const result = await deleteOrder(orderId);
+            showFeedback(result.message || "Pedido excluído com sucesso.", "success");
+            await loadOrders();
+        } catch (error) {
+            showFeedback(error.message, "error");
+        } finally {
+            deleteOrderRequestInFlight = false;
+        }
+    });
 }
 
 loadOrders();

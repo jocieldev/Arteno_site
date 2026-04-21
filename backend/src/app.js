@@ -9,6 +9,7 @@ const shippingRoutes = require("./routes/shippingRoutes");
 const checkoutRoutes = require("./routes/checkoutRoutes");
 const siteSettingRoutes = require("./routes/siteSettingRoutes");
 const adminIntegrationRoutes = require("./routes/adminIntegrationRoutes");
+const adminMotoboyRoutes = require("./routes/adminMotoboyRoutes");
 const adminSiteSettingRoutes = require("./routes/adminSiteSettingRoutes");
 const adminProductRoutes = require("./routes/adminProductRoutes");
 const adminCategoryRoutes = require("./routes/adminCategoryRoutes");
@@ -20,7 +21,10 @@ const { handleMelhorEnvioWebhook } = require("./controllers/melhorEnvioWebhookCo
 const {
     buildLogoutCookie,
     buildSessionCookie,
+    createAdminSession,
+    getAdminConfigError,
     isAdminAuthenticated,
+    revokeAdminSession,
     validateAdminCredentials
 } = require("./utils/adminAuth");
 const requireAdminAuth = require("./middleware/requireAdminAuth");
@@ -62,6 +66,7 @@ function sendHtmlFile(res, fileName) {
 function sendAdminHtmlFile(res, fileName) {
     const filePath = path.join(adminViewsPath, fileName);
     setUtf8ContentType(res, filePath);
+    res.setHeader("Cache-Control", "no-store");
     res.sendFile(filePath);
 }
 
@@ -147,6 +152,7 @@ app.use("/api/admin/orders", requireAdminAuth, adminOrderRoutes);
 app.use("/api/admin/messages", requireAdminAuth, adminMessageRoutes);
 app.use("/api/admin/coupons", requireAdminAuth, adminCouponRoutes);
 app.use("/api/admin/integrations", requireAdminAuth, adminIntegrationRoutes);
+app.use("/api/admin/motoboy", requireAdminAuth, adminMotoboyRoutes);
 app.use("/api/admin/site-settings", requireAdminAuth, adminSiteSettingRoutes);
 app.post("/api/integrations/melhor-envio/webhook", handleMelhorEnvioWebhook);
 
@@ -215,21 +221,29 @@ app.get("/admin/login", (req, res) => {
 
 app.post("/admin/login", (req, res) => {
     const { username = "", password = "" } = req.body;
+    const configError = getAdminConfigError();
 
-    if (!validateAdminCredentials(username.trim(), password)) {
-        return res.redirect("/admin/login?error=1");
+    if (configError) {
+        return res.redirect("/admin/login?error=config");
     }
 
-    res.setHeader("Set-Cookie", buildSessionCookie());
+    if (!validateAdminCredentials(username.trim(), password)) {
+        return res.redirect("/admin/login?error=invalid");
+    }
+
+    const sessionToken = createAdminSession();
+    res.setHeader("Set-Cookie", buildSessionCookie(sessionToken));
     return res.redirect("/admin");
 });
 
-app.post("/admin/logout", (_req, res) => {
+app.post("/admin/logout", (req, res) => {
+    revokeAdminSession(req);
     res.setHeader("Set-Cookie", buildLogoutCookie());
     return res.redirect("/admin/login");
 });
 
-app.get("/admin/logout", (_req, res) => {
+app.get("/admin/logout", (req, res) => {
+    revokeAdminSession(req);
     res.setHeader("Set-Cookie", buildLogoutCookie());
     return res.redirect("/admin/login");
 });
@@ -288,6 +302,14 @@ app.get("/admin/integrations", (req, res) => {
     }
 
     return sendAdminHtmlFile(res, "integrations.html");
+});
+
+app.get("/admin/motoboy", (req, res) => {
+    if (!isAdminAuthenticated(req)) {
+        return res.redirect("/admin/login");
+    }
+
+    return sendAdminHtmlFile(res, "motoboy.html");
 });
 
 app.get("/admin/settings", (req, res) => {

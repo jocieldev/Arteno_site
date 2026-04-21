@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motoboy | Admin Arteno</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body class="admin-panel-body">
+    <div class="admin-layout">
+        <div class="admin-mobile-overlay" id="adminMobileOverlay"></div>
+
+        <aside class="admin-sidebar">
+            <div class="admin-sidebar-brand">
+                <img src="/img/logo.png" alt="Logo Arteno" class="admin-sidebar-logo">
+                <div>
+                    <strong>Arteno</strong>
+                    <span>Painel administrativo</span>
+                </div>
+
+                <button type="button" class="admin-sidebar-close" id="adminSidebarClose" aria-label="Fechar menu">
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+
+            <nav class="admin-sidebar-nav">
+                <a href="/admin" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-box"></i></span>
+                    <span>Produtos</span>
+                </a>
+                <a href="/admin/categories" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-tags"></i></span>
+                    <span>Categorias</span>
+                </a>
+                <a href="/admin/orders" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-bag-shopping"></i></span>
+                    <span>Pedidos</span>
+                </a>
+                <a href="/admin/coupons" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-ticket"></i></span>
+                    <span>Cupons</span>
+                </a>
+                <a href="/admin/messages" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-envelope"></i></span>
+                    <span>Mensagens</span>
+                    <span class="admin-sidebar-badge" data-admin-message-badge hidden></span>
+                </a>
+                <a href="/admin/integrations" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-plug"></i></span>
+                    <span>Integrações</span>
+                </a>
+                <a href="/admin/motoboy" class="admin-sidebar-link active">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-motorcycle"></i></span>
+                    <span>Motoboy</span>
+                </a>
+                <a href="/admin/settings" class="admin-sidebar-link">
+                    <span class="admin-sidebar-icon"><i class="fa-solid fa-gear"></i></span>
+                    <span>Configurações</span>
+                </a>
+            </nav>
+
+            <div class="admin-sidebar-footer">
+                <a href="/" target="_blank" rel="noreferrer" class="admin-sidebar-secondary">Ver loja</a>
+                <form action="/admin/logout" method="get">
+                    <button type="submit" class="admin-sidebar-logout">Sair</button>
+                </form>
+            </div>
+        </aside>
+
+        <main class="admin-main">
+            <div class="motoboy-page-shell">
+                <header class="admin-products-header motoboy-page-header">
+                    <div class="admin-products-header-left">
+                        <button type="button" class="admin-mobile-menu-button" id="adminMobileMenuButton" aria-label="Abrir menu">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </button>
+
+                        <div class="admin-products-title-wrap">
+                            <span class="admin-products-title-icon"><i class="fa-solid fa-motorcycle"></i></span>
+                            <div class="motoboy-page-title-block">
+                                <p class="admin-panel-kicker">Entrega Local</p>
+                                <h1>Operação de motoboy</h1>
+                                <p class="admin-panel-subtitle">Organize a origem, as regras comerciais e a janela operacional da sua entrega local em uma tela mais clara e mais segura de manter.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="motoboy-page-actions">
+                        <a href="/admin/orders" class="admin-secondary-button">Ver pedidos</a>
+                        <a href="/admin/integrations" class="admin-secondary-button">Integrações</a>
+                    </div>
+                </header>
+
+                <div class="admin-feedback admin-products-feedback" id="motoboyFeedback" hidden></div>
+
+                <section class="admin-editor-card motoboy-status-card">
+                    <div class="admin-editor-card-header motoboy-section-header">
+                        <div>
+                            <p class="admin-card-kicker">Resumo</p>
+                            <h3>Status da operação</h3>
+                        </div>
+                    </div>
+
+                    <div class="motoboy-status-grid">
+                        <article class="motoboy-status-item motoboy-status-item-emphasis">
+                            <span class="motoboy-status-label">Situação atual</span>
+                            <strong id="motoboyStatusLabel">Carregando...</strong>
+                        </article>
+                        <article class="motoboy-status-item">
+                            <span class="motoboy-status-label">Origem resolvida</span>
+                            <strong id="motoboyOriginResolved">-</strong>
+                        </article>
+                        <article class="motoboy-status-item">
+                            <span class="motoboy-status-label">Coordenadas</span>
+                            <strong id="motoboyCoordinates">-</strong>
+                        </article>
+                        <article class="motoboy-status-item">
+                            <span class="motoboy-status-label">Raio máximo</span>
+                            <strong id="motoboyMaxDistance">-</strong>
+                        </article>
+                        <article class="motoboy-status-item">
+                            <span class="motoboy-status-label">Valor por km</span>
+                            <strong id="motoboyPricePerKmStatus">-</strong>
+                        </article>
+                        <article class="motoboy-status-item">
+                            <span class="motoboy-status-label">Atualizado em</span>
+                            <strong id="motoboyUpdatedAt">-</strong>
+                        </article>
+                    </div>
+                </section>
+
+                <form class="motoboy-form-layout" id="motoboyForm">
+                    <section class="admin-editor-card motoboy-form-main">
+                        <div class="admin-editor-card-header motoboy-section-header">
+                            <div>
+                                <p class="admin-card-kicker">Configuração</p>
+                                <h3>Estrutura do serviço</h3>
+                            </div>
+                        </div>
+
+                        <div class="motoboy-form-panels">
+                            <article class="motoboy-panel">
+                                <div class="motoboy-panel-header">
+                                    <h4>Ativação e identidade</h4>
+                                    <p>Defina como a entrega local será apresentada ao cliente.</p>
+                                </div>
+
+                                <div class="motoboy-field-grid motoboy-field-grid-2">
+                                    <label class="motoboy-toggle-card" for="motoboyEnabled">
+                                        <div>
+                                            <span class="motoboy-toggle-label">Motoboy ativo</span>
+                                            <strong>Liberar entrega local no site</strong>
+                                        </div>
+                                        <input type="checkbox" id="motoboyEnabled">
+                                    </label>
+
+                                    <label class="admin-input-label">
+                                        Nome do serviço
+                                        <input type="text" class="admin-input" id="motoboyServiceName" placeholder="Ex.: Motoboy expresso">
+                                        <small class="admin-field-help">Texto principal mostrado no checkout.</small>
+                                    </label>
+
+                                    <label class="admin-input-label motoboy-field-span-full">
+                                        Nome exibido da empresa
+                                        <input type="text" class="admin-input" id="motoboyCompanyName" placeholder="Ex.: Entrega local Arteno">
+                                        <small class="admin-field-help">Assinatura curta e confiável para o frete local.</small>
+                                    </label>
+                                </div>
+                            </article>
+
+                            <article class="motoboy-panel">
+                                <div class="motoboy-panel-header">
+                                    <h4>Endereço de origem</h4>
+                                    <p>Esse endereço é usado como base para geolocalização e cálculo da rota.</p>
+                                </div>
+
+                                <div class="motoboy-field-grid motoboy-field-grid-origin">
+                                    <label class="admin-input-label">
+                                        CEP de origem
+                                        <input type="text" class="admin-input" id="motoboyOriginZipCode" placeholder="00000-000">
+                                    </label>
+
+                                    <label class="admin-input-label motoboy-field-span-full">
+                                        Rua / avenida de origem
+                                        <input type="text" class="admin-input" id="motoboyOriginStreet" placeholder="Rua de saída do motoboy">
+                                    </label>
+
+                                    <label class="admin-input-label">
+                                        Número
+                                        <input type="text" class="admin-input" id="motoboyOriginNumber" placeholder="123">
+                                    </label>
+
+                                    <label class="admin-input-label">
+                                        Bairro
+                                        <input type="text" class="admin-input" id="motoboyOriginNeighborhood" placeholder="Bairro">
+                                    </label>
+
+                                    <label class="admin-input-label">
+                                        Cidade
+                                        <input type="text" class="admin-input" id="motoboyOriginCity" placeholder="Cidade">
+                                    </label>
+
+                                    <label class="admin-input-label">
+                                        UF
+                                        <input type="text" class="admin-input" id="motoboyOriginState" placeholder="UF" maxlength="2">
+                                    </label>
+                                </div>
+                            </article>
+
+                            <article class="motoboy-panel">
+                                <div class="motoboy-panel-header">
+                                    <h4>Preço e cobertura</h4>
+                                    <p>Crie uma regra comercial sustentável antes de ativar a modalidade.</p>
+                                </div>
+
+                                <div class="motoboy-field-grid motoboy-field-grid-4">
+                                    <label class="admin-input-label">
+                                        Valor por km
+                                        <input type="number" class="admin-input" id="motoboyPricePerKm" min="0" step="0.01" placeholder="0,00">
+                                    </label>
+
+                                    <label class="admin-input-label">
+                                        Valor mínimo da entrega
+                                        <input type="number" class="admin-input" id="motoboyMinimumFee" min="0" step="0.01" placeholder="0,00">
+                                    </label>
+
+                                    <label class="admin-input-label">
+                                        Distância máxima atendida
+                                        <input type="number" class="admin-input" id="motoboyMaxDistanceKm" min="0" step="0.1" placeholder="0">
+                                    </label>
+
+                                    <label class="admin-input-label motoboy-field-span-full">
+                                        Pedido mínimo para liberar motoboy
+                                        <input type="number" class="admin-input" id="motoboyMinimumOrderSubtotal" min="0" step="0.01" placeholder="0,00">
+                                    </label>
+                                </div>
+                            </article>
+
+                            <article class="motoboy-panel">
+                                <div class="motoboy-panel-header">
+                                    <h4>Operação e prazo</h4>
+                                    <p>Defina quando a entrega local opera e como ela entra na rotina de despacho.</p>
+                                </div>
+
+                                <div class="motoboy-field-grid motoboy-field-grid-3">
+                                    <label class="admin-input-label">
+                                        Dias para enviar após o produto ficar pronto
+                                        <input type="number" class="admin-input" id="motoboyDispatchDays" min="0" step="1" placeholder="0">
+                                    </label>
+
+                                    <label class="admin-input-label">
+                                        Dias de trânsito estimados
+                                        <input type="number" class="admin-input" id="motoboyTransitDays" min="1" step="1" placeholder="1">
+                                    </label>
+
+                                    <label class="admin-input-label motoboy-field-span-full">
+                                        Horas médias até a entrega
+                                        <input type="number" class="admin-input" id="motoboyEstimatedHours" min="1" step="1" placeholder="4">
+                                    </label>
+                                </div>
+
+                                <div class="motoboy-inline-controls">
+                                    <label class="motoboy-toggle-inline" for="motoboySameDayEnabled">
+                                        <input type="checkbox" id="motoboySameDayEnabled">
+                                        <div>
+                                            <strong>Saída no mesmo dia</strong>
+                                            <span>Use apenas se pedidos prontos até certo horário puderem ser despachados no mesmo dia útil.</span>
+                                        </div>
+                                    </label>
+
+                                    <label class="admin-input-label motoboy-inline-time">
+                                        Horário limite para saída no mesmo dia
+                                        <input type="time" class="admin-input" id="motoboySameDayCutoffTime">
+                                    </label>
+                                </div>
+
+                                <div class="motoboy-operating-days">
+                                    <div class="motoboy-panel-subheader">
+                                        <strong>Dias de operação</strong>
+                                        <span>Escolha em quais dias a modalidade pode aparecer no checkout.</span>
+                                    </div>
+                                    <div class="motoboy-operating-days-grid">
+                                        <label class="motoboy-day-pill"><input type="checkbox" value="mon"> <span>Seg</span></label>
+                                        <label class="motoboy-day-pill"><input type="checkbox" value="tue"> <span>Ter</span></label>
+                                        <label class="motoboy-day-pill"><input type="checkbox" value="wed"> <span>Qua</span></label>
+                                        <label class="motoboy-day-pill"><input type="checkbox" value="thu"> <span>Qui</span></label>
+                                        <label class="motoboy-day-pill"><input type="checkbox" value="fri"> <span>Sex</span></label>
+                                        <label class="motoboy-day-pill"><input type="checkbox" value="sat"> <span>Sáb</span></label>
+                                        <label class="motoboy-day-pill"><input type="checkbox" value="sun"> <span>Dom</span></label>
+                                    </div>
+                                </div>
+                            </article>
+
+                            <article class="motoboy-panel">
+                                <div class="motoboy-panel-header">
+                                    <h4>Mensagem operacional</h4>
+                                    <p>Use esse texto para orientar o cliente no checkout sem deixar a experiência carregada.</p>
+                                </div>
+
+                                <label class="admin-input-label">
+                                    Observações exibidas no sistema
+                                    <textarea class="admin-textarea" id="motoboyNotes" rows="5" placeholder="Ex.: Entregas locais são despachadas em dias úteis e confirmadas por WhatsApp."></textarea>
+                                </label>
+                            </article>
+                        </div>
+                    </section>
+
+                    <aside class="motoboy-form-sidebar">
+                        <section class="admin-editor-card motoboy-side-card">
+                            <div class="motoboy-side-card-header">
+                                <p class="admin-card-kicker">Ações</p>
+                                <h4>Salvar e revisar</h4>
+                            </div>
+                            <div class="motoboy-side-actions">
+                                <button type="submit" class="admin-auth-submit" id="motoboySaveButton">Salvar configuração</button>
+                                <a href="/admin/integrations" class="admin-secondary-button">Voltar para integrações</a>
+                            </div>
+                        </section>
+                    </aside>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script src="/admin/message-badge.js"></script>
+    <script src="/admin/motoboy.js"></script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 const Category = require("../models/Category");
 const Product = require("../models/Product");
 const { cloudinary, ensureCloudinaryConfig } = require("../config/cloudinary");
+const { buildProductListingQueryOptions } = require("./productController");
 
 function slugify(value = "") {
     return value
@@ -114,15 +115,13 @@ async function listCategories(_req, res) {
 
 async function getCategoryBySlug(req, res) {
     try {
+        const { filters, sortOptions } = buildProductListingQueryOptions(req.query, {
+            categorySlug: req.params.slug
+        });
         const category = await Category.findOne({ slug: req.params.slug }).populate({
             path: "products",
-            match: {
-                $or: [
-                    { status: "active" },
-                    { status: { $exists: false }, isActive: true }
-                ]
-            },
-            options: { sort: { createdAt: -1 } }
+            match: filters,
+            options: { sort: sortOptions }
         });
 
         if (!category) {

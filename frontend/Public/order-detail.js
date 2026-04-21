@@ -203,6 +203,49 @@ function renderProgressSteps(order) {
     }).join("");
 }
 
+function getNormalizedPersonalizationPreviews(item = {}) {
+    return (Array.isArray(item.personalizationPreviews) ? item.personalizationPreviews : [])
+        .map((preview = {}, index) => ({
+            name: String(preview.name || `PrÃ©via ${index + 1}`).trim() || `PrÃ©via ${index + 1}`,
+            textValue: String(preview.textValue || item.personalizationName || "").trim(),
+            overlayImageKind: String(preview.overlayImageKind || "").trim(),
+            overlayImageUrl: String(preview.overlayImageUrl || "").trim(),
+            overlayImageStorageKey: String(preview.overlayImageStorageKey || "").trim()
+        }))
+        .filter((preview) => (
+            preview.textValue
+            || preview.overlayImageKind
+            || preview.overlayImageUrl
+            || preview.overlayImageStorageKey
+        ));
+}
+
+function renderPersonalizationSummary(item = {}) {
+    const previews = getNormalizedPersonalizationPreviews(item);
+
+    if (previews.length) {
+        return previews.map((preview) => {
+            const details = [];
+
+            if (preview.textValue) {
+                details.push(`Texto: ${preview.textValue}`);
+            }
+
+            if (preview.overlayImageKind) {
+                details.push(`Imagem: ${preview.overlayImageKind === "upload" ? "enviada pelo cliente" : "selecionada"}`);
+            }
+
+            return `<span>${escapeHtml(preview.name)}: ${escapeHtml(details.join(" | ") || "Personalizado")}</span>`;
+        }).join("");
+    }
+
+    if (item.personalizationName) {
+        return `<span>PersonalizaÃ§Ã£o: ${escapeHtml(item.personalizationName)}</span>`;
+    }
+
+    return "";
+}
+
 function renderOrderItems(items = []) {
     return items.map((item) => `
         <article class="account-order-item">
@@ -236,6 +279,18 @@ function renderOrderHistory(history = []) {
 }
 
 function renderTrackingValue(order) {
+    if (order.shippingIntegration?.provider === "motoboy") {
+        if (order.orderStatus === "delivered") {
+            return "Entrega local concluida.";
+        }
+
+        if (order.orderStatus === "shipped") {
+            return "Saiu para entrega com motoboy.";
+        }
+
+        return "Entrega local por motoboy.";
+    }
+
     if (order.orderStatus === "cancelled") {
         return "Pedido cancelado";
     }
@@ -339,7 +394,7 @@ function renderOrderDetail(order) {
                             <span>${escapeHtml(statusMeta.label)}</span>
                         </div>
                         <div class="account-order-detail-row">
-                            <strong>Código de rastreio</strong>
+                            <strong>${escapeHtml(order.shippingIntegration?.provider === "motoboy" ? "Entrega local" : "Código de rastreio")}</strong>
                             <span>${escapeHtml(renderTrackingValue(order))}</span>
                         </div>
                         <div class="account-order-detail-row">

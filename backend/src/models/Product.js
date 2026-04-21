@@ -296,7 +296,103 @@ const productSchema = new mongoose.Schema(
                     default: "0 2px 10px rgba(0, 0, 0, 0.35)",
                     trim: true
                 }
-            }
+            },
+            previews: [
+                {
+                    name: {
+                        type: String,
+                        default: "Prévia",
+                        trim: true
+                    },
+                    enabled: {
+                        type: Boolean,
+                        default: false
+                    },
+                    imageUrl: {
+                        type: String,
+                        default: ""
+                    },
+                    imagePublicId: {
+                        type: String,
+                        default: ""
+                    },
+                    positionXPercent: {
+                        type: Number,
+                        default: 50,
+                        min: 0,
+                        max: 100
+                    },
+                    positionYPercent: {
+                        type: Number,
+                        default: 50,
+                        min: 0,
+                        max: 100
+                    },
+                    widthPercent: {
+                        type: Number,
+                        default: 60,
+                        min: 10,
+                        max: 100
+                    },
+                    allowCustomerAdjust: {
+                        type: Boolean,
+                        default: false
+                    },
+                    fontSizePx: {
+                        type: Number,
+                        default: 28,
+                        min: 8,
+                        max: 120
+                    },
+                    referenceWidthPx: {
+                        type: Number,
+                        default: 0,
+                        min: 0
+                    },
+                    sampleText: {
+                        type: String,
+                        default: "Maria",
+                        trim: true
+                    },
+                    textColor: {
+                        type: String,
+                        default: "#ffffff",
+                        trim: true
+                    },
+                    fontFamily: {
+                        type: String,
+                        default: "'Georgia', 'Times New Roman', serif",
+                        trim: true
+                    },
+                    fontWeight: {
+                        type: String,
+                        default: "700",
+                        trim: true
+                    },
+                    letterSpacingEm: {
+                        type: Number,
+                        default: 0.04,
+                        min: -0.2,
+                        max: 1
+                    },
+                    rotationDeg: {
+                        type: Number,
+                        default: 0,
+                        min: -180,
+                        max: 180
+                    },
+                    textTransform: {
+                        type: String,
+                        enum: ["none", "uppercase"],
+                        default: "uppercase"
+                    },
+                    textShadow: {
+                        type: String,
+                        default: "0 2px 10px rgba(0, 0, 0, 0.35)",
+                        trim: true
+                    }
+                }
+            ]
         },
         shipping: {
             productionDays: {

@@ -84,6 +84,7 @@
                 </div>
 
                 <div class="admin-products-actions">
+                    <button type="button" class="admin-primary-toolbar-button admin-primary-toolbar-button-danger" id="adminOrderDeleteButton">Excluir pedido</button>
                     <a href="/admin/orders" class="admin-primary-toolbar-button admin-primary-toolbar-button-secondary">Voltar para pedidos</a>
                 </div>
             </header>
@@ -122,11 +123,19 @@
                     </article>
 
                     <article class="admin-order-detail-card">
-                        <p class="admin-card-kicker">Etiqueta Melhor Envio</p>
+                        <p class="admin-card-kicker">Frete do pedido</p>
                         <div class="admin-order-detail-list" id="adminOrderShipmentInfo"></div>
                         <div class="admin-order-shipment-tools">
                             <button type="button" class="admin-auth-submit admin-order-status-save" id="adminOrderPurchaseShippingButton">Comprar frete e gerar etiqueta</button>
                             <button type="button" class="admin-secondary-button" id="adminOrderDownloadLabelButton">Baixar / imprimir PDF da etiqueta</button>
+                        </div>
+                    </article>
+
+                    <article class="admin-order-detail-card" id="adminOrderLocalDeliveryCard" hidden>
+                        <p class="admin-card-kicker">Operação local</p>
+                        <div class="admin-order-local-actions">
+                            <button type="button" class="admin-secondary-button" id="adminOrderMarkOutForDeliveryButton">Saiu para entrega</button>
+                            <button type="button" class="admin-auth-submit admin-order-status-save" id="adminOrderMarkDeliveredButton">Marcar entregue</button>
                         </div>
                     </article>
                 </div>

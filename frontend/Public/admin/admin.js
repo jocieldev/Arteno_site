@@ -42,6 +42,10 @@ const adminProductTabs = document.querySelectorAll(".admin-products-tab[data-fil
 const productCategorySelect = document.getElementById("productCategorySelect");
 const personalizationPreviewEnabledInput = document.getElementById("personalizationPreviewEnabled");
 const personalizationPreviewFields = document.getElementById("personalizationPreviewFields");
+const personalizationPreviewNameInput = document.getElementById("personalizationPreviewName");
+const personalizationPreviewItems = document.getElementById("personalizationPreviewItems");
+const addPersonalizationPreviewButton = document.getElementById("addPersonalizationPreviewButton");
+const removePersonalizationPreviewButton = document.getElementById("removePersonalizationPreviewButton");
 const adminImageOverlayFields = document.getElementById("adminImageOverlayFields");
 const adminOverlayOptionImagesField = document.getElementById("adminOverlayOptionImagesField");
 const adminPersonalizationPreviewImage = document.getElementById("adminPersonalizationPreviewImage");
@@ -63,6 +67,8 @@ let selectedProductImageFiles = [];
 let existingProductImages = [];
 let selectedPreviewImageFile = null;
 let existingPreviewImage = null;
+let personalizationPreviewItemsState = [];
+let activeAdminPersonalizationPreviewIndex = 0;
 let selectedOverlayOptionImageFiles = [];
 let existingOverlayOptionImages = [];
 let productVariationsState = [];
@@ -193,8 +199,15 @@ function renderAdminRoute() {
 
 if (alertBox) {
     const params = new URLSearchParams(window.location.search);
+    const errorCode = params.get("error");
 
-    if (params.get("error") === "1") {
+    if (errorCode === "invalid") {
+        alertBox.textContent = "Usuario ou senha invalidos. Tente novamente.";
+        alertBox.hidden = false;
+    }
+
+    if (errorCode === "config") {
+        alertBox.textContent = "Painel admin nao configurado. Atualize ADMIN_USERNAME, ADMIN_PASSWORD e ADMIN_SESSION_SECRET no backend/.env.";
         alertBox.hidden = false;
     }
 }
@@ -816,12 +829,178 @@ function syncDescriptionInput() {
     descriptionInput.value = descriptionEditor.innerHTML.trim();
 }
 
+function createDefaultPersonalizationPreviewItem(overrides = {}) {
+    return {
+        name: "Prévia",
+        enabled: Boolean(productForm?.elements.personalizationPreviewEnabled?.checked),
+        allowCustomerAdjust: false,
+        imageUrl: "",
+        imagePublicId: "",
+        sampleText: "Maria",
+        positionXPercent: 50,
+        positionYPercent: 50,
+        widthPercent: 60,
+        fontSizePx: 28,
+        referenceWidthPx: 0,
+        textColor: "#ffffff",
+        fontFamily: "'Georgia', 'Times New Roman', serif",
+        fontWeight: "700",
+        letterSpacingEm: 0.04,
+        rotationDeg: 0,
+        textTransform: "uppercase",
+        textShadow: "0 2px 10px rgba(0, 0, 0, 0.35)",
+        selectedFile: null,
+        ...overrides
+    };
+}
+
+function getNormalizedPersonalizationPreviewItems(product = {}) {
+    const previews = Array.isArray(product.personalization?.previews) && product.personalization.previews.length
+        ? product.personalization.previews
+        : (product.personalization?.preview ? [product.personalization.preview] : []);
+
+    if (!previews.length) {
+        return [createDefaultPersonalizationPreviewItem()];
+    }
+
+    return previews.map((preview, index) => createDefaultPersonalizationPreviewItem({
+        name: String(preview.name || preview.label || `Prévia ${index + 1}`).trim() || `Prévia ${index + 1}`,
+        enabled: Boolean(preview.enabled),
+        allowCustomerAdjust: Boolean(preview.allowCustomerAdjust),
+        imageUrl: String(preview.imageUrl || ""),
+        imagePublicId: String(preview.imagePublicId || ""),
+        sampleText: String(preview.sampleText || "Maria"),
+        positionXPercent: Number(preview.positionXPercent ?? 50),
+        positionYPercent: Number(preview.positionYPercent ?? 50),
+        widthPercent: Number(preview.widthPercent ?? 60),
+        fontSizePx: Number(preview.fontSizePx ?? 28),
+        referenceWidthPx: Number(preview.referenceWidthPx ?? 0),
+        textColor: String(preview.textColor || "#ffffff"),
+        fontFamily: String(preview.fontFamily || "'Georgia', 'Times New Roman', serif"),
+        fontWeight: String(preview.fontWeight || "700"),
+        letterSpacingEm: Number(preview.letterSpacingEm ?? 0.04),
+        rotationDeg: Number(preview.rotationDeg ?? 0),
+        textTransform: preview.textTransform === "none" ? "none" : "uppercase",
+        textShadow: String(preview.textShadow || "0 2px 10px rgba(0, 0, 0, 0.35)")
+    }));
+}
+
+function renderPersonalizationPreviewItemTabs() {
+    if (!personalizationPreviewItems) {
+        return;
+    }
+
+    personalizationPreviewItems.innerHTML = personalizationPreviewItemsState.map((item, index) => `
+        <button
+            type="button"
+            class="admin-preview-item-button${index === activeAdminPersonalizationPreviewIndex ? " is-active" : ""}"
+            data-preview-item-index="${index}"
+        >${escapeHtml(item.name || `Prévia ${index + 1}`)}</button>
+    `).join("");
+
+    if (removePersonalizationPreviewButton) {
+        removePersonalizationPreviewButton.disabled = personalizationPreviewItemsState.length <= 1;
+    }
+}
+
+function getActivePersonalizationPreviewItem() {
+    if (!personalizationPreviewItemsState.length) {
+        personalizationPreviewItemsState = [createDefaultPersonalizationPreviewItem()];
+    }
+
+    if (activeAdminPersonalizationPreviewIndex < 0 || activeAdminPersonalizationPreviewIndex >= personalizationPreviewItemsState.length) {
+        activeAdminPersonalizationPreviewIndex = 0;
+    }
+
+    return personalizationPreviewItemsState[activeAdminPersonalizationPreviewIndex];
+}
+
+function applyActivePreviewItemToForm() {
+    if (!productForm) {
+        return;
+    }
+
+    const item = getActivePersonalizationPreviewItem();
+    selectedPreviewImageFile = item.selectedFile || null;
+    existingPreviewImage = item.imageUrl
+        ? { imageUrl: item.imageUrl, imagePublicId: item.imagePublicId || "" }
+        : null;
+
+    if (personalizationPreviewNameInput) {
+        personalizationPreviewNameInput.value = item.name || "Prévia";
+    }
+
+    productForm.elements.personalizationPreviewAllowCustomerAdjust.checked = Boolean(item.allowCustomerAdjust);
+    productForm.elements.personalizationPreviewSampleText.value = item.sampleText || "Maria";
+    productForm.elements.personalizationPreviewPositionXPercent.value = item.positionXPercent ?? 50;
+    productForm.elements.personalizationPreviewPositionYPercent.value = item.positionYPercent ?? 50;
+    productForm.elements.personalizationPreviewWidthPercent.value = item.widthPercent ?? 60;
+    productForm.elements.personalizationPreviewFontSizePx.value = item.fontSizePx ?? 28;
+    productForm.elements.personalizationPreviewReferenceWidthPx.value = item.referenceWidthPx ?? 0;
+    productForm.elements.personalizationPreviewTextColor.value = item.textColor || "#ffffff";
+    productForm.elements.personalizationPreviewFontFamily.value = item.fontFamily || "'Georgia', 'Times New Roman', serif";
+    productForm.elements.personalizationPreviewFontWeight.value = item.fontWeight || "700";
+    productForm.elements.personalizationPreviewLetterSpacingEm.value = item.letterSpacingEm ?? 0.04;
+    productForm.elements.personalizationPreviewRotationDeg.value = item.rotationDeg ?? 0;
+    productForm.elements.personalizationPreviewTextTransform.value = item.textTransform || "uppercase";
+    productForm.elements.personalizationPreviewTextShadow.value = item.textShadow || "0 2px 10px rgba(0, 0, 0, 0.35)";
+
+    if (productPreviewImageInput) {
+        productPreviewImageInput.value = "";
+    }
+
+    renderPersonalizationPreviewItemTabs();
+    renderPreviewImageUploadState();
+}
+
+function syncActivePreviewItemFromForm() {
+    if (!productForm || !personalizationPreviewItemsState.length) {
+        return;
+    }
+
+    const currentItem = personalizationPreviewItemsState[activeAdminPersonalizationPreviewIndex] || createDefaultPersonalizationPreviewItem();
+    personalizationPreviewItemsState[activeAdminPersonalizationPreviewIndex] = {
+        ...currentItem,
+        name: String(personalizationPreviewNameInput?.value || currentItem.name || "Prévia").trim() || "Prévia",
+        enabled: Boolean(productForm.elements.personalizationPreviewEnabled?.checked),
+        allowCustomerAdjust: Boolean(productForm.elements.personalizationPreviewAllowCustomerAdjust?.checked),
+        imageUrl: existingPreviewImage?.imageUrl || "",
+        imagePublicId: existingPreviewImage?.imagePublicId || "",
+        sampleText: productForm.elements.personalizationPreviewSampleText?.value || "Maria",
+        positionXPercent: Number(productForm.elements.personalizationPreviewPositionXPercent?.value || 50),
+        positionYPercent: Number(productForm.elements.personalizationPreviewPositionYPercent?.value || 50),
+        widthPercent: Number(productForm.elements.personalizationPreviewWidthPercent?.value || 60),
+        fontSizePx: Number(productForm.elements.personalizationPreviewFontSizePx?.value || 28),
+        referenceWidthPx: Number(productForm.elements.personalizationPreviewReferenceWidthPx?.value || 0),
+        textColor: productForm.elements.personalizationPreviewTextColor?.value || "#ffffff",
+        fontFamily: productForm.elements.personalizationPreviewFontFamily?.value || "'Georgia', 'Times New Roman', serif",
+        fontWeight: productForm.elements.personalizationPreviewFontWeight?.value || "700",
+        letterSpacingEm: Number(productForm.elements.personalizationPreviewLetterSpacingEm?.value || 0.04),
+        rotationDeg: Number(productForm.elements.personalizationPreviewRotationDeg?.value || 0),
+        textTransform: productForm.elements.personalizationPreviewTextTransform?.value === "none" ? "none" : "uppercase",
+        textShadow: productForm.elements.personalizationPreviewTextShadow?.value || "0 2px 10px rgba(0, 0, 0, 0.35)",
+        selectedFile: selectedPreviewImageFile || null
+    };
+
+    renderPersonalizationPreviewItemTabs();
+}
+
+function selectPersonalizationPreviewItem(index) {
+    syncActivePreviewItemFromForm();
+    activeAdminPersonalizationPreviewIndex = Math.max(0, Math.min(index, personalizationPreviewItemsState.length - 1));
+    applyActivePreviewItemToForm();
+    updateAdminPersonalizationPreview();
+    updateSubmitButtonState();
+}
+
 function serializeProductFormState() {
     if (!productForm) {
         return null;
     }
 
+    syncActivePreviewItemFromForm();
     syncDescriptionInput();
+    syncActivePreviewItemFromForm();
 
     return JSON.stringify({
         name: productForm.elements.name.value.trim(),
@@ -844,7 +1023,27 @@ function serializeProductFormState() {
         showInMoreOptions: Boolean(productForm.elements.showInMoreOptions.checked),
         personalizationRequireName: Boolean(productForm.elements.personalizationRequireName?.checked),
         personalizationPreviewEnabled: Boolean(productForm.elements.personalizationPreviewEnabled?.checked),
-        personalizationPreviewAllowCustomerAdjust: Boolean(productForm.elements.personalizationPreviewAllowCustomerAdjust?.checked),
+        personalizationPreviews: personalizationPreviewItemsState.map((item) => ({
+            name: item.name,
+            enabled: item.enabled,
+            allowCustomerAdjust: item.allowCustomerAdjust,
+            imageUrl: item.imageUrl,
+            imagePublicId: item.imagePublicId,
+            sampleText: item.sampleText,
+            positionXPercent: item.positionXPercent,
+            positionYPercent: item.positionYPercent,
+            widthPercent: item.widthPercent,
+            fontSizePx: item.fontSizePx,
+            referenceWidthPx: item.referenceWidthPx,
+            textColor: item.textColor,
+            fontFamily: item.fontFamily,
+            fontWeight: item.fontWeight,
+            letterSpacingEm: item.letterSpacingEm,
+            rotationDeg: item.rotationDeg,
+            textTransform: item.textTransform,
+            textShadow: item.textShadow,
+            previewImageName: item.selectedFile?.name || item.imageUrl || ""
+        })),
         personalizationImageOverlayAllowOptionImages: Boolean(productForm.elements.personalizationImageOverlayAllowOptionImages?.checked),
         personalizationImageOverlayRequireSelection: Boolean(productForm.elements.personalizationImageOverlayRequireSelection?.checked),
         personalizationImageOverlayAllowCustomerUpload: Boolean(productForm.elements.personalizationImageOverlayAllowCustomerUpload?.checked),
@@ -855,20 +1054,6 @@ function serializeProductFormState() {
         personalizationImageOverlayMaxHeightPercent: productForm.elements.personalizationImageOverlayMaxHeightPercent?.value || "34",
         personalizationImageOverlayIsRound: Boolean(productForm.elements.personalizationImageOverlayIsRound?.checked),
         personalizationImageOverlayRotationDeg: productForm.elements.personalizationImageOverlayRotationDeg?.value || "0",
-        personalizationPreviewPositionXPercent: productForm.elements.personalizationPreviewPositionXPercent?.value || "50",
-        personalizationPreviewPositionYPercent: productForm.elements.personalizationPreviewPositionYPercent?.value || "50",
-        personalizationPreviewWidthPercent: productForm.elements.personalizationPreviewWidthPercent?.value || "60",
-        personalizationPreviewFontSizePx: productForm.elements.personalizationPreviewFontSizePx?.value || "28",
-        personalizationPreviewReferenceWidthPx: productForm.elements.personalizationPreviewReferenceWidthPx?.value || "0",
-        personalizationPreviewSampleText: productForm.elements.personalizationPreviewSampleText?.value || "Maria",
-        personalizationPreviewTextColor: productForm.elements.personalizationPreviewTextColor?.value || "#ffffff",
-        personalizationPreviewFontFamily: productForm.elements.personalizationPreviewFontFamily?.value || "'Georgia', 'Times New Roman', serif",
-        personalizationPreviewFontWeight: productForm.elements.personalizationPreviewFontWeight?.value || "700",
-        personalizationPreviewLetterSpacingEm: productForm.elements.personalizationPreviewLetterSpacingEm?.value || "0.04",
-        personalizationPreviewRotationDeg: productForm.elements.personalizationPreviewRotationDeg?.value || "0",
-        personalizationPreviewTextTransform: productForm.elements.personalizationPreviewTextTransform?.value || "uppercase",
-        personalizationPreviewTextShadow: productForm.elements.personalizationPreviewTextShadow?.value || "0 2px 10px rgba(0, 0, 0, 0.35)",
-        previewImageName: selectedPreviewImageFile?.name || existingPreviewImage?.imageUrl || "",
         overlayOptionImageNames: selectedOverlayOptionImageFiles.map((file) => file.name),
         retainedOverlayOptionImages: existingOverlayOptionImages.map((image) => ({
             imageUrl: image.imageUrl || "",
@@ -1225,6 +1410,8 @@ function resetProductForm() {
     setDescriptionContent("");
     selectedProductImageFiles = [];
     existingProductImages = [];
+    personalizationPreviewItemsState = [createDefaultPersonalizationPreviewItem()];
+    activeAdminPersonalizationPreviewIndex = 0;
     selectedPreviewImageFile = null;
     existingPreviewImage = null;
     selectedOverlayOptionImageFiles = [];
@@ -1241,6 +1428,7 @@ function resetProductForm() {
     }
     updateStockQuantityFieldVisibility();
     updateStatusHintSelection();
+    applyActivePreviewItemToForm();
     renderProductMediaPreview();
     renderProductVariations(productVariationsState);
     updatePersonalizationPreviewVisibility();
@@ -1310,7 +1498,6 @@ function populateProductForm(product) {
     productForm.elements.showInMoreOptions.checked = Boolean(product.showInMoreOptions);
     productForm.elements.personalizationRequireName.checked = Boolean(product.personalization?.requireName ?? product.personalization?.enabled);
     productForm.elements.personalizationPreviewEnabled.checked = previewConfig.enabled;
-    productForm.elements.personalizationPreviewAllowCustomerAdjust.checked = previewConfig.allowCustomerAdjust;
     productForm.elements.personalizationImageOverlayAllowOptionImages.checked = overlayConfig.allowOptionImages;
     productForm.elements.personalizationImageOverlayRequireSelection.checked = overlayConfig.requireSelection;
     productForm.elements.personalizationImageOverlayAllowCustomerUpload.checked = overlayConfig.allowCustomerUpload;
@@ -1321,19 +1508,9 @@ function populateProductForm(product) {
     productForm.elements.personalizationImageOverlayMaxHeightPercent.value = overlayConfig.maxHeightPercent;
     productForm.elements.personalizationImageOverlayIsRound.checked = overlayConfig.isRound;
     productForm.elements.personalizationImageOverlayRotationDeg.value = overlayConfig.rotationDeg;
-    productForm.elements.personalizationPreviewSampleText.value = previewConfig.sampleText || "Maria";
-    productForm.elements.personalizationPreviewPositionXPercent.value = previewConfig.positionXPercent;
-    productForm.elements.personalizationPreviewPositionYPercent.value = previewConfig.positionYPercent;
-    productForm.elements.personalizationPreviewWidthPercent.value = previewConfig.widthPercent;
-    productForm.elements.personalizationPreviewFontSizePx.value = previewConfig.fontSizePx;
-    productForm.elements.personalizationPreviewReferenceWidthPx.value = previewConfig.referenceWidthPx || 0;
-    productForm.elements.personalizationPreviewTextColor.value = previewConfig.textColor;
-    productForm.elements.personalizationPreviewFontFamily.value = previewConfig.fontFamily;
-    productForm.elements.personalizationPreviewFontWeight.value = previewConfig.fontWeight;
-    productForm.elements.personalizationPreviewLetterSpacingEm.value = previewConfig.letterSpacingEm;
-    productForm.elements.personalizationPreviewRotationDeg.value = previewConfig.rotationDeg;
-    productForm.elements.personalizationPreviewTextTransform.value = previewConfig.textTransform;
-    productForm.elements.personalizationPreviewTextShadow.value = previewConfig.textShadow;
+    personalizationPreviewItemsState = getNormalizedPersonalizationPreviewItems(product);
+    activeAdminPersonalizationPreviewIndex = 0;
+    applyActivePreviewItemToForm();
     updateStockQuantityFieldVisibility();
     updateStatusHintSelection();
     renderProductMediaPreview();
@@ -1495,6 +1672,8 @@ async function loadProducts() {
 }
 
 function getFormPayload(form) {
+    syncActivePreviewItemFromForm();
+
     const formData = new FormData();
     const variations = readProductVariations();
     const variationItemUploadMap = [];
@@ -1521,7 +1700,6 @@ function getFormPayload(form) {
     formData.append("showInMoreOptions", String(form.elements.showInMoreOptions.checked));
     formData.append("personalizationRequireName", String(form.elements.personalizationRequireName.checked));
     formData.append("personalizationPreviewEnabled", String(form.elements.personalizationPreviewEnabled.checked));
-    formData.append("personalizationPreviewAllowCustomerAdjust", String(form.elements.personalizationPreviewAllowCustomerAdjust.checked));
     formData.append("personalizationImageOverlayAllowOptionImages", String(form.elements.personalizationImageOverlayAllowOptionImages.checked));
     formData.append("personalizationImageOverlayRequireSelection", String(form.elements.personalizationImageOverlayRequireSelection.checked));
     formData.append("personalizationImageOverlayAllowCustomerUpload", String(form.elements.personalizationImageOverlayAllowCustomerUpload.checked));
@@ -1532,29 +1710,41 @@ function getFormPayload(form) {
     formData.append("personalizationImageOverlayMaxHeightPercent", form.elements.personalizationImageOverlayMaxHeightPercent.value);
     formData.append("personalizationImageOverlayIsRound", String(form.elements.personalizationImageOverlayIsRound.checked));
     formData.append("personalizationImageOverlayRotationDeg", form.elements.personalizationImageOverlayRotationDeg.value);
-    formData.append("personalizationPreviewImageUrl", existingPreviewImage?.imageUrl || "");
-    formData.append("personalizationPreviewImagePublicId", existingPreviewImage?.imagePublicId || "");
-    formData.append("personalizationPreviewPositionXPercent", form.elements.personalizationPreviewPositionXPercent.value);
-    formData.append("personalizationPreviewPositionYPercent", form.elements.personalizationPreviewPositionYPercent.value);
-    formData.append("personalizationPreviewWidthPercent", form.elements.personalizationPreviewWidthPercent.value);
-    formData.append("personalizationPreviewFontSizePx", form.elements.personalizationPreviewFontSizePx.value);
-    formData.append("personalizationPreviewReferenceWidthPx", form.elements.personalizationPreviewReferenceWidthPx.value);
-    formData.append("personalizationPreviewSampleText", form.elements.personalizationPreviewSampleText.value);
-    formData.append("personalizationPreviewTextColor", form.elements.personalizationPreviewTextColor.value);
-    formData.append("personalizationPreviewFontFamily", form.elements.personalizationPreviewFontFamily.value);
-    formData.append("personalizationPreviewFontWeight", form.elements.personalizationPreviewFontWeight.value);
-    formData.append("personalizationPreviewLetterSpacingEm", form.elements.personalizationPreviewLetterSpacingEm.value);
-    formData.append("personalizationPreviewRotationDeg", form.elements.personalizationPreviewRotationDeg.value);
-    formData.append("personalizationPreviewTextTransform", form.elements.personalizationPreviewTextTransform.value);
-    formData.append("personalizationPreviewTextShadow", form.elements.personalizationPreviewTextShadow.value);
+    const serializedPersonalizationPreviews = personalizationPreviewItemsState.map((item, index) => {
+        const hasSelectedFile = item.selectedFile instanceof File;
+
+        if (hasSelectedFile) {
+            formData.append("previewImages", item.selectedFile);
+        }
+
+        return {
+            name: item.name,
+            enabled: Boolean(form.elements.personalizationPreviewEnabled.checked),
+            allowCustomerAdjust: item.allowCustomerAdjust,
+            imageUrl: hasSelectedFile ? "" : (item.imageUrl || ""),
+            imagePublicId: hasSelectedFile ? "" : (item.imagePublicId || ""),
+            positionXPercent: item.positionXPercent,
+            positionYPercent: item.positionYPercent,
+            widthPercent: item.widthPercent,
+            fontSizePx: item.fontSizePx,
+            referenceWidthPx: item.referenceWidthPx,
+            sampleText: item.sampleText,
+            textColor: item.textColor,
+            fontFamily: item.fontFamily,
+            fontWeight: item.fontWeight,
+            letterSpacingEm: item.letterSpacingEm,
+            rotationDeg: item.rotationDeg,
+            textTransform: item.textTransform,
+            textShadow: item.textShadow,
+            uploadIndex: hasSelectedFile ? index : undefined
+        };
+    });
+    formData.append("personalizationPreviews", JSON.stringify(serializedPersonalizationPreviews));
     formData.append("retainedOverlayOptionImages", JSON.stringify(existingOverlayOptionImages));
     formData.append("retainedImages", JSON.stringify(existingProductImages));
     selectedProductImageFiles.forEach((file) => {
         formData.append("images", file);
     });
-    if (selectedPreviewImageFile) {
-        formData.append("previewImage", selectedPreviewImageFile);
-    }
     selectedOverlayOptionImageFiles.forEach((file) => {
         formData.append("overlayOptionImages", file);
     });
@@ -1974,9 +2164,52 @@ if (productForm) {
     if (productPreviewImageInput) {
         productPreviewImageInput.addEventListener("change", () => {
             selectedPreviewImageFile = productPreviewImageInput.files?.[0] || null;
+            syncActivePreviewItemFromForm();
             renderPreviewImageUploadState();
             updateAdminPersonalizationPreview();
             updateSubmitButtonState();
+        });
+    }
+
+    if (addPersonalizationPreviewButton) {
+        addPersonalizationPreviewButton.addEventListener("click", () => {
+            syncActivePreviewItemFromForm();
+            personalizationPreviewItemsState.push(createDefaultPersonalizationPreviewItem({
+                enabled: Boolean(productForm?.elements.personalizationPreviewEnabled?.checked),
+                name: `Prévia ${personalizationPreviewItemsState.length + 1}`
+            }));
+            activeAdminPersonalizationPreviewIndex = personalizationPreviewItemsState.length - 1;
+            applyActivePreviewItemToForm();
+            renderPreviewImageUploadState();
+            updateAdminPersonalizationPreview();
+            updateSubmitButtonState();
+        });
+    }
+
+    if (removePersonalizationPreviewButton) {
+        removePersonalizationPreviewButton.addEventListener("click", () => {
+            if (personalizationPreviewItemsState.length <= 1) {
+                return;
+            }
+
+            personalizationPreviewItemsState.splice(activeAdminPersonalizationPreviewIndex, 1);
+            activeAdminPersonalizationPreviewIndex = Math.max(0, activeAdminPersonalizationPreviewIndex - 1);
+            applyActivePreviewItemToForm();
+            updateAdminPersonalizationPreview();
+            updateSubmitButtonState();
+        });
+    }
+
+    if (personalizationPreviewItems) {
+        personalizationPreviewItems.addEventListener("click", (event) => {
+            const button = event.target.closest("[data-preview-item-index]");
+
+            if (!button) {
+                return;
+            }
+
+            selectPersonalizationPreviewItem(Number(button.dataset.previewItemIndex || 0));
+            renderPreviewImageUploadState();
         });
     }
 
@@ -2078,6 +2311,7 @@ if (productForm) {
 
     productForm.addEventListener("input", (event) => {
         if (event.target.closest("#personalizationPreviewCard") || event.target.name === "personalizationRequireName") {
+            syncActivePreviewItemFromForm();
             updatePersonalizationPreviewVisibility();
             updateAdminPersonalizationPreview();
         }
@@ -2085,6 +2319,7 @@ if (productForm) {
 
     productForm.addEventListener("change", (event) => {
         if (event.target.closest("#personalizationPreviewCard") || event.target.name === "personalizationRequireName") {
+            syncActivePreviewItemFromForm();
             updatePersonalizationPreviewVisibility();
             updateAdminPersonalizationPreview();
         }

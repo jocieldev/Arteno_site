@@ -93,8 +93,13 @@ function escapeHtml(value = "") {
 
 function formatShippingDeadlineLabel(option = {}) {
     const productionDays = Number(option.productionDays || 0);
+    const dispatchDays = Number(option.dispatchDays || 0);
     const deliveryDays = Number(option.deliveryTime || 0);
-    const totalDeliveryDays = Number(option.totalDeliveryDays || (productionDays + deliveryDays));
+    const totalDeliveryDays = Number(option.totalDeliveryDays || (productionDays + dispatchDays + deliveryDays));
+
+    if (dispatchDays) {
+        return `${productionDays} dia(s) de produção + ${dispatchDays} dia(s) após embalagem + ${deliveryDays} dia(s) de entrega = ${totalDeliveryDays} dia(s) úteis`;
+    }
 
     if (!productionDays) {
         return `${deliveryDays} dia(s) úteis`;
@@ -291,22 +296,113 @@ async function getCheckoutStoredPersonalizationImageFile(storageKey) {
     });
 }
 
+function getNormalizedPersonalizationPreviews(item = {}) {
+    return (Array.isArray(item.personalizationPreviews) ? item.personalizationPreviews : [])
+        .map((preview = {}, index) => ({
+            name: String(preview.name || `PrÃ©via ${index + 1}`).trim() || `PrÃ©via ${index + 1}`,
+            textValue: String(preview.textValue || item.personalizationName || "").trim(),
+            overlayImageKind: String(preview.overlayImageKind || "").trim(),
+            overlayImageUrl: String(preview.overlayImageUrl || "").trim(),
+            overlayImageStorageKey: String(preview.overlayImageStorageKey || "").trim()
+        }))
+        .filter((preview) => (
+            preview.textValue
+            || preview.overlayImageKind
+            || preview.overlayImageUrl
+            || preview.overlayImageStorageKey
+        ));
+}
+
+function getCheckoutPersonalizationSummaryEntries(item = {}) {
+    const previews = getNormalizedPersonalizationPreviews(item);
+
+    if (previews.length) {
+        return previews.map((preview) => {
+            const details = [];
+
+            if (preview.textValue) {
+                details.push(`Texto: ${preview.textValue}`);
+            }
+
+            if (preview.overlayImageKind) {
+                details.push(`Imagem: ${preview.overlayImageKind === "upload" ? "enviada pelo cliente" : "selecionada"}`);
+            }
+
+            return {
+                label: preview.name,
+                description: details.join(" | ") || "Personalizado"
+            };
+        });
+    }
+
+    const fallbackEntries = [];
+
+    if (item.personalizationName) {
+        fallbackEntries.push({
+            label: "PersonalizaÃ§Ã£o",
+            description: `Texto: ${String(item.personalizationName || "").trim()}`
+        });
+    }
+
+    if (item.personalizationImageKind) {
+        fallbackEntries.push({
+            label: "Imagem",
+            description: item.personalizationImageKind === "upload" ? "Enviada pelo cliente" : "Selecionada"
+        });
+    }
+
+    return fallbackEntries;
+}
+
+function renderCheckoutPersonalizationSummary(item = {}) {
+    return getCheckoutPersonalizationSummaryEntries(item).map((entry) => `
+        <p>${escapeHtml(entry.label)}: ${escapeHtml(entry.description)}</p>
+    `).join("");
+}
+
 function renderCheckoutPersonalizationPreview(item = {}) {
-    if (item.personalizationImageKind === "upload" && item.personalizationImageStorageKey) {
-        return `
-            <div class="checkout-personalization-thumb" data-personalization-storage-key="${escapeHtml(item.personalizationImageStorageKey)}" hidden></div>
-        `;
+    const normalizedPreviews = getNormalizedPersonalizationPreviews(item);
+    const previewsWithImages = normalizedPreviews
+        .filter((preview) => preview.overlayImageUrl || preview.overlayImageStorageKey);
+    const imageEntries = previewsWithImages.length
+        ? previewsWithImages.map((preview) => ({
+            label: preview.name,
+            kind: preview.overlayImageKind,
+            imageUrl: preview.overlayImageUrl,
+            storageKey: preview.overlayImageStorageKey
+        }))
+        : [{
+            label: "PersonalizaÃ§Ã£o",
+            kind: String(item.personalizationImageKind || "").trim(),
+            imageUrl: String(item.personalizationImageUrl || "").trim(),
+            storageKey: String(item.personalizationImageStorageKey || "").trim()
+        }].filter((entry) => entry.imageUrl || entry.storageKey);
+
+    const summaryMarkup = normalizedPreviews.length > 1
+        ? renderCheckoutPersonalizationSummary(item)
+        : "";
+
+    if (!imageEntries.length) {
+        return summaryMarkup;
     }
 
-    if (item.personalizationImageUrl) {
-        return `
-            <div class="checkout-personalization-thumb">
-                <img src="${escapeHtml(item.personalizationImageUrl)}" alt="Imagem da personalizacao">
-            </div>
-        `;
-    }
+    return `${summaryMarkup}${imageEntries.map((entry) => {
+        if (entry.kind === "upload" && entry.storageKey) {
+            return `
+                <div class="checkout-personalization-thumb" data-personalization-storage-key="${escapeHtml(entry.storageKey)}" hidden></div>
+            `;
+        }
 
-    return "";
+        if (entry.imageUrl) {
+            return `
+                <div class="checkout-personalization-thumb">
+                    <img src="${escapeHtml(entry.imageUrl)}" alt="${escapeHtml(`Imagem de ${entry.label}`)}">
+                </div>
+            `;
+        }
+
+        return "";
+    }).join("")}`;
 }
 
 async function hydrateCheckoutPersonalizationThumbs() {
@@ -436,7 +532,7 @@ function renderShippingOptions() {
                 <input type="radio" name="checkoutShippingOption" value="${escapeHtml(optionId)}" ${isSelected ? "checked" : ""}>
                 <div>
                     <strong>${escapeHtml(option.company || "Correios")} - ${escapeHtml(option.name || "Frete")}</strong>
-                    <span>${escapeHtml(String(option.deliveryTime || 0))} dia(s) úteis</span>
+                    <span>${escapeHtml(`${String(option.deliveryTime || 0)} dia(s) úteis`)}</span>
                 </div>
                 <span class="checkout-shipping-option-price">${escapeHtml(formatCurrency(option.price || 0))}</span>
             </label>
@@ -654,16 +750,21 @@ async function loadCheckoutConfig() {
 
 async function prefillCurrentUser() {
     try {
-        const response = await fetch("/api/auth/account");
+        const response = await fetch("/api/auth/me");
 
         if (!response.ok) {
             return;
         }
 
         const result = await response.json();
-        document.getElementById("checkoutCustomerName").value = result.user?.name || "";
-        document.getElementById("checkoutCustomerEmail").value = result.user?.email || "";
-        document.getElementById("checkoutCustomerPhone").value = applyPhoneMask(result.user?.phone || "");
+
+        if (!result.user) {
+            return;
+        }
+
+        document.getElementById("checkoutCustomerName").value = result.user.name || "";
+        document.getElementById("checkoutCustomerEmail").value = result.user.email || "";
+        document.getElementById("checkoutCustomerPhone").value = applyPhoneMask(result.user.phone || "");
     } catch (_error) {
         // Ignora usuários não autenticados.
     }
@@ -902,12 +1003,70 @@ async function resolveCheckoutItemsForSubmission(items = checkoutItems) {
     }
 
     return Promise.all(items.map(async (item = {}) => {
+        const resolvedPreviews = Array.isArray(item.personalizationPreviews)
+            ? await Promise.all(item.personalizationPreviews.map(async (preview = {}) => {
+                if (preview.overlayImageKind !== "upload") {
+                    return preview;
+                }
+
+                if (preview.overlayImageUrl && !String(preview.overlayImageUrl || "").startsWith("data:image/")) {
+                    return preview;
+                }
+
+                const previewStorageKey = String(preview.overlayImageStorageKey || "").trim();
+
+                if (!previewStorageKey) {
+                    throw new Error(`A imagem de uma das prévias do item "${item.name || "Produto"}" não está mais disponível no navegador. Envie novamente antes de finalizar.`);
+                }
+
+                if (!window.personalizationImageStore?.getFile) {
+                    throw new Error("O armazenamento temporário de imagens não está disponível neste navegador.");
+                }
+
+                const previewFile = await window.personalizationImageStore.getFile(previewStorageKey);
+
+                if (!previewFile) {
+                    throw new Error(`A imagem de uma das prévias do item "${item.name || "Produto"}" não foi encontrada. Envie novamente antes de finalizar.`);
+                }
+
+                const uploadedPreviewImage = await uploadCheckoutPersonalizationImage(previewFile);
+
+                return {
+                    ...preview,
+                    overlayImageUrl: uploadedPreviewImage.imageUrl,
+                    overlayImagePublicId: uploadedPreviewImage.imagePublicId
+                };
+            }))
+            : [];
+        const firstPreviewWithOverlay = resolvedPreviews.find((preview) => preview.overlayImageUrl || preview.overlayImageStorageKey) || null;
+
+        if (firstPreviewWithOverlay) {
+            return {
+                ...item,
+                personalizationImageUrl: firstPreviewWithOverlay.overlayImageUrl || "",
+                personalizationImagePublicId: firstPreviewWithOverlay.overlayImagePublicId || "",
+                personalizationImageStorageKey: firstPreviewWithOverlay.overlayImageStorageKey || "",
+                personalizationImageKind: firstPreviewWithOverlay.overlayImageKind || "",
+                personalizationPreviews: resolvedPreviews
+            };
+        }
+
         if (item.personalizationImageKind !== "upload") {
-            return item;
+            return {
+                ...item,
+                personalizationImageUrl: String(item.personalizationImageUrl || "").trim(),
+                personalizationImagePublicId: String(item.personalizationImagePublicId || "").trim(),
+                personalizationImageStorageKey: String(item.personalizationImageStorageKey || "").trim(),
+                personalizationImageKind: String(item.personalizationImageKind || "").trim(),
+                personalizationPreviews: resolvedPreviews
+            };
         }
 
         if (item.personalizationImageUrl && !String(item.personalizationImageUrl || "").startsWith("data:image/")) {
-            return item;
+            return {
+                ...item,
+                personalizationPreviews: resolvedPreviews
+            };
         }
 
         const storageKey = String(item.personalizationImageStorageKey || "").trim();
@@ -931,7 +1090,8 @@ async function resolveCheckoutItemsForSubmission(items = checkoutItems) {
         return {
             ...item,
             personalizationImageUrl: uploadedImage.imageUrl,
-            personalizationImagePublicId: uploadedImage.imagePublicId
+            personalizationImagePublicId: uploadedImage.imagePublicId,
+            personalizationPreviews: resolvedPreviews
         };
     }));
 }
@@ -943,16 +1103,27 @@ async function cleanupStoredPersonalizationImages(items = []) {
 
     await Promise.all(items.map(async (item = {}) => {
         const storageKey = String(item.personalizationImageStorageKey || "").trim();
-
-        if (!storageKey) {
-            return;
+        if (storageKey) {
+            try {
+                await window.personalizationImageStore.deleteFile(storageKey);
+            } catch (_error) {
+                // Ignora falhas de limpeza local.
+            }
         }
 
-        try {
-            await window.personalizationImageStore.deleteFile(storageKey);
-        } catch (_error) {
-            // Ignora falhas de limpeza local.
-        }
+        await Promise.all((Array.isArray(item.personalizationPreviews) ? item.personalizationPreviews : []).map(async (preview = {}) => {
+            const previewStorageKey = String(preview.overlayImageStorageKey || "").trim();
+
+            if (!previewStorageKey) {
+                return;
+            }
+
+            try {
+                await window.personalizationImageStore.deleteFile(previewStorageKey);
+            } catch (_error) {
+                // Ignora falhas de limpeza local.
+            }
+        }));
     }));
 }
 

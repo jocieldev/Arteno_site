@@ -28,8 +28,13 @@
 
     function formatShippingDeadlineLabel(option = {}) {
         const productionDays = Number(option.productionDays || 0);
+        const dispatchDays = Number(option.dispatchDays || 0);
         const deliveryDays = Number(option.deliveryTime || 0);
-        const totalDeliveryDays = Number(option.totalDeliveryDays || (productionDays + deliveryDays));
+        const totalDeliveryDays = Number(option.totalDeliveryDays || (productionDays + dispatchDays + deliveryDays));
+
+        if (dispatchDays) {
+            return `${productionDays} dia(s) de produção + ${dispatchDays} dia(s) após embalagem + ${deliveryDays} dia(s) de entrega = ${totalDeliveryDays} dia(s) úteis`;
+        }
 
         if (!productionDays) {
             return `${deliveryDays} dia(s) úteis`;
@@ -115,6 +120,74 @@
         `).join("");
     }
 
+    function getNormalizedPersonalizationPreviews(item = {}) {
+        return (Array.isArray(item.personalizationPreviews) ? item.personalizationPreviews : [])
+            .map((preview = {}, index) => ({
+                name: String(preview.name || `PrÃ©via ${index + 1}`).trim() || `PrÃ©via ${index + 1}`,
+                textValue: String(preview.textValue || item.personalizationName || "").trim(),
+                overlayImageKind: String(preview.overlayImageKind || "").trim(),
+                overlayImageUrl: String(preview.overlayImageUrl || "").trim(),
+                overlayImageStorageKey: String(preview.overlayImageStorageKey || "").trim()
+            }))
+            .filter((preview) => (
+                preview.textValue
+                || preview.overlayImageKind
+                || preview.overlayImageUrl
+                || preview.overlayImageStorageKey
+            ));
+    }
+
+    function getPersonalizationSummaryEntries(item = {}) {
+        const previews = getNormalizedPersonalizationPreviews(item);
+
+        if (previews.length) {
+            return previews.map((preview) => {
+                const details = [];
+
+                if (preview.textValue) {
+                    details.push(`Texto: ${preview.textValue}`);
+                }
+
+                if (preview.overlayImageKind) {
+                    details.push(`Imagem: ${preview.overlayImageKind === "upload" ? "enviada pelo cliente" : "selecionada"}`);
+                }
+
+                return {
+                    label: preview.name,
+                    description: details.join(" | ") || "Personalizado"
+                };
+            });
+        }
+
+        const fallbackEntries = [];
+        const personalizationName = String(item.personalizationName || "").trim();
+        const personalizationImageKind = String(item.personalizationImageKind || "").trim();
+
+        if (personalizationName) {
+            fallbackEntries.push({
+                label: "PersonalizaÃ§Ã£o",
+                description: `Texto: ${personalizationName}`
+            });
+        }
+
+        if (personalizationImageKind) {
+            fallbackEntries.push({
+                label: "Imagem",
+                description: personalizationImageKind === "upload" ? "Enviada pelo cliente" : "Selecionada"
+            });
+        }
+
+        return fallbackEntries;
+    }
+
+    function renderPersonalizationSummary(item = {}) {
+        const entries = getPersonalizationSummaryEntries(item);
+
+        return entries.map((entry) => `
+            <p class="cart-drawer-item-detail">${escapeHtml(entry.label)}: ${escapeHtml(entry.description)}</p>
+        `).join("");
+    }
+
     function revokePersonalizationPreviewUrls() {
         personalizationPreviewObjectUrls.forEach((objectUrl) => {
             URL.revokeObjectURL(objectUrl);
@@ -162,22 +235,91 @@
         });
     }
 
-    function renderPersonalizationImagePreview(item = {}) {
+    function getPersonalizationImageEntries(item = {}) {
+        const previews = getNormalizedPersonalizationPreviews(item)
+            .filter((preview) => preview.overlayImageUrl || preview.overlayImageStorageKey)
+            .map((preview) => ({
+                label: preview.name,
+                kind: preview.overlayImageKind,
+                imageUrl: preview.overlayImageUrl,
+                storageKey: preview.overlayImageStorageKey
+            }));
+
+        if (previews.length) {
+            return previews;
+        }
+
         if (item.personalizationImageKind === "upload" && item.personalizationImageStorageKey) {
-            return `
-                <div class="cart-drawer-personalization-thumb" data-personalization-storage-key="${escapeHtml(item.personalizationImageStorageKey)}" hidden></div>
-            `;
+            return [{
+                label: "PersonalizaÃ§Ã£o",
+                kind: "upload",
+                imageUrl: "",
+                storageKey: String(item.personalizationImageStorageKey || "").trim()
+            }];
         }
 
         if (item.personalizationImageUrl) {
-            return `
-                <div class="cart-drawer-personalization-thumb">
-                    <img src="${escapeHtml(item.personalizationImageUrl)}" alt="Imagem da personalizacao">
-                </div>
-            `;
+            return [{
+                label: "PersonalizaÃ§Ã£o",
+                kind: String(item.personalizationImageKind || "").trim(),
+                imageUrl: String(item.personalizationImageUrl || "").trim(),
+                storageKey: ""
+            }];
         }
 
-        return "";
+        return [];
+    }
+
+    function renderPersonalizationImagePreview(item = {}) {
+        const imageEntries = getPersonalizationImageEntries(item);
+        const summaryMarkup = renderPersonalizationSummary(item);
+
+        if (!imageEntries.length) {
+            return summaryMarkup;
+        }
+
+        return `${summaryMarkup}${imageEntries.map((entry) => {
+            if (entry.kind === "upload" && entry.storageKey) {
+                return `
+                    <div class="cart-drawer-personalization-thumb" data-personalization-storage-key="${escapeHtml(entry.storageKey)}" hidden></div>
+                `;
+            }
+
+            if (entry.imageUrl) {
+                return `
+                    <div class="cart-drawer-personalization-thumb">
+                        <img src="${escapeHtml(entry.imageUrl)}" alt="${escapeHtml(`Imagem de ${entry.label}`)}">
+                    </div>
+                `;
+            }
+
+            return "";
+        }).join("")}`;
+    }
+
+    function encodeCartItemState(item = {}) {
+        try {
+            const serializableState = {
+                selectedVariations: Array.isArray(item.selectedVariations) ? item.selectedVariations : [],
+                personalizationName: String(item.personalizationName || ""),
+                personalizationPreviews: Array.isArray(item.personalizationPreviews) ? item.personalizationPreviews : []
+            };
+
+            return window.btoa(unescape(encodeURIComponent(JSON.stringify(serializableState))));
+        } catch (_error) {
+            return "";
+        }
+    }
+
+    function buildCartItemProductUrl(item = {}) {
+        const slug = encodeURIComponent(item.slug || "");
+        const state = encodeCartItemState(item);
+
+        if (!state) {
+            return `/produto/${slug}`;
+        }
+
+        return `/produto/${slug}?cartState=${encodeURIComponent(state)}`;
     }
 
     const drawerMarkup = `
@@ -201,31 +343,40 @@
             </div>
             <div class="cart-drawer-footer">
                 <section class="cart-drawer-shipping" id="cartDrawerShippingBlock">
-                    <div class="cart-drawer-shipping-header">
-                        <strong>Frete do carrinho</strong>
-                        <span>Calcule para todos os itens juntos.</span>
+                    <button type="button" class="cart-drawer-shipping-toggle" id="cartDrawerShippingToggle" aria-expanded="false">
+                        <span class="cart-drawer-shipping-toggle-copy">
+                            <strong>Calcular frete</strong>
+                            <span>Calcule para todos os itens juntos.</span>
+                        </span>
+                        <span class="cart-drawer-shipping-toggle-icon">+</span>
+                    </button>
+                    <div class="cart-drawer-shipping-panel" id="cartDrawerShippingPanel" hidden>
+                        <div class="cart-drawer-shipping-form">
+                            <input type="text" id="cartDrawerZipCode" inputmode="numeric" autocomplete="postal-code" placeholder="Digite seu CEP">
+                            <button type="button" id="cartDrawerShippingButton">Calcular frete</button>
+                        </div>
+                        <p class="cart-drawer-shipping-feedback" id="cartDrawerShippingFeedback" hidden></p>
+                        <div class="cart-drawer-shipping-options" id="cartDrawerShippingOptions" hidden></div>
                     </div>
-                    <div class="cart-drawer-shipping-form">
-                        <input type="text" id="cartDrawerZipCode" inputmode="numeric" autocomplete="postal-code" placeholder="Digite seu CEP">
-                        <button type="button" id="cartDrawerShippingButton">Calcular frete</button>
-                    </div>
-                    <p class="cart-drawer-shipping-feedback" id="cartDrawerShippingFeedback" hidden></p>
-                    <div class="cart-drawer-shipping-options" id="cartDrawerShippingOptions" hidden></div>
                 </section>
-                <div class="cart-drawer-summary">
-                    <span>Subtotal</span>
-                    <strong id="cartDrawerSubtotal">R$ 0,00</strong>
-                </div>
-                <div class="cart-drawer-summary cart-drawer-summary-secondary">
-                    <span>Frete estimado</span>
-                    <strong id="cartDrawerShippingTotal">Calcule</strong>
-                </div>
-                <div class="cart-drawer-summary cart-drawer-summary-total">
-                    <span>Total estimado</span>
-                    <strong id="cartDrawerGrandTotal">R$ 0,00</strong>
+                <div class="cart-drawer-summary-card">
+                    <div class="cart-drawer-summary">
+                        <span>Subtotal</span>
+                        <strong id="cartDrawerSubtotal">R$ 0,00</strong>
+                    </div>
+                    <div class="cart-drawer-summary cart-drawer-summary-secondary">
+                        <span>Frete estimado</span>
+                        <strong id="cartDrawerShippingTotal">Calcule</strong>
+                    </div>
+                    <div class="cart-drawer-summary cart-drawer-summary-total">
+                        <span>Total estimado</span>
+                        <strong id="cartDrawerGrandTotal">R$ 0,00</strong>
+                    </div>
                 </div>
                 <div class="cart-drawer-buttons">
                     <button type="button" class="cart-drawer-checkout" id="cartDrawerCheckout">Fazer pedido</button>
+                </div>
+                <div class="cart-drawer-secondary-actions">
                     <button type="button" class="cart-drawer-clear" id="cartDrawerClear">Limpar carrinho</button>
                 </div>
             </div>
@@ -246,6 +397,8 @@
     const clearButton = document.getElementById("cartDrawerClear");
     const checkoutButton = document.getElementById("cartDrawerCheckout");
     const shippingBlock = document.getElementById("cartDrawerShippingBlock");
+    const shippingToggle = document.getElementById("cartDrawerShippingToggle");
+    const shippingPanel = document.getElementById("cartDrawerShippingPanel");
     const shippingInput = document.getElementById("cartDrawerZipCode");
     const shippingButton = document.getElementById("cartDrawerShippingButton");
     const shippingFeedback = document.getElementById("cartDrawerShippingFeedback");
@@ -256,6 +409,24 @@
     let selectedShippingOption = null;
     let lastQuotedZipCode = "";
     let lastQuotedCartSignature = "";
+    let isShippingPanelOpen = false;
+
+    function setShippingPanelOpen(isOpen) {
+        isShippingPanelOpen = Boolean(isOpen);
+
+        if (shippingPanel) {
+            shippingPanel.hidden = !isShippingPanelOpen;
+        }
+
+        if (shippingToggle) {
+            shippingToggle.setAttribute("aria-expanded", isShippingPanelOpen ? "true" : "false");
+            const icon = shippingToggle.querySelector(".cart-drawer-shipping-toggle-icon");
+
+            if (icon) {
+                icon.textContent = isShippingPanelOpen ? "-" : "+";
+            }
+        }
+    }
 
     async function hydrateCartDrawerPersonalizationThumbs() {
         const previewNodes = Array.from(itemsContainer.querySelectorAll("[data-personalization-storage-key]"));
@@ -356,6 +527,7 @@
             return;
         }
 
+        setShippingPanelOpen(true);
         shippingOptionsElement.hidden = false;
         shippingOptionsElement.innerHTML = availableShippingOptions.map((option) => {
             const optionId = String(option.serviceId || "");
@@ -365,7 +537,7 @@
                 <button type="button" class="cart-drawer-shipping-option ${isSelected ? "is-selected" : ""}" data-shipping-option-id="${escapeHtml(optionId)}">
                     <div>
                         <strong>${escapeHtml(option.company || "Correios")} - ${escapeHtml(option.name || "Frete")}</strong>
-                        <span>${escapeHtml(String(option.deliveryTime || 0))} dia(s) úteis</span>
+                        <span>${escapeHtml(`${String(option.deliveryTime || 0)} dia(s) úteis`)}</span>
                     </div>
                     <strong>${escapeHtml(formatCurrency(option.price || 0))}</strong>
                 </button>
@@ -412,6 +584,7 @@
             clearButton.disabled = true;
             shippingTotalElement.textContent = "Calcule";
             grandTotalElement.textContent = formatCurrency(0);
+            setShippingPanelOpen(false);
             renderShippingOptions();
             return;
         }
@@ -422,13 +595,12 @@
         revokePersonalizationPreviewUrls();
 
         itemsContainer.innerHTML = items.map((item) => {
-            const productUrl = `/produto/${encodeURIComponent(item.slug || "")}`;
+            const productUrl = buildCartItemProductUrl(item);
             const imageUrl = escapeHtml(item.imageUrl || "/img/tabua-produto01.webp");
             const name = escapeHtml(item.name || "Produto");
             const cartKey = escapeHtml(item.cartKey || item.slug || "");
-            const personalizationName = escapeHtml(item.personalizationName || "");
-            const personalizationImageKind = escapeHtml(item.personalizationImageKind || "");
-
+            const personalizationName = "";
+            const personalizationImageKind = "";
             return `
                 <article class="cart-drawer-item" data-cart-key="${cartKey}">
                     <a href="${productUrl}">
@@ -577,6 +749,12 @@
 
     if (shippingButton) {
         shippingButton.addEventListener("click", calculateCartShipping);
+    }
+
+    if (shippingToggle) {
+        shippingToggle.addEventListener("click", () => {
+            setShippingPanelOpen(!isShippingPanelOpen);
+        });
     }
 
     cartTriggers.forEach((trigger) => {

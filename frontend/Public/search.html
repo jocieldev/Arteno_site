@@ -138,16 +138,91 @@
             <p class="search-subtitle" id="searchSummary">Buscando produtos...</p>
         </section>
 
-        <section class="search-results-section">
-            <div class="produtos-grid search-results-grid" id="searchResultsGrid">
-                <div class="search-skeleton-card"><div class="site-skeleton site-skeleton--image search-skeleton-thumb"></div><div class="site-skeleton site-skeleton--text search-skeleton-line"></div><div class="site-skeleton site-skeleton--text search-skeleton-line"></div><div class="site-skeleton site-skeleton--text search-skeleton-line"></div></div>
-                <div class="search-skeleton-card"><div class="site-skeleton site-skeleton--image search-skeleton-thumb"></div><div class="site-skeleton site-skeleton--text search-skeleton-line"></div><div class="site-skeleton site-skeleton--text search-skeleton-line"></div><div class="site-skeleton site-skeleton--text search-skeleton-line"></div></div>
-                <div class="search-skeleton-card"><div class="site-skeleton site-skeleton--image search-skeleton-thumb"></div><div class="site-skeleton site-skeleton--text search-skeleton-line"></div><div class="site-skeleton site-skeleton--text search-skeleton-line"></div><div class="site-skeleton site-skeleton--text search-skeleton-line"></div></div>
-                <div class="search-skeleton-card"><div class="site-skeleton site-skeleton--image search-skeleton-thumb"></div><div class="site-skeleton site-skeleton--text search-skeleton-line"></div><div class="site-skeleton site-skeleton--text search-skeleton-line"></div><div class="site-skeleton site-skeleton--text search-skeleton-line"></div></div>
-                <div class="search-skeleton-card"><div class="site-skeleton site-skeleton--image search-skeleton-thumb"></div><div class="site-skeleton site-skeleton--text search-skeleton-line"></div><div class="site-skeleton site-skeleton--text search-skeleton-line"></div><div class="site-skeleton site-skeleton--text search-skeleton-line"></div></div>
-                <div class="search-skeleton-card"><div class="site-skeleton site-skeleton--image search-skeleton-thumb"></div><div class="site-skeleton site-skeleton--text search-skeleton-line"></div><div class="site-skeleton site-skeleton--text search-skeleton-line"></div><div class="site-skeleton site-skeleton--text search-skeleton-line"></div></div>
-            </div>
-            <p class="search-empty-state" id="searchEmptyState" hidden>Nenhum produto foi encontrado para essa busca.</p>
+        <section class="search-layout">
+            <div class="product-filters-backdrop" id="searchFiltersBackdrop" hidden></div>
+
+            <aside class="search-filters-sidebar">
+                <button type="button" class="mobile-filters-trigger" id="searchOpenFiltersButton">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Filtrar</span>
+                </button>
+
+                <form class="product-filters" id="searchFiltersForm">
+                    <div class="product-filters-mobile-top">
+                        <div>
+                            <p class="product-filters-kicker">Refinar busca</p>
+                            <h2>Filtros</h2>
+                        </div>
+                        <button type="button" class="product-filters-close" id="searchCloseFiltersButton" aria-label="Fechar filtros">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <div class="product-filters-grid">
+                        <label class="product-filter-field">
+                            <span>Categoria</span>
+                            <select id="searchCategoryFilter" name="category">
+                                <option value="">Todas</option>
+                            </select>
+                        </label>
+
+                        <label class="product-filter-field">
+                            <span>Preço mínimo</span>
+                            <input type="number" id="searchMinPriceFilter" name="minPrice" min="0" step="0.01" placeholder="0,00">
+                        </label>
+
+                        <label class="product-filter-field">
+                            <span>Preço máximo</span>
+                            <input type="number" id="searchMaxPriceFilter" name="maxPrice" min="0" step="0.01" placeholder="0,00">
+                        </label>
+
+                        <label class="product-filter-field">
+                            <span>Ordenar por</span>
+                            <select id="searchSortFilter" name="sort">
+                                <option value="">Mais recentes</option>
+                                <option value="price_asc">Menor preço</option>
+                                <option value="price_desc">Maior preço</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div class="product-filters-toggle-row">
+                        <label class="product-filter-check">
+                            <input type="checkbox" id="searchPersonalizableFilter" name="personalizable">
+                            <span>Personalizável</span>
+                        </label>
+                    </div>
+
+                    <div class="product-filters-actions">
+                        <button type="submit" class="product-filters-apply">Aplicar filtros</button>
+                        <button type="button" class="product-filters-clear" id="searchClearFiltersButton">Limpar</button>
+                    </div>
+                </form>
+            </aside>
+
+            <section class="search-results-section">
+                <div class="filters-toolbar">
+                    <button type="button" class="mobile-filters-trigger mobile-filters-trigger-inline" id="searchOpenFiltersInlineButton">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span>Filtrar</span>
+                    </button>
+                </div>
+
+                <div class="active-filters-bar" id="searchActiveFiltersBar" hidden>
+                    <div class="active-filters-chips" id="searchActiveFiltersChips"></div>
+                    <button type="button" class="active-filters-clear-all" id="searchClearAllChipsButton">Limpar filtros</button>
+                </div>
+
+                <div class="produtos-grid search-results-grid" id="searchResultsGrid">
+                <div class="search-skeleton-card"><div class="site-skeleton site-skeleton--image search-skeleton-thumb"></div><div class="search-skeleton-copy"><div class="site-skeleton site-skeleton--text search-skeleton-line search-skeleton-line--title"></div><div class="site-skeleton site-skeleton--text search-skeleton-line search-skeleton-line--title"></div></div><div class="search-skeleton-meta"><div class="site-skeleton site-skeleton--text search-skeleton-price"></div><div class="site-skeleton site-skeleton--text search-skeleton-installment"></div><div class="site-skeleton search-skeleton-button"></div></div></div>
+                <div class="search-skeleton-card"><div class="site-skeleton site-skeleton--image search-skeleton-thumb"></div><div class="search-skeleton-copy"><div class="site-skeleton site-skeleton--text search-skeleton-line search-skeleton-line--title"></div><div class="site-skeleton site-skeleton--text search-skeleton-line search-skeleton-line--title"></div></div><div class="search-skeleton-meta"><div class="site-skeleton site-skeleton--text search-skeleton-price"></div><div class="site-skeleton site-skeleton--text search-skeleton-installment"></div><div class="site-skeleton search-skeleton-button"></div></div></div>
+                <div class="search-skeleton-card"><div class="site-skeleton site-skeleton--image search-skeleton-thumb"></div><div class="search-skeleton-copy"><div class="site-skeleton site-skeleton--text search-skeleton-line search-skeleton-line--title"></div><div class="site-skeleton site-skeleton--text search-skeleton-line search-skeleton-line--title"></div></div><div class="search-skeleton-meta"><div class="site-skeleton site-skeleton--text search-skeleton-price"></div><div class="site-skeleton site-skeleton--text search-skeleton-installment"></div><div class="site-skeleton search-skeleton-button"></div></div></div>
+                <div class="search-skeleton-card"><div class="site-skeleton site-skeleton--image search-skeleton-thumb"></div><div class="search-skeleton-copy"><div class="site-skeleton site-skeleton--text search-skeleton-line search-skeleton-line--title"></div><div class="site-skeleton site-skeleton--text search-skeleton-line search-skeleton-line--title"></div></div><div class="search-skeleton-meta"><div class="site-skeleton site-skeleton--text search-skeleton-price"></div><div class="site-skeleton site-skeleton--text search-skeleton-installment"></div><div class="site-skeleton search-skeleton-button"></div></div></div>
+                <div class="search-skeleton-card"><div class="site-skeleton site-skeleton--image search-skeleton-thumb"></div><div class="search-skeleton-copy"><div class="site-skeleton site-skeleton--text search-skeleton-line search-skeleton-line--title"></div><div class="site-skeleton site-skeleton--text search-skeleton-line search-skeleton-line--title"></div></div><div class="search-skeleton-meta"><div class="site-skeleton site-skeleton--text search-skeleton-price"></div><div class="site-skeleton site-skeleton--text search-skeleton-installment"></div><div class="site-skeleton search-skeleton-button"></div></div></div>
+                <div class="search-skeleton-card"><div class="site-skeleton site-skeleton--image search-skeleton-thumb"></div><div class="search-skeleton-copy"><div class="site-skeleton site-skeleton--text search-skeleton-line search-skeleton-line--title"></div><div class="site-skeleton site-skeleton--text search-skeleton-line search-skeleton-line--title"></div></div><div class="search-skeleton-meta"><div class="site-skeleton site-skeleton--text search-skeleton-price"></div><div class="site-skeleton site-skeleton--text search-skeleton-installment"></div><div class="site-skeleton search-skeleton-button"></div></div></div>
+                </div>
+                <p class="search-empty-state" id="searchEmptyState" hidden>Nenhum produto foi encontrado para essa busca.</p>
+            </section>
         </section>
     </main>
 

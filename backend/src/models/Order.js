@@ -208,6 +208,133 @@ const orderItemSchema = new mongoose.Schema(
             type: Number,
             default: 100
         },
+        personalizationPreviews: [
+            {
+                name: {
+                    type: String,
+                    default: "Prévia",
+                    trim: true
+                },
+                textValue: {
+                    type: String,
+                    default: "",
+                    trim: true
+                },
+                imageUrl: {
+                    type: String,
+                    default: ""
+                },
+                textBaseXPercent: {
+                    type: Number,
+                    default: 50
+                },
+                textBaseYPercent: {
+                    type: Number,
+                    default: 50
+                },
+                textWidthPercent: {
+                    type: Number,
+                    default: 60
+                },
+                textFontSizePx: {
+                    type: Number,
+                    default: 28
+                },
+                referenceWidthPx: {
+                    type: Number,
+                    default: 0
+                },
+                textColor: {
+                    type: String,
+                    default: "#ffffff"
+                },
+                textFontFamily: {
+                    type: String,
+                    default: "'Georgia', 'Times New Roman', serif"
+                },
+                textFontWeight: {
+                    type: String,
+                    default: "700"
+                },
+                textTransform: {
+                    type: String,
+                    default: "uppercase"
+                },
+                letterSpacingEm: {
+                    type: Number,
+                    default: 0.04
+                },
+                textShadow: {
+                    type: String,
+                    default: "0 2px 10px rgba(0, 0, 0, 0.35)"
+                },
+                textRotationDeg: {
+                    type: Number,
+                    default: 0
+                },
+                textOffsetXPercent: {
+                    type: Number,
+                    default: 0
+                },
+                textOffsetYPercent: {
+                    type: Number,
+                    default: 0
+                },
+                textScalePercent: {
+                    type: Number,
+                    default: 100
+                },
+                overlayImageUrl: {
+                    type: String,
+                    default: ""
+                },
+                overlayImagePublicId: {
+                    type: String,
+                    default: ""
+                },
+                overlayImageKind: {
+                    type: String,
+                    default: "",
+                    trim: true
+                },
+                overlayBaseXPercent: {
+                    type: Number,
+                    default: 50
+                },
+                overlayBaseYPercent: {
+                    type: Number,
+                    default: 50
+                },
+                overlayBaseMaxWidthPercent: {
+                    type: Number,
+                    default: 34
+                },
+                overlayBaseMaxHeightPercent: {
+                    type: Number,
+                    default: 34
+                },
+                overlayBaseRotationDeg: {
+                    type: Number,
+                    default: 0
+                },
+                overlayImageIsRound: {
+                    type: Boolean,
+                    default: false
+                },
+                overlayImageOffsetXPercent: {
+                    type: Number,
+                    default: 0
+                },
+                overlayImageOffsetYPercent: {
+                    type: Number,
+                    default: 0
+                },
+                overlayImageScalePercent: {
+                    type: Number,
+                    default: 100
+                }
+            }
+        ],
         imageUrl: {
             type: String,
             default: ""
@@ -447,6 +574,28 @@ const orderSchema = new mongoose.Schema(
             deliveryTime: {
                 type: Number,
                 default: 0
+            },
+            dispatchDays: {
+                type: Number,
+                default: 0
+            },
+            distanceKm: {
+                type: Number,
+                default: 0
+            },
+            estimatedDurationMinutes: {
+                type: Number,
+                default: 0
+            },
+            deliveryWindowLabel: {
+                type: String,
+                default: "",
+                trim: true
+            },
+            originLabel: {
+                type: String,
+                default: "",
+                trim: true
             },
             melhorEnvioCartId: {
                 type: String,

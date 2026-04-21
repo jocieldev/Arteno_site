@@ -4,7 +4,8 @@ const {
     getAdminOrderById,
     updateAdminOrderStatus,
     purchaseAdminOrderShipping,
-    downloadAdminOrderLabel
+    downloadAdminOrderLabel,
+    deleteAdminOrder
 } = require("../controllers/adminOrderController");
 
 const router = express.Router();
@@ -14,5 +15,6 @@ router.get("/:id", getAdminOrderById);
 router.get("/:id/melhor-envio/label", downloadAdminOrderLabel);
 router.post("/:id/melhor-envio/purchase", purchaseAdminOrderShipping);
 router.patch("/:id/status", updateAdminOrderStatus);
+router.delete("/:id", deleteAdminOrder);
 
 module.exports = router;

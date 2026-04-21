@@ -3,6 +3,7 @@ const adminSidebarClose = document.getElementById("adminSidebarClose");
 const adminMobileOverlay = document.getElementById("adminMobileOverlay");
 const feedbackBox = document.getElementById("adminOrderDetailFeedback");
 const detailShell = document.getElementById("adminOrderDetailShell");
+const orderDeleteButton = document.getElementById("adminOrderDeleteButton");
 const orderNumberElement = document.getElementById("adminOrderNumber");
 const orderMetaElement = document.getElementById("adminOrderMeta");
 const orderStatusPill = document.getElementById("adminOrderStatusPill");
@@ -14,9 +15,14 @@ const orderShippingElement = document.getElementById("adminOrderShipping");
 const orderShipmentInfoElement = document.getElementById("adminOrderShipmentInfo");
 const orderPurchaseShippingButton = document.getElementById("adminOrderPurchaseShippingButton");
 const orderDownloadLabelButton = document.getElementById("adminOrderDownloadLabelButton");
+const orderLocalDeliveryCard = document.getElementById("adminOrderLocalDeliveryCard");
+const orderMarkOutForDeliveryButton = document.getElementById("adminOrderMarkOutForDeliveryButton");
+const orderMarkDeliveredButton = document.getElementById("adminOrderMarkDeliveredButton");
 const orderItemsList = document.getElementById("adminOrderItemsList");
 let orderStatusSaveRequestInFlight = false;
 let orderPurchaseShippingRequestInFlight = false;
+let orderDeleteRequestInFlight = false;
+let currentOrder = null;
 
 function setButtonLoading(button, isLoading, loadingText) {
     if (!(button instanceof HTMLElement)) {
@@ -127,6 +133,24 @@ function getStatusMeta(value = "payment_confirmed") {
     return ORDER_STATUS_META[value] || ORDER_STATUS_META.payment_confirmed;
 }
 
+function buildPersonalizationImageFileName(item = {}, itemIndex = 0) {
+    const safeOrderNumber = String(currentOrder?.orderNumber || "pedido")
+        .trim()
+        .replace(/[^a-zA-Z0-9-_]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        || "pedido";
+    const safeItemName = String(item.name || `item-${itemIndex + 1}`)
+        .trim()
+        .replace(/[^a-zA-Z0-9-_]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        || `item-${itemIndex + 1}`;
+    const url = String(item.personalizationImageUrl || "");
+    const extensionMatch = url.match(/\.([a-zA-Z0-9]+)(?:[?#]|$)/);
+    const extension = extensionMatch ? extensionMatch[1].toLowerCase() : "png";
+
+    return `${safeOrderNumber}-${safeItemName}-personalizacao.${extension}`;
+}
+
 function renderListItem(label, value) {
     return `
         <div class="admin-order-detail-row">
@@ -155,64 +179,142 @@ function syncPreviewTextScale() {
     });
 }
 
-function renderPersonalizationDetails(item = {}) {
+async function downloadPersonalizationImage(imageUrl, fileName) {
+    if (!imageUrl) {
+        throw new Error("Esta imagem de personalizacao nao esta disponivel para download.");
+    }
+
+    const response = await fetch(imageUrl, {
+        credentials: "omit"
+    });
+
+    if (!response.ok) {
+        throw new Error("Nao foi possivel baixar a imagem da personalizacao.");
+    }
+
+    const imageBlob = await response.blob();
+    const objectUrl = window.URL.createObjectURL(imageBlob);
+    const downloadLink = document.createElement("a");
+
+    downloadLink.href = objectUrl;
+    downloadLink.download = fileName || "personalizacao.png";
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    downloadLink.remove();
+
+    window.setTimeout(() => {
+        window.URL.revokeObjectURL(objectUrl);
+    }, 1000);
+}
+
+function appendPersonalizationDownloadButtons(items = []) {
+    if (!(orderItemsList instanceof HTMLElement)) {
+        return;
+    }
+
+    const personalizationBlocks = orderItemsList.querySelectorAll(".admin-order-detail-personalization-media");
+
+    personalizationBlocks.forEach((block, itemIndex) => {
+        const item = Array.isArray(items) ? items[itemIndex] : null;
+
+        if (!item?.personalizationImageUrl || block.querySelector(".admin-order-download-personalization-button")) {
+            return;
+        }
+
+        const downloadButton = document.createElement("button");
+        downloadButton.type = "button";
+        downloadButton.className = "admin-secondary-button admin-order-download-personalization-button";
+        downloadButton.dataset.personalizationImageUrl = String(item.personalizationImageUrl || "");
+        downloadButton.dataset.personalizationImageName = buildPersonalizationImageFileName(item, itemIndex);
+        downloadButton.textContent = item.personalizationImageKind === "upload"
+            ? "Baixar imagem enviada pelo cliente"
+            : "Baixar imagem da personalizacao";
+        block.appendChild(downloadButton);
+    });
+}
+
+function renderPersonalizationDetails(item = {}, itemIndex = 0) {
     const details = [];
-    const hasPreviewCanvas = Boolean(item.personalizationPreviewImageUrl);
     const hasPersonalizationImage = Boolean(item.personalizationImageUrl);
     const personalizationImageLabel = item.personalizationImageKind === "upload"
         ? "Imagem enviada pelo cliente"
         : "Imagem escolhida na personalizacao";
-    const previewText = item.personalizationName
-        ? (item.personalizationPreviewTextTransform === "none" ? item.personalizationName : item.personalizationName.toUpperCase())
-        : "";
-    const previewTextLeft = Number(item.personalizationPreviewTextBaseXPercent || 50) + Number(item.personalizationTextOffsetXPercent || 0);
-    const previewTextTop = Number(item.personalizationPreviewTextBaseYPercent || 50) + Number(item.personalizationTextOffsetYPercent || 0);
-    const previewImageLeft = Number(item.personalizationImageBaseXPercent || 50) + Number(item.personalizationImageOffsetXPercent || 0);
-    const previewImageTop = Number(item.personalizationImageBaseYPercent || 50) + Number(item.personalizationImageOffsetYPercent || 0);
-    const previewImageWidth = Number(item.personalizationImageBaseMaxWidthPercent || 34) * (Number(item.personalizationImageScalePercent || 100) / 100);
-    const previewImageHeight = Number(item.personalizationImageBaseMaxHeightPercent || 34) * (Number(item.personalizationImageScalePercent || 100) / 100);
+    const personalizationPreviews = Array.isArray(item.personalizationPreviews) && item.personalizationPreviews.length
+        ? item.personalizationPreviews
+        : (item.personalizationPreviewImageUrl ? [{
+            name: "Prévia",
+            imageUrl: item.personalizationPreviewImageUrl,
+            textBaseXPercent: item.personalizationPreviewTextBaseXPercent,
+            textBaseYPercent: item.personalizationPreviewTextBaseYPercent,
+            textWidthPercent: item.personalizationPreviewTextWidthPercent,
+            textFontSizePx: item.personalizationPreviewTextFontSizePx,
+            referenceWidthPx: item.personalizationPreviewReferenceWidthPx,
+            textColor: item.personalizationPreviewTextColor,
+            textFontFamily: item.personalizationPreviewTextFontFamily,
+            textFontWeight: item.personalizationPreviewTextFontWeight,
+            textTransform: item.personalizationPreviewTextTransform,
+            letterSpacingEm: item.personalizationPreviewLetterSpacingEm,
+            textShadow: item.personalizationPreviewTextShadow,
+            textRotationDeg: item.personalizationPreviewTextRotationDeg,
+            textOffsetXPercent: item.personalizationTextOffsetXPercent,
+            textOffsetYPercent: item.personalizationTextOffsetYPercent,
+            textScalePercent: item.personalizationTextScalePercent,
+            overlayImageUrl: item.personalizationImageUrl,
+            overlayImagePublicId: item.personalizationImagePublicId,
+            overlayImageKind: item.personalizationImageKind,
+            overlayBaseXPercent: item.personalizationImageBaseXPercent,
+            overlayBaseYPercent: item.personalizationImageBaseYPercent,
+            overlayBaseMaxWidthPercent: item.personalizationImageBaseMaxWidthPercent,
+            overlayBaseMaxHeightPercent: item.personalizationImageBaseMaxHeightPercent,
+            overlayBaseRotationDeg: item.personalizationImageBaseRotationDeg,
+            overlayImageIsRound: item.personalizationImageIsRound,
+            overlayImageOffsetXPercent: item.personalizationImageOffsetXPercent,
+            overlayImageOffsetYPercent: item.personalizationImageOffsetYPercent,
+            overlayImageScalePercent: item.personalizationImageScalePercent
+        }] : []);
 
-    if (hasPreviewCanvas) {
-        details.push(`
+    if (personalizationPreviews.length) {
+        details.push(personalizationPreviews.map((preview) => `
+            ${preview.name ? `<strong>${escapeHtml(preview.name)}</strong>` : ""}
             <div class="admin-order-preview-canvas">
-                <img src="${escapeHtml(item.personalizationPreviewImageUrl)}" alt="Prévia do produto personalizado" class="admin-order-preview-base">
-                ${hasPersonalizationImage ? `
+                <img src="${escapeHtml(preview.imageUrl)}" alt="Prévia do produto personalizado" class="admin-order-preview-base">
+                ${preview.overlayImageUrl ? `
                     <img
-                        src="${escapeHtml(item.personalizationImageUrl)}"
+                        src="${escapeHtml(preview.overlayImageUrl)}"
                         alt="Imagem escolhida na personalização"
                         class="admin-order-preview-overlay"
                         style="
-                            left:${previewImageLeft}%;
-                            top:${previewImageTop}%;
-                            max-width:${previewImageWidth}%;
-                            max-height:${previewImageHeight}%;
-                            border-radius:${item.personalizationImageIsRound ? "50%" : "0"};
-                            transform:translate(-50%, -50%) rotate(${Number(item.personalizationImageBaseRotationDeg || 0)}deg);
+                            left:${Number(preview.overlayBaseXPercent || 50) + Number(preview.overlayImageOffsetXPercent || 0)}%;
+                            top:${Number(preview.overlayBaseYPercent || 50) + Number(preview.overlayImageOffsetYPercent || 0)}%;
+                            max-width:${Number(preview.overlayBaseMaxWidthPercent || 34) * (Number(preview.overlayImageScalePercent || 100) / 100)}%;
+                            max-height:${Number(preview.overlayBaseMaxHeightPercent || 34) * (Number(preview.overlayImageScalePercent || 100) / 100)}%;
+                            border-radius:${preview.overlayImageIsRound ? "50%" : "0"};
+                            transform:translate(-50%, -50%) rotate(${Number(preview.overlayBaseRotationDeg || 0)}deg);
                         "
                     >
                 ` : ""}
-                ${previewText ? `
+                ${item.personalizationName ? `
                     <div
                         class="admin-order-preview-text"
                         style="
-                            left:${previewTextLeft}%;
-                            top:${previewTextTop}%;
-                            width:${Number(item.personalizationPreviewTextWidthPercent || 60)}%;
-                            color:${escapeHtml(item.personalizationPreviewTextColor || "#ffffff")};
-                            font-family:${escapeHtml(item.personalizationPreviewTextFontFamily || "'Georgia', 'Times New Roman', serif")};
-                            font-weight:${escapeHtml(item.personalizationPreviewTextFontWeight || "700")};
-                            text-transform:${escapeHtml(item.personalizationPreviewTextTransform || "uppercase")};
-                            text-shadow:${escapeHtml(item.personalizationPreviewTextShadow || "0 2px 10px rgba(0, 0, 0, 0.35)")};
-                            transform:translate(-50%, -50%) rotate(${Number(item.personalizationPreviewTextRotationDeg || 0)}deg);
+                            left:${Number(preview.textBaseXPercent || 50) + Number(preview.textOffsetXPercent || 0)}%;
+                            top:${Number(preview.textBaseYPercent || 50) + Number(preview.textOffsetYPercent || 0)}%;
+                            width:${Number(preview.textWidthPercent || 60)}%;
+                            color:${escapeHtml(preview.textColor || "#ffffff")};
+                            font-family:${escapeHtml(preview.textFontFamily || "'Georgia', 'Times New Roman', serif")};
+                            font-weight:${escapeHtml(preview.textFontWeight || "700")};
+                            text-transform:${escapeHtml(preview.textTransform || "uppercase")};
+                            text-shadow:${escapeHtml(preview.textShadow || "0 2px 10px rgba(0, 0, 0, 0.35)")};
+                            transform:translate(-50%, -50%) rotate(${Number(preview.textRotationDeg || 0)}deg);
                         "
-                        data-base-font-size="${Number(item.personalizationPreviewTextFontSizePx || 28)}"
-                        data-reference-width="${Number(item.personalizationPreviewReferenceWidthPx || 0)}"
-                        data-scale-percent="${Number(item.personalizationTextScalePercent || 100)}"
-                        data-letter-spacing-em="${Number(item.personalizationPreviewLetterSpacingEm ?? 0.04)}"
-                    >${escapeHtml(previewText)}</div>
+                        data-base-font-size="${Number(preview.textFontSizePx || 28)}"
+                        data-reference-width="${Number(preview.referenceWidthPx || 0)}"
+                        data-scale-percent="${Number(preview.textScalePercent || 100)}"
+                        data-letter-spacing-em="${Number(preview.letterSpacingEm ?? 0.04)}"
+                    >${escapeHtml(preview.textTransform === "none" ? item.personalizationName : item.personalizationName.toUpperCase())}</div>
                 ` : ""}
             </div>
-        `);
+        `).join(""));
     }
 
     if (item.personalizationName) {
@@ -251,6 +353,7 @@ function renderPersonalizationDetails(item = {}) {
 }
 
 function renderOrder(order) {
+    currentOrder = order;
     const statusMeta = getStatusMeta(order.orderStatus);
 
     if (orderNumberElement) {
@@ -310,27 +413,43 @@ function renderOrder(order) {
     }
 
     if (orderShipmentInfoElement) {
+        const isMotoboy = order.shippingIntegration?.provider === "motoboy";
         orderShipmentInfoElement.innerHTML = [
-            renderListItem("Status da etiqueta", order.shippingIntegration?.status || "Ainda não gerada"),
+            renderListItem(isMotoboy ? "Status da entrega local" : "Status da etiqueta", order.shippingIntegration?.status || "Ainda não gerada"),
+            renderListItem("Provider", isMotoboy ? "Motoboy" : "Melhor Envio"),
             renderListItem("Serviço", order.shippingIntegration?.serviceName || "-"),
             renderListItem("Transportadora", order.shippingIntegration?.companyName || "-"),
             renderListItem("Custo do frete", formatCurrency(order.shippingIntegration?.quotePrice || 0)),
             renderListItem("Prazo estimado", order.shippingIntegration?.deliveryTime ? `${Number(order.shippingIntegration.deliveryTime)} dia(s)` : "-"),
-            renderListItem("ID Melhor Envio", order.shippingIntegration?.melhorEnvioCartId || "-")
+            renderListItem("Distância", order.shippingIntegration?.distanceKm ? `${Number(order.shippingIntegration.distanceKm).toFixed(2)} km` : "-"),
+            renderListItem("Origem", order.shippingIntegration?.originLabel || "-"),
+            renderListItem(isMotoboy ? "Janela operacional" : "ID Melhor Envio", isMotoboy ? (order.shippingIntegration?.deliveryWindowLabel || order.shippingIntegration?.payload?.notes || "-") : (order.shippingIntegration?.melhorEnvioCartId || "-"))
         ].join("");
     }
 
     if (orderPurchaseShippingButton) {
-        orderPurchaseShippingButton.disabled = !order.shippingIntegration?.serviceId;
+        const isMotoboy = order.shippingIntegration?.provider === "motoboy";
+        orderPurchaseShippingButton.disabled = !order.shippingIntegration?.serviceId || isMotoboy;
+        orderPurchaseShippingButton.hidden = isMotoboy;
     }
 
     if (orderDownloadLabelButton) {
+        const isMotoboy = order.shippingIntegration?.provider === "motoboy";
         const hasGeneratedLabel = Boolean(order.shippingIntegration?.melhorEnvioCartId || order.shippingIntegration?.melhorEnvioOrderId);
-        orderDownloadLabelButton.disabled = !hasGeneratedLabel;
+        orderDownloadLabelButton.disabled = isMotoboy ? false : !hasGeneratedLabel;
+        orderDownloadLabelButton.hidden = false;
+        orderDownloadLabelButton.textContent = isMotoboy
+            ? "Baixar PDF do motoboy"
+            : "Baixar / imprimir PDF da etiqueta";
+    }
+
+    if (orderLocalDeliveryCard) {
+        const isMotoboy = order.shippingIntegration?.provider === "motoboy";
+        orderLocalDeliveryCard.hidden = !isMotoboy;
     }
 
     if (orderItemsList) {
-        orderItemsList.innerHTML = (order.items || []).map((item) => `
+        orderItemsList.innerHTML = (order.items || []).map((item, itemIndex) => `
             <article class="admin-order-item-card">
                 <div class="admin-order-item-main">
                     <img src="${escapeHtml(item.imageUrl || "/img/tabua-produto01.webp")}" alt="${escapeHtml(item.name || "Produto")}" class="admin-order-item-image">
@@ -341,11 +460,12 @@ function renderOrder(order) {
                     </div>
                 </div>
                 <div class="admin-order-item-details">
-                    ${renderPersonalizationDetails(item) || '<div class="admin-order-detail-note">Sem personalização registrada para este item.</div>'}
+                    ${renderPersonalizationDetails(item, itemIndex) || '<div class="admin-order-detail-note">Sem personalização registrada para este item.</div>'}
                 </div>
             </article>
         `).join("");
 
+        appendPersonalizationDownloadButtons(order.items || []);
         syncPreviewTextScale();
     }
 
@@ -400,6 +520,30 @@ async function updateOrderStatus(orderId, orderStatus, trackingCode) {
     return result;
 }
 
+async function saveLocalDeliveryStatus(nextStatus, successMessage, loadingButton, loadingText) {
+    if (!currentOrderId || orderStatusSaveRequestInFlight) {
+        return;
+    }
+
+    orderStatusSaveRequestInFlight = true;
+    setButtonLoading(loadingButton, true, loadingText);
+
+    try {
+        const updatedOrder = await updateOrderStatus(
+            currentOrderId,
+            nextStatus,
+            orderTrackingCodeInput ? orderTrackingCodeInput.value : ""
+        );
+        renderOrder(updatedOrder);
+        showFeedback(successMessage, "success");
+    } catch (error) {
+        showFeedback(error.message, "error");
+    } finally {
+        orderStatusSaveRequestInFlight = false;
+        setButtonLoading(loadingButton, false, loadingText);
+    }
+}
+
 async function purchaseOrderShipping(orderId) {
     const response = await fetch(`/api/admin/orders/${orderId}/melhor-envio/purchase`, {
         method: "POST",
@@ -418,6 +562,26 @@ async function purchaseOrderShipping(orderId) {
 
     if (!response.ok) {
         throw new Error(result.message || "Não foi possível comprar o frete deste pedido.");
+    }
+
+    return result;
+}
+
+async function deleteOrder(orderId) {
+    const response = await fetch(`/api/admin/orders/${encodeURIComponent(orderId)}`, {
+        method: "DELETE",
+        credentials: "same-origin"
+    });
+
+    if (response.status === 401) {
+        window.location.href = "/admin/login";
+        return null;
+    }
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.message || "Não foi possível excluir este pedido.");
     }
 
     return result;
@@ -530,6 +694,80 @@ if (orderDownloadLabelButton) {
         }
 
         downloadOrderLabel(currentOrderId);
+    });
+}
+
+if (orderDeleteButton) {
+    orderDeleteButton.addEventListener("click", async () => {
+        if (!currentOrderId || orderDeleteRequestInFlight) {
+            return;
+        }
+
+        const confirmed = window.confirm("Deseja excluir este pedido permanentemente? Esta ação remove as informações e as imagens vinculadas.");
+
+        if (!confirmed) {
+            return;
+        }
+
+        orderDeleteRequestInFlight = true;
+        setButtonLoading(orderDeleteButton, true, "Excluindo...");
+
+        try {
+            const result = await deleteOrder(currentOrderId);
+            showFeedback(result.message || "Pedido excluído com sucesso.", "success");
+            window.location.href = "/admin/orders";
+        } catch (error) {
+            showFeedback(error.message, "error");
+        } finally {
+            orderDeleteRequestInFlight = false;
+            setButtonLoading(orderDeleteButton, false, "Excluindo...");
+        }
+    });
+}
+
+if (orderMarkOutForDeliveryButton) {
+    orderMarkOutForDeliveryButton.addEventListener("click", async () => {
+        await saveLocalDeliveryStatus(
+            "shipped",
+            "Pedido marcado como saiu para entrega.",
+            orderMarkOutForDeliveryButton,
+            "Atualizando..."
+        );
+    });
+}
+
+if (orderMarkDeliveredButton) {
+    orderMarkDeliveredButton.addEventListener("click", async () => {
+        await saveLocalDeliveryStatus(
+            "delivered",
+            "Pedido marcado como entregue.",
+            orderMarkDeliveredButton,
+            "Salvando..."
+        );
+    });
+}
+
+if (orderItemsList) {
+    orderItemsList.addEventListener("click", async (event) => {
+        const downloadButton = event.target instanceof Element
+            ? event.target.closest(".admin-order-download-personalization-button")
+            : null;
+
+        if (!(downloadButton instanceof HTMLButtonElement)) {
+            return;
+        }
+
+        const imageUrl = downloadButton.dataset.personalizationImageUrl || "";
+        const fileName = downloadButton.dataset.personalizationImageName || "personalizacao.png";
+
+        try {
+            setButtonLoading(downloadButton, true, "Baixando...");
+            await downloadPersonalizationImage(imageUrl, fileName);
+        } catch (error) {
+            showFeedback(error.message || "Nao foi possivel baixar a imagem da personalizacao.", "error");
+        } finally {
+            setButtonLoading(downloadButton, false, "Baixando...");
+        }
     });
 }
 

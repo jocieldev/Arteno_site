@@ -186,12 +186,21 @@ function buildProductCard(product, { slide = false } = {}) {
     const productUrl = escapeHtml(getProductUrl(product));
     const name = escapeHtml(product.name || "");
     const price = formatCurrency(product.price);
+    const rawPrice = Number(product.price || 0);
+    const rawCompareAtPrice = Number(product.compareAtPrice || 0);
+    const discountPercent = rawCompareAtPrice > rawPrice && rawPrice > 0
+        ? Math.round(((rawCompareAtPrice - rawPrice) / rawCompareAtPrice) * 100)
+        : 0;
     const compareAtPrice = product.compareAtPrice ? `<span class="price-compare">${formatCurrency(product.compareAtPrice)}</span>` : "";
+    const discountBadge = discountPercent > 0
+        ? `<span class="product-discount-badge">${discountPercent}% OFF</span>`
+        : "";
     const installmentQuantity = product.installments?.quantity || 1;
     const installmentValue = product.installments?.value || product.price || 0;
 
     const cardMarkup = `
         <div class="produto-content item js-product-card" data-product-url="${productUrl}" role="link" tabindex="0" aria-label="Abrir produto ${name}">
+            ${discountBadge}
             <a href="${productUrl}">
                 <img src="${imageUrl}" alt="${name}">
             </a>

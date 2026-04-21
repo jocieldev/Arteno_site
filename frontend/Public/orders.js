@@ -192,49 +192,47 @@ function getOrderItemsCount(order) {
     return (order.items || []).reduce((sum, item) => sum + Number(item.quantity || 0), 0);
 }
 
-function getCartKeyForOrderItem(item = {}) {
-    const slug = String(item.slug || "").trim();
-    const personalizationName = String(item.personalizationName || "").trim();
-    const variationKey = Array.isArray(item.selectedVariations)
-        ? item.selectedVariations
-            .map((variation) => `${variation.variationId || variation.variationName}:${variation.itemId || variation.itemLabel}:${variation.price ?? ""}`)
-            .sort()
-            .join("|")
-        : "";
-
-    return [slug, variationKey, personalizationName].filter(Boolean).join("::");
+function getNormalizedPersonalizationPreviews(item = {}) {
+    return (Array.isArray(item.personalizationPreviews) ? item.personalizationPreviews : [])
+        .map((preview = {}, index) => ({
+            name: String(preview.name || `PrÃ©via ${index + 1}`).trim() || `PrÃ©via ${index + 1}`,
+            textValue: String(preview.textValue || item.personalizationName || "").trim(),
+            overlayImageKind: String(preview.overlayImageKind || "").trim(),
+            overlayImageUrl: String(preview.overlayImageUrl || "").trim(),
+            overlayImageStorageKey: String(preview.overlayImageStorageKey || "").trim()
+        }))
+        .filter((preview) => (
+            preview.textValue
+            || preview.overlayImageKind
+            || preview.overlayImageUrl
+            || preview.overlayImageStorageKey
+        ));
 }
 
-function mapOrderItemToCartItem(item = {}) {
-    return {
-        cartKey: getCartKeyForOrderItem(item),
-        slug: String(item.slug || "").trim(),
-        name: item.name || "Produto",
-        selectedVariations: Array.isArray(item.selectedVariations) ? item.selectedVariations : [],
-        personalizationName: item.personalizationName || "",
-        price: Number(item.price || 0),
-        imageUrl: item.imageUrl || "/img/tabua-produto01.webp",
-        quantity: Number(item.quantity || 1)
-    };
-}
+function renderPersonalizationSummary(item = {}) {
+    const previews = getNormalizedPersonalizationPreviews(item);
 
-function addOrderItemsToCart(order) {
-    const items = getStoredCartItems();
+    if (previews.length) {
+        return previews.map((preview) => {
+            const details = [];
 
-    (order.items || []).forEach((orderItem) => {
-        const nextItem = mapOrderItemToCartItem(orderItem);
-        const existingItem = items.find((item) => String(item.cartKey || item.slug) === nextItem.cartKey);
+            if (preview.textValue) {
+                details.push(`Texto: ${preview.textValue}`);
+            }
 
-        if (existingItem) {
-            existingItem.quantity = Number(existingItem.quantity || 0) + Number(nextItem.quantity || 0);
-            return;
-        }
+            if (preview.overlayImageKind) {
+                details.push(`Imagem: ${preview.overlayImageKind === "upload" ? "enviada pelo cliente" : "selecionada"}`);
+            }
 
-        items.push(nextItem);
-    });
+            return `<p>${escapeHtml(preview.name)}: ${escapeHtml(details.join(" | ") || "Personalizado")}</p>`;
+        }).join("");
+    }
 
-    setStoredCartItems(items);
-    updateCartCount();
+    if (item.personalizationName) {
+        return `<p>PersonalizaÃ§Ã£o: ${escapeHtml(item.personalizationName)}</p>`;
+    }
+
+    return "";
 }
 
 function buildOrderItemRowMarkup(item = {}) {
@@ -248,7 +246,7 @@ function buildOrderItemRowMarkup(item = {}) {
                     <span>${escapeHtml(formatCurrency(item.price || 0))}</span>
                     <span>Qtd. ${escapeHtml(Number(item.quantity || 1))}</span>
                 </div>
-                ${item.personalizationName ? `<p>${escapeHtml(item.personalizationName)}</p>` : ""}
+                ${renderPersonalizationSummary(item)}
             </div>
         </div>
     `;
@@ -265,7 +263,7 @@ function buildOrderPreviewItemMarkup(item = {}) {
                     <span>${escapeHtml(formatCurrency(item.price || 0))}</span>
                     <span>Qtd. ${escapeHtml(Number(item.quantity || 1))}</span>
                 </div>
-                ${item.personalizationName ? `<p>${escapeHtml(item.personalizationName)}</p>` : ""}
+                ${renderPersonalizationSummary(item)}
             </div>
         </div>
     `;
@@ -460,8 +458,14 @@ if (accountOrdersList) {
                 return;
             }
 
-            addOrderItemsToCart(order);
-            showOrdersError("Itens adicionados ao carrinho novamente.", "success");
+            const firstItemSlug = String(order.items?.[0]?.slug || "").trim();
+
+            if (!firstItemSlug) {
+                showOrdersError("Nao foi possivel abrir o produto deste pedido.");
+                return;
+            }
+
+            window.location.href = `/produto/${encodeURIComponent(firstItemSlug)}`;
             return;
         }
 

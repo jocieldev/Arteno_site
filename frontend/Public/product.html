@@ -160,6 +160,11 @@
         </section>
 
         <div class="product-page-content" id="productPageContent" hidden>
+            <nav class="product-breadcrumb" id="productBreadcrumb" aria-label="Breadcrumb" hidden>
+                <a href="/">Início</a>
+                <span class="product-breadcrumb-separator" aria-hidden="true">/</span>
+                <span aria-current="page">Produto</span>
+            </nav>
             <section class="product-page-shell" id="productPageShell" hidden>
                 <div class="product-page-media-column">
                     <div class="product-gallery">
@@ -232,6 +237,7 @@
                                     <span class="product-page-field-label">Prévia da gravação</span>
                                     <span class="product-page-personalization-note">Veja uma simulação de como o nome pode aparecer no produto.</span>
                                 </div>
+                                <div class="product-page-preview-tabs" id="productPersonalizationPreviewTabs" hidden></div>
                                 <div class="product-page-personalization-preview-canvas">
                                     <img src="" alt="Prévia do produto personalizado" id="productPersonalizationPreviewImage">
                                     <img src="" alt="" id="productPersonalizationOverlayImage" class="product-page-personalization-overlay-image" hidden>
