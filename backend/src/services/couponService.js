@@ -103,14 +103,14 @@ async function previewCouponApplication(code, subtotal) {
     return buildAppliedCouponSnapshot(coupon, subtotal);
 }
 
-async function markCouponAsUsed(couponId) {
+async function markCouponAsUsed(couponId, usedAt = new Date()) {
     if (!couponId) {
         return;
     }
 
     await Coupon.findByIdAndUpdate(couponId, {
         $inc: { usageCount: 1 },
-        $set: { lastUsedAt: new Date() }
+        $set: { lastUsedAt: usedAt }
     });
 }
 

@@ -66,8 +66,7 @@ async function quoteMotoboyOption({ zipCode, orderSubtotal = 0 }) {
         estimatedDurationMinutes: route.durationMinutes,
         operatingDaysLabel,
         deliveryWindowLabel,
-        originLabel: settings.originLabel || "",
-        notes: settings.notes || ""
+        originLabel: settings.originLabel || ""
     };
 }
 

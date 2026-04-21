@@ -1,5 +1,5 @@
 const express = require("express");
-const { createCheckoutOrder, getCheckoutPublicConfig, previewCheckoutCoupon, uploadCheckoutPersonalizationImage } = require("../controllers/checkoutController");
+const { createCheckoutOrder, getCheckoutPublicConfig, previewCheckoutCoupon, uploadCheckoutPersonalizationImage } = require("../controllers/checkoutMercadoPagoController");
 const attachCurrentUser = require("../middleware/attachCurrentUser");
 const uploadPersonalizationImage = require("../middleware/uploadPersonalizationImage");
 

@@ -395,6 +395,10 @@ const productSchema = new mongoose.Schema(
             ]
         },
         shipping: {
+            allowMotoboy: {
+                type: Boolean,
+                default: true
+            },
             productionDays: {
                 type: Number,
                 default: 0,

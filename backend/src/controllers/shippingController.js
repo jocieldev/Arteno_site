@@ -33,6 +33,10 @@ function getProductProductionDays(product) {
     return normalizeQuantity(product?.shipping?.productionDays, 0);
 }
 
+function allowsMotoboyShipping(product) {
+    return product?.shipping?.allowMotoboy !== false;
+}
+
 function hasValidShippingProfile(profile) {
     return Boolean(
         profile.weightKg
@@ -170,8 +174,7 @@ async function buildSameZipMotoboyOption(orderSubtotal, productionDays) {
             deliveryWindowLabel: settings.sameDayEnabled && settings.sameDayCutoffTime
                 ? `Pedidos finalizados ate ${settings.sameDayCutoffTime} podem sair no mesmo dia util depois de prontos.`
                 : "",
-            originLabel: settings.originLabel || "",
-            notes: settings.notes || ""
+            originLabel: settings.originLabel || ""
         }, productionDays);
     } catch (error) {
         console.error("Motoboy indisponivel para CEP igual ao da origem:", error.message);
@@ -271,6 +274,7 @@ async function buildCheckoutProductsPayload(items = []) {
     let totalQuantity = 0;
     let referencePrice = 0;
     let productionDays = 0;
+    let allowMotoboy = true;
 
     for (const { product, quantity } of resolvedItems) {
         const productId = String(product._id);
@@ -300,13 +304,15 @@ async function buildCheckoutProductsPayload(items = []) {
         totalQuantity += quantity;
         referencePrice += Number(product.price || 0) * quantity;
         productionDays = Math.max(productionDays, getProductProductionDays(product));
+        allowMotoboy = allowMotoboy && allowsMotoboyShipping(product);
     }
 
     return {
         payloadProducts,
         totalQuantity,
         referencePrice: Number(referencePrice.toFixed(2)),
-        productionDays
+        productionDays,
+        allowMotoboy
     };
 }
 
@@ -337,6 +343,7 @@ async function quoteShipping(req, res) {
         }
 
         const { shippingProfile, products } = buildProductsPayload(product, quantity);
+        const canUseMotoboy = allowsMotoboyShipping(product);
 
         if (!hasValidShippingProfile(shippingProfile)) {
             return res.status(400).json({
@@ -348,10 +355,10 @@ async function quoteShipping(req, res) {
             const productionDays = getProductProductionDays(product);
 
             if (await isOriginZipCode(zipCode)) {
-                const sameZipMotoboyOption = await buildSameZipMotoboyOption(
+                const sameZipMotoboyOption = canUseMotoboy ? await buildSameZipMotoboyOption(
                     Number(product?.price || 0) * quantity,
                     productionDays
-                );
+                ) : null;
 
                 return res.json({
                     zipCode,
@@ -363,11 +370,11 @@ async function quoteShipping(req, res) {
                 });
             }
 
-            const motoboyOption = await buildMotoboyOption(
+            const motoboyOption = canUseMotoboy ? await buildMotoboyOption(
                 zipCode,
                 Number(product?.price || 0) * quantity,
                 productionDays
-            );
+            ) : null;
 
             return res.json({
                 zipCode,
@@ -387,10 +394,10 @@ async function quoteShipping(req, res) {
         }
 
         if (await isOriginZipCode(zipCode)) {
-            const sameZipMotoboyOption = await buildSameZipMotoboyOption(
+            const sameZipMotoboyOption = canUseMotoboy ? await buildSameZipMotoboyOption(
                 Number(product?.price || 0) * quantity,
                 getProductProductionDays(product)
-            );
+            ) : null;
 
             return res.json({
                 zipCode,
@@ -412,11 +419,11 @@ async function quoteShipping(req, res) {
             .map(mapShippingOption)
             .map((option) => enrichShippingOption(option, getProductProductionDays(product)))
             .sort((left, right) => left.price - right.price);
-        const motoboyOption = await buildMotoboyOption(
+        const motoboyOption = canUseMotoboy ? await buildMotoboyOption(
             zipCode,
             Number(product?.price || 0) * quantity,
             getProductProductionDays(product)
-        );
+        ) : null;
 
         return res.json({
             zipCode,
@@ -453,11 +460,11 @@ async function quoteCheckoutShipping(req, res) {
             });
         }
 
-        const { payloadProducts, totalQuantity, referencePrice, productionDays } = await buildCheckoutProductsPayload(items);
+        const { payloadProducts, totalQuantity, referencePrice, productionDays, allowMotoboy } = await buildCheckoutProductsPayload(items);
 
         if (shouldUseDemoShippingMode()) {
             if (await isOriginZipCode(zipCode)) {
-                const sameZipMotoboyOption = await buildSameZipMotoboyOption(referencePrice, productionDays);
+                const sameZipMotoboyOption = allowMotoboy ? await buildSameZipMotoboyOption(referencePrice, productionDays) : null;
 
                 return res.json({
                     zipCode,
@@ -467,7 +474,7 @@ async function quoteCheckoutShipping(req, res) {
                 });
             }
 
-            const motoboyOption = await buildMotoboyOption(zipCode, referencePrice, productionDays);
+            const motoboyOption = allowMotoboy ? await buildMotoboyOption(zipCode, referencePrice, productionDays) : null;
 
             return res.json({
                 zipCode,
@@ -488,7 +495,7 @@ async function quoteCheckoutShipping(req, res) {
         }
 
         if (await isOriginZipCode(zipCode)) {
-            const sameZipMotoboyOption = await buildSameZipMotoboyOption(referencePrice, productionDays);
+            const sameZipMotoboyOption = allowMotoboy ? await buildSameZipMotoboyOption(referencePrice, productionDays) : null;
 
             return res.json({
                 zipCode,
@@ -508,7 +515,7 @@ async function quoteCheckoutShipping(req, res) {
             .map(mapShippingOption)
             .map((option) => enrichShippingOption(option, productionDays))
             .sort((left, right) => left.price - right.price);
-        const motoboyOption = await buildMotoboyOption(zipCode, referencePrice, productionDays);
+        const motoboyOption = allowMotoboy ? await buildMotoboyOption(zipCode, referencePrice, productionDays) : null;
 
         return res.json({
             zipCode,

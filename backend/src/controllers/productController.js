@@ -314,6 +314,9 @@ async function buildProductPayload(data) {
             previews: normalizePersonalizationPreviews(data)
         },
         shipping: {
+            allowMotoboy: data.shippingAllowMotoboy === undefined
+                ? true
+                : normalizeBoolean(data.shippingAllowMotoboy),
             productionDays: normalizeIntegerNumber(data.shippingProductionDays, 0),
             weightKg: normalizePositiveDecimal(data.shippingWeightKg, 0),
             lengthCm: normalizePositiveDecimal(data.shippingLengthCm, 0),

@@ -98,7 +98,6 @@ function getDefaultMotoboySettings() {
         sameDayCutoffTime: "",
         estimatedDeliveryHours: 4,
         operatingDays: [...DEFAULT_OPERATING_DAYS],
-        notes: "",
         coordinates: {
             latitude: 0,
             longitude: 0,
@@ -139,7 +138,6 @@ function normalizeMotoboySettingsPayload(payload = {}) {
         sameDayCutoffTime: normalizeTime(payload.sameDayCutoffTime),
         estimatedDeliveryHours: Math.max(1, normalizeNonNegativeInteger(payload.estimatedDeliveryHours, 4)),
         operatingDays: normalizeOperatingDays(payload.operatingDays),
-        notes: normalizeText(payload.notes),
         coordinates: normalizeCoordinates(coordinates)
     };
 }

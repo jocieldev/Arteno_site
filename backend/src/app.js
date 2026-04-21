@@ -18,6 +18,7 @@ const adminMessageRoutes = require("./routes/adminMessageRoutes");
 const adminCouponRoutes = require("./routes/adminCouponRoutes");
 const ContactMessage = require("./models/ContactMessage");
 const { handleMelhorEnvioWebhook } = require("./controllers/melhorEnvioWebhookController");
+const { handleMercadoPagoWebhook } = require("./controllers/mercadoPagoWebhookController");
 const {
     buildLogoutCookie,
     buildSessionCookie,
@@ -155,6 +156,7 @@ app.use("/api/admin/integrations", requireAdminAuth, adminIntegrationRoutes);
 app.use("/api/admin/motoboy", requireAdminAuth, adminMotoboyRoutes);
 app.use("/api/admin/site-settings", requireAdminAuth, adminSiteSettingRoutes);
 app.post("/api/integrations/melhor-envio/webhook", handleMelhorEnvioWebhook);
+app.post("/api/integrations/mercado-pago/webhook", handleMercadoPagoWebhook);
 
 app.get("/", (_req, res) => {
     sendHtmlFile(res, "index.html");

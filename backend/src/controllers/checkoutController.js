@@ -1,6 +1,13 @@
 const Order = require("../models/Order");
+const Product = require("../models/Product");
 const { previewCouponApplication, markCouponAsUsed } = require("../services/couponService");
 const { cloudinary, ensureCloudinaryConfig } = require("../config/cloudinary");
+const {
+    buildMercadoPagoPublicConfig,
+    createMercadoPagoPayment,
+    isMercadoPagoReady,
+    mapMercadoPagoStatusToOrderStatus
+} = require("../services/mercadoPagoService");
 
 const ORDER_STATUS_LABELS = {
     payment_pending: "Pagamento pendente",
@@ -42,6 +49,136 @@ function normalizeQuantity(value) {
     return Number.isInteger(normalized) && normalized > 0 ? normalized : 1;
 }
 
+async function resolveCheckoutItemsFromCatalog(items = []) {
+    const serializedItems = Array.isArray(items) ? items.map(serializeItem) : [];
+    const productIds = Array.from(new Set(serializedItems.map((item) => normalizeText(item.productId)).filter(Boolean)));
+    const slugs = Array.from(new Set(serializedItems.map((item) => normalizeText(item.slug)).filter(Boolean)));
+
+    if (!serializedItems.length) {
+        return [];
+    }
+
+    const filters = [];
+
+    if (productIds.length) {
+        filters.push({ _id: { $in: productIds } });
+    }
+
+    if (slugs.length) {
+        filters.push({ slug: { $in: slugs } });
+    }
+
+    const products = await Product.find(filters.length === 1 ? filters[0] : { $or: filters });
+    const productById = new Map(products.map((product) => [String(product._id), product]));
+    const productBySlug = new Map(products.map((product) => [normalizeText(product.slug), product]));
+
+    return serializedItems.map((item) => {
+        const product = (item.productId && productById.get(normalizeText(item.productId)))
+            || (item.slug && productBySlug.get(normalizeText(item.slug)));
+
+        if (!product || product.isActive === false || product.status === "draft") {
+            const error = new Error(`O produto "${item.name || item.slug || "Produto"}" não está disponível para compra.`);
+            error.status = 400;
+            throw error;
+        }
+
+        let variationPriceDelta = 0;
+        const authoritativeVariations = item.selectedVariations.map((selectedVariation = {}) => {
+            const productVariation = (Array.isArray(product.variations) ? product.variations : []).find((variation) => (
+                normalizeText(variation.id) === normalizeText(selectedVariation.variationId)
+                || normalizeText(variation.name) === normalizeText(selectedVariation.variationName)
+            ));
+
+            if (!productVariation) {
+                const error = new Error(`A variação "${selectedVariation.variationName || "Variação"}" não foi encontrada no produto "${product.name}".`);
+                error.status = 400;
+                throw error;
+            }
+
+            const productVariationItem = (Array.isArray(productVariation.items) ? productVariation.items : []).find((variationItem) => (
+                normalizeText(variationItem.id) === normalizeText(selectedVariation.itemId)
+                || normalizeText(variationItem.label) === normalizeText(selectedVariation.itemLabel)
+            ));
+
+            if (!productVariationItem) {
+                const error = new Error(`A opção "${selectedVariation.itemLabel || "Selecionada"}" não existe mais no produto "${product.name}".`);
+                error.status = 400;
+                throw error;
+            }
+
+            const variationPrice = productVariationItem.price === null || productVariationItem.price === undefined
+                ? null
+                : normalizePrice(productVariationItem.price);
+
+            if (variationPrice !== null) {
+                variationPriceDelta += variationPrice;
+            }
+
+            return {
+                variationId: normalizeText(productVariation.id),
+                variationType: normalizeText(productVariation.type),
+                variationName: normalizeText(productVariation.name),
+                itemId: normalizeText(productVariationItem.id),
+                itemLabel: normalizeText(productVariationItem.label),
+                colorHex: normalizeText(productVariationItem.colorHex),
+                price: variationPrice,
+                imageUrl: normalizeText(productVariationItem.imageUrl),
+                previewImageUrl: normalizeText(productVariationItem.previewImageUrl)
+            };
+        });
+
+        const unitPrice = Number((normalizePrice(product.price) + variationPriceDelta).toFixed(2));
+
+        return {
+            ...item,
+            productId: String(product._id),
+            slug: normalizeText(product.slug),
+            name: normalizeText(product.name),
+            imageUrl: normalizeText(item.imageUrl || product.imageUrl),
+            selectedVariations: authoritativeVariations,
+            price: unitPrice,
+            lineTotal: Number((unitPrice * normalizeQuantity(item.quantity)).toFixed(2))
+        };
+    });
+}
+
+function extractMercadoPagoResultDetails(paymentResponse = {}) {
+    const transactionData = paymentResponse.point_of_interaction?.transaction_data || {};
+    const barcode = paymentResponse.barcode || {};
+
+    return {
+        mercadoPagoPaymentId: paymentResponse.id || "",
+        paymentMethodId: paymentResponse.payment_method_id || "",
+        ticketUrl: paymentResponse.transaction_details?.external_resource_url || "",
+        qrCode: transactionData.qr_code || "",
+        qrCodeBase64: transactionData.qr_code_base64 || "",
+        boletoLine: barcode.content || transactionData.barcode_content || "",
+        expiresAt: paymentResponse.date_of_expiration || "",
+        paidAt: paymentResponse.date_approved || "",
+        statusDetail: paymentResponse.status_detail || "",
+        message: paymentResponse.status === "approved"
+            ? "Pagamento aprovado pelo Mercado Pago."
+            : paymentResponse.status === "pending"
+                ? "Pagamento criado. Aguarde a confirmação pelo Mercado Pago."
+                : "O Mercado Pago retornou uma atualização para esta compra."
+    };
+}
+
+function mapMercadoPagoPaymentMethod(paymentResponse = {}, fallbackMethod = "") {
+    const paymentMethodId = normalizeText(paymentResponse.payment_method_id || fallbackMethod).toLowerCase();
+    const paymentTypeId = normalizeText(paymentResponse.payment_type_id).toLowerCase();
+
+    if (paymentMethodId === "pix" || paymentTypeId === "bank_transfer") {
+        return "pix";
+    }
+
+    if (paymentMethodId.startsWith("bol") || paymentTypeId === "ticket") {
+        return "boleto";
+    }
+
+    return "card";
+}
+
 function normalizeShippingOption(option = {}) {
     const serviceId = normalizeText(option.serviceId || option.id);
 
@@ -56,8 +193,7 @@ function normalizeShippingOption(option = {}) {
         distanceKm: normalizeSignedNumber(option.distanceKm, 0),
         estimatedDurationMinutes: normalizeQuantity(option.estimatedDurationMinutes || 0, 0),
         deliveryWindowLabel: normalizeText(option.deliveryWindowLabel),
-        originLabel: normalizeText(option.originLabel),
-        notes: normalizeText(option.notes)
+        originLabel: normalizeText(option.originLabel)
     };
 }
 
@@ -289,6 +425,7 @@ function serializeItem(item = {}) {
 
     return {
         cartKey: normalizeText(item.cartKey),
+        productId: normalizeText(item.productId || item._id),
         slug: normalizeText(item.slug),
         selectedVariations: normalizeSelectedVariations(item.selectedVariations),
         name: normalizeText(item.name) || "Produto",
@@ -518,9 +655,7 @@ async function createCheckoutOrder(req, res) {
                 status: shippingOption.provider === "motoboy" ? "awaiting_dispatch" : "customer_selected",
                 purchasedAt: null,
                 labelGeneratedAt: null,
-                payload: {
-                    notes: shippingOption.notes
-                }
+                payload: {}
             },
             payment: {
                 provider: "mercado_pago",
