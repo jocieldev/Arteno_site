@@ -238,10 +238,43 @@ app.post("/admin/login", (req, res) => {
     return res.redirect("/admin");
 });
 
+app.post("/api/admin/session/login", (req, res) => {
+    const { username = "", password = "" } = req.body;
+    const configError = getAdminConfigError();
+
+    if (configError) {
+        return res.status(500).json({
+            message: configError,
+            code: "config"
+        });
+    }
+
+    if (!validateAdminCredentials(username.trim(), password)) {
+        return res.status(401).json({
+            message: "Usuario ou senha invalidos. Tente novamente.",
+            code: "invalid"
+        });
+    }
+
+    const sessionToken = createAdminSession();
+    res.setHeader("Set-Cookie", buildSessionCookie(sessionToken));
+    return res.json({
+        ok: true
+    });
+});
+
 app.post("/admin/logout", (req, res) => {
     revokeAdminSession(req);
     res.setHeader("Set-Cookie", buildLogoutCookie());
     return res.redirect("/admin/login");
+});
+
+app.post("/api/admin/session/logout", (req, res) => {
+    revokeAdminSession(req);
+    res.setHeader("Set-Cookie", buildLogoutCookie());
+    return res.json({
+        ok: true
+    });
 });
 
 app.get("/admin/logout", (req, res) => {

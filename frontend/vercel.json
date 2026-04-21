@@ -5,12 +5,84 @@
       "destination": "https://artenosite-production.up.railway.app/api/:path*"
     },
     {
+      "source": "/admin/logout",
+      "destination": "https://artenosite-production.up.railway.app/admin/logout"
+    },
+    {
+      "source": "/admin/integrations/melhor-envio/callback",
+      "destination": "https://artenosite-production.up.railway.app/admin/integrations/melhor-envio/callback"
+    },
+    {
       "source": "/admin",
-      "destination": "https://artenosite-production.up.railway.app/admin"
+      "destination": "/Public/admin/index.html"
+    },
+    {
+      "source": "/admin/login",
+      "destination": "/Public/admin/login.html"
+    },
+    {
+      "source": "/admin/products/new",
+      "destination": "/Public/admin/index.html"
+    },
+    {
+      "source": "/admin/products/:id/edit",
+      "destination": "/Public/admin/index.html"
+    },
+    {
+      "source": "/admin/categories",
+      "destination": "/Public/admin/categories.html"
+    },
+    {
+      "source": "/admin/categories/new",
+      "destination": "/Public/admin/categories.html"
+    },
+    {
+      "source": "/admin/categories/:id/edit",
+      "destination": "/Public/admin/categories.html"
+    },
+    {
+      "source": "/admin/orders",
+      "destination": "/Public/admin/orders.html"
+    },
+    {
+      "source": "/admin/orders/:id",
+      "destination": "/Public/admin/order-detail.html"
+    },
+    {
+      "source": "/admin/messages",
+      "destination": "/Public/admin/messages.html"
+    },
+    {
+      "source": "/admin/coupons",
+      "destination": "/Public/admin/coupons.html"
+    },
+    {
+      "source": "/admin/coupons/new",
+      "destination": "/Public/admin/coupon-form.html"
+    },
+    {
+      "source": "/admin/coupons/:id/edit",
+      "destination": "/Public/admin/coupon-form.html"
+    },
+    {
+      "source": "/admin/coupons/:id",
+      "destination": "/Public/admin/coupon-detail.html"
+    },
+    {
+      "source": "/admin/integrations",
+      "destination": "/Public/admin/integrations.html"
+    },
+    {
+      "source": "/admin/motoboy",
+      "destination": "/Public/admin/motoboy.html"
+    },
+    {
+      "source": "/admin/settings",
+      "destination": "/Public/admin/settings.html"
     },
     {
       "source": "/admin/:path*",
-      "destination": "https://artenosite-production.up.railway.app/admin/:path*"
+      "destination": "/Public/admin/:path*"
     },
     {
       "source": "/",

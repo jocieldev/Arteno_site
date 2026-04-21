@@ -224,14 +224,51 @@ if (passwordInput && passwordToggle) {
 }
 
 if (adminAuthForm && adminAuthSubmitButton) {
-    adminAuthForm.addEventListener("submit", (event) => {
+    adminAuthForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
         if (adminLoginRequestInFlight) {
-            event.preventDefault();
             return;
         }
 
         adminLoginRequestInFlight = true;
         setButtonLoading(adminAuthSubmitButton, true, "Entrando...");
+
+        if (alertBox) {
+            alertBox.hidden = true;
+            alertBox.textContent = "";
+        }
+
+        try {
+            const formData = new FormData(adminAuthForm);
+            const payload = {
+                username: String(formData.get("username") || "").trim(),
+                password: String(formData.get("password") || "")
+            };
+            const response = await fetch("/api/admin/session/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                credentials: "same-origin",
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(result.message || "Nao foi possivel entrar no painel.");
+            }
+
+            window.location.href = "/admin";
+        } catch (error) {
+            if (alertBox) {
+                alertBox.textContent = error.message || "Nao foi possivel entrar no painel.";
+                alertBox.hidden = false;
+            }
+
+            adminLoginRequestInFlight = false;
+            setButtonLoading(adminAuthSubmitButton, false, "Entrando...");
+        }
     });
 }
 
