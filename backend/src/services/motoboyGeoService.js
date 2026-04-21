@@ -42,6 +42,13 @@ function normalizeZipCode(value = "") {
     return String(value || "").replace(/\D/g, "").slice(0, 8);
 }
 
+function formatZipCode(value = "") {
+    const normalized = normalizeZipCode(value);
+    return normalized.length === 8
+        ? `${normalized.slice(0, 5)}-${normalized.slice(5)}`
+        : normalized;
+}
+
 function joinAddressParts(parts = []) {
     return parts
         .map((part) => normalizeText(part))
@@ -130,6 +137,7 @@ async function tryGeocodeCandidates(candidates = [], notFoundMessage) {
 
 async function geocodeFromViaCep(zipCode, extraAddress = {}, notFoundMessage) {
     const normalizedZipCode = normalizeZipCode(zipCode);
+    const formattedZipCode = formatZipCode(normalizedZipCode);
 
     if (normalizedZipCode.length !== 8) {
         return null;
@@ -149,11 +157,15 @@ async function geocodeFromViaCep(zipCode, extraAddress = {}, notFoundMessage) {
         const state = normalizeText(extraAddress.state) || normalizeText(viaCepResponse.uf);
 
         return tryGeocodeCandidates([
-            joinAddressParts([street, number, neighborhood, city, state, normalizedZipCode, "Brasil"]),
-            joinAddressParts([street, neighborhood, city, state, normalizedZipCode, "Brasil"]),
-            joinAddressParts([street, city, state, normalizedZipCode, "Brasil"]),
-            joinAddressParts([neighborhood, city, state, normalizedZipCode, "Brasil"]),
-            joinAddressParts([city, state, normalizedZipCode, "Brasil"]),
+            joinAddressParts([street, number, neighborhood, city, state, formattedZipCode, "Brasil"]),
+            joinAddressParts([street, neighborhood, city, state, formattedZipCode, "Brasil"]),
+            joinAddressParts([street, city, state, formattedZipCode, "Brasil"]),
+            joinAddressParts([neighborhood, city, state, formattedZipCode, "Brasil"]),
+            joinAddressParts([street, city, state, "Brasil"]),
+            joinAddressParts([neighborhood, city, state, "Brasil"]),
+            joinAddressParts([city, state, formattedZipCode, "Brasil"]),
+            joinAddressParts([`CEP ${formattedZipCode}`, city, state, "Brasil"]),
+            joinAddressParts([formattedZipCode, city, state, "Brasil"]),
             joinAddressParts([city, state, "Brasil"])
         ], notFoundMessage);
     } catch (_error) {
@@ -186,6 +198,7 @@ async function geocodeMotoboyOrigin(origin = {}) {
 
 async function geocodePostalCode(zipCode = "") {
     const normalizedZipCode = String(zipCode || "").replace(/\D/g, "").slice(0, 8);
+    const formattedZipCode = formatZipCode(normalizedZipCode);
     const notFoundMessage = "Nao foi possivel localizar o CEP de destino no mapa para calcular o motoboy.";
 
     if (normalizedZipCode.length !== 8) {
@@ -201,6 +214,8 @@ async function geocodePostalCode(zipCode = "") {
     }
 
     return tryGeocodeCandidates([
+        joinAddressParts([`CEP ${formattedZipCode}`, "Brasil"]),
+        joinAddressParts([formattedZipCode, "Brasil"]),
         joinAddressParts([normalizedZipCode, "Brasil"])
     ], notFoundMessage);
 }
