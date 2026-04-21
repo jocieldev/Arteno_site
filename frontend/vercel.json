@@ -2,15 +2,15 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://arteno-site.onrender.com/api/:path*"
+      "destination": "https://artenosite-production.up.railway.app/api/:path*"
     },
     {
       "source": "/admin",
-      "destination": "https://arteno-site.onrender.com/admin"
+      "destination": "https://artenosite-production.up.railway.app/admin"
     },
     {
       "source": "/admin/:path*",
-      "destination": "https://arteno-site.onrender.com/admin/:path*"
+      "destination": "https://artenosite-production.up.railway.app/admin/:path*"
     },
     {
       "source": "/",
