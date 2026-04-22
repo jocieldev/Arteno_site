@@ -11,6 +11,38 @@ const {
 
 const STATE_COOKIE_NAME = "melhor_envio_oauth_state";
 
+function getFrontendBaseUrl(req) {
+    const configuredFrontendBaseUrl = String(process.env.FRONTEND_BASE_URL || "").trim().replace(/\/+$/, "");
+
+    if (configuredFrontendBaseUrl) {
+        return configuredFrontendBaseUrl;
+    }
+
+    const allowedCorsOrigins = String(process.env.CORS_ALLOWED_ORIGINS || "")
+        .split(",")
+        .map((origin) => origin.trim().replace(/\/+$/, ""))
+        .filter(Boolean);
+
+    if (allowedCorsOrigins.length) {
+        return allowedCorsOrigins[0];
+    }
+
+    return `${req.protocol}://${req.get("host")}`;
+}
+
+function buildFrontendAdminUrl(req, path, query = {}) {
+    const baseUrl = getFrontendBaseUrl(req);
+    const url = new URL(path, `${baseUrl}/`);
+
+    Object.entries(query).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+            url.searchParams.set(key, String(value));
+        }
+    });
+
+    return url.toString();
+}
+
 function buildStateCookie(value = "") {
     return [
         `${STATE_COOKIE_NAME}=${encodeURIComponent(value)}`,
@@ -104,22 +136,32 @@ async function handleMelhorEnvioCallback(req, res) {
     res.setHeader("Set-Cookie", clearStateCookie());
 
     if (returnedError) {
-        return res.redirect(`/admin/integrations?error=${encodeURIComponent(returnedError)}`);
+        return res.redirect(buildFrontendAdminUrl(req, "/admin/integrations", {
+            error: returnedError
+        }));
     }
 
     if (!returnedCode) {
-        return res.redirect("/admin/integrations?error=authorization_code_missing");
+        return res.redirect(buildFrontendAdminUrl(req, "/admin/integrations", {
+            error: "authorization_code_missing"
+        }));
     }
 
     if (!expectedState || expectedState !== returnedState) {
-        return res.redirect("/admin/integrations?error=state_invalid");
+        return res.redirect(buildFrontendAdminUrl(req, "/admin/integrations", {
+            error: "state_invalid"
+        }));
     }
 
     try {
         await exchangeAuthorizationCode(returnedCode);
-        return res.redirect("/admin/integrations?success=connected");
+        return res.redirect(buildFrontendAdminUrl(req, "/admin/integrations", {
+            success: "connected"
+        }));
     } catch (error) {
-        return res.redirect(`/admin/integrations?error=${encodeURIComponent(error.message || "oauth_failed")}`);
+        return res.redirect(buildFrontendAdminUrl(req, "/admin/integrations", {
+            error: error.message || "oauth_failed"
+        }));
     }
 }
 
