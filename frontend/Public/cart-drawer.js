@@ -673,7 +673,16 @@ function getNormalizedPersonalizationPreviews(item = {}) {
             renderCartDrawer();
 
             if (!availableShippingOptions.length) {
-                showShippingFeedback("Nenhuma opção de frete foi encontrada para este CEP.", "error");
+                const motoboyMessage = result?.diagnostics?.motoboy?.message;
+                const warnings = Array.isArray(result?.warnings) && result.warnings.length
+                    ? ` ${result.warnings.join(" ")}`
+                    : "";
+                showShippingFeedback(
+                    motoboyMessage
+                        ? `${motoboyMessage}${warnings}`
+                        : `Nenhuma opção de frete foi encontrada para este CEP.${warnings}`,
+                    "error"
+                );
                 return;
             }
 

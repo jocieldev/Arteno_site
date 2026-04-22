@@ -1290,7 +1290,16 @@ async function calculateShippingQuote() {
                 "success"
             );
         } else {
-            showShippingFeedback("Nenhuma opção de frete foi encontrada para este CEP.", "error");
+            const motoboyMessage = result?.diagnostics?.motoboy?.message;
+            const warnings = Array.isArray(result?.warnings) && result.warnings.length
+                ? ` ${result.warnings.join(" ")}`
+                : "";
+            showShippingFeedback(
+                motoboyMessage
+                    ? `${motoboyMessage}${warnings}`
+                    : `Nenhuma opção de frete foi encontrada para este CEP.${warnings}`,
+                "error"
+            );
         }
     } catch (error) {
         renderShippingOptions([]);

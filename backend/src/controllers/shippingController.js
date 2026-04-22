@@ -1,6 +1,6 @@
 const Product = require("../models/Product");
 const { quoteShipmentByProducts } = require("../services/melhorEnvioService");
-const { quoteMotoboyOption } = require("../services/motoboyService");
+const { quoteMotoboyOptionDetailed } = require("../services/motoboyService");
 const { getMelhorEnvioOAuthConfig } = require("../services/melhorEnvioOAuthService");
 const { getMotoboySettings } = require("../services/motoboySettingsService");
 
@@ -129,19 +129,25 @@ async function isOriginZipCode(zipCode) {
 
 async function buildMotoboyOption(zipCode, orderSubtotal, productionDays) {
     try {
-        const option = await quoteMotoboyOption({
+        const result = await quoteMotoboyOptionDetailed({
             zipCode,
             orderSubtotal
         });
 
-        if (!option) {
-            return null;
-        }
-
-        return enrichShippingOption(option, productionDays);
+        return {
+            option: result.option ? enrichShippingOption(result.option, productionDays) : null,
+            diagnostics: result.diagnostics || null
+        };
     } catch (error) {
         console.error("Motoboy indisponivel nesta consulta:", error.message);
-        return null;
+        return {
+            option: null,
+            diagnostics: {
+                available: false,
+                reasonCode: "motoboy_internal_error",
+                message: error.message || "Nao foi possivel calcular o motoboy."
+            }
+        };
     }
 }
 
@@ -150,35 +156,66 @@ async function buildSameZipMotoboyOption(orderSubtotal, productionDays) {
         const settings = await getMotoboySettings();
 
         if (!settings?.isReady) {
-            return null;
+            return {
+                option: null,
+                diagnostics: {
+                    available: false,
+                    reasonCode: "motoboy_not_ready",
+                    message: "A configuracao do motoboy ainda nao esta pronta para uso."
+                }
+            };
         }
 
         const normalizedSubtotal = Number(orderSubtotal || 0);
         const minimumOrderSubtotal = Number(settings.minimumOrderSubtotal || 0);
 
         if (normalizedSubtotal < minimumOrderSubtotal) {
-            return null;
+            return {
+                option: null,
+                diagnostics: {
+                    available: false,
+                    reasonCode: "below_minimum_order_subtotal",
+                    message: "O subtotal do pedido ficou abaixo do minimo configurado para o motoboy."
+                }
+            };
         }
 
-        return enrichShippingOption({
-            provider: "motoboy",
-            serviceId: "motoboy-local",
-            name: settings.serviceName || "Motoboy",
-            company: settings.companyName || "Entrega local",
-            price: Number(Number(settings.minimumFee || 0).toFixed(2)),
-            currency: "BRL",
-            deliveryTime: Math.max(1, Number(settings.transitDays || 1)),
-            dispatchDays: Math.max(0, Number(settings.dispatchDaysAfterReady || 0)),
-            distanceKm: 0,
-            estimatedDurationMinutes: 0,
-            deliveryWindowLabel: settings.sameDayEnabled && settings.sameDayCutoffTime
-                ? `Pedidos finalizados ate ${settings.sameDayCutoffTime} podem sair no mesmo dia util depois de prontos.`
-                : "",
-            originLabel: settings.originLabel || ""
-        }, productionDays);
+        return {
+            option: enrichShippingOption({
+                provider: "motoboy",
+                serviceId: "motoboy-local",
+                name: settings.serviceName || "Motoboy",
+                company: settings.companyName || "Entrega local",
+                price: Number(Number(settings.minimumFee || 0).toFixed(2)),
+                currency: "BRL",
+                deliveryTime: Math.max(1, Number(settings.transitDays || 1)),
+                dispatchDays: Math.max(0, Number(settings.dispatchDaysAfterReady || 0)),
+                distanceKm: 0,
+                distanceSource: "same_zip_origin",
+                estimatedDurationMinutes: 0,
+                deliveryWindowLabel: settings.sameDayEnabled && settings.sameDayCutoffTime
+                    ? `Pedidos finalizados ate ${settings.sameDayCutoffTime} podem sair no mesmo dia util depois de prontos.`
+                    : "",
+                originLabel: settings.originLabel || ""
+            }, productionDays),
+            diagnostics: {
+                available: true,
+                reasonCode: "same_zip_origin",
+                message: "Motoboy disponivel por CEP igual ao da origem.",
+                distanceKm: 0,
+                distanceSource: "same_zip_origin"
+            }
+        };
     } catch (error) {
         console.error("Motoboy indisponivel para CEP igual ao da origem:", error.message);
-        return null;
+        return {
+            option: null,
+            diagnostics: {
+                available: false,
+                reasonCode: "motoboy_same_zip_error",
+                message: error.message || "Nao foi possivel calcular o motoboy para CEP igual ao da origem."
+            }
+        };
     }
 }
 
@@ -232,7 +269,7 @@ async function resolveCheckoutProducts(items = []) {
     const slugs = Array.from(new Set(normalizedItems.map((item) => item.slug).filter(Boolean)));
 
     if (!productIds.length && !slugs.length) {
-        const error = new Error("Seu carrinho não possui produtos válidos para calcular o frete.");
+        const error = new Error("Seu carrinho nao possui produtos validos para calcular o frete.");
         error.status = 400;
         throw error;
     }
@@ -255,7 +292,7 @@ async function resolveCheckoutProducts(items = []) {
         const product = (item.productId && productById.get(item.productId)) || (item.slug && productBySlug.get(item.slug));
 
         if (!product) {
-            const error = new Error(`Não encontrei o produto "${item.name || item.slug || "Produto"}" para calcular o frete.`);
+            const error = new Error(`Nao encontrei o produto "${item.name || item.slug || "Produto"}" para calcular o frete.`);
             error.status = 404;
             throw error;
         }
@@ -271,10 +308,12 @@ async function buildCheckoutProductsPayload(items = []) {
     const resolvedItems = await resolveCheckoutProducts(items);
     const groupedProducts = new Map();
     const payloadProducts = [];
+    const warnings = [];
     let totalQuantity = 0;
     let referencePrice = 0;
     let productionDays = 0;
     let allowMotoboy = true;
+    let canQuoteCorreios = true;
 
     for (const { product, quantity } of resolvedItems) {
         const productId = String(product._id);
@@ -295,12 +334,12 @@ async function buildCheckoutProductsPayload(items = []) {
         const { shippingProfile, products: itemProducts } = buildProductsPayload(product, quantity);
 
         if (!hasValidShippingProfile(shippingProfile)) {
-            const error = new Error(`O produto "${product.name}" ainda não tem peso e dimensões completos para calcular o frete.`);
-            error.status = 400;
-            throw error;
+            canQuoteCorreios = false;
+            warnings.push(`O produto "${product.name}" ainda nao tem peso e dimensoes completos para cotar Correios.`);
+        } else {
+            payloadProducts.push(...itemProducts);
         }
 
-        payloadProducts.push(...itemProducts);
         totalQuantity += quantity;
         referencePrice += Number(product.price || 0) * quantity;
         productionDays = Math.max(productionDays, getProductProductionDays(product));
@@ -312,7 +351,52 @@ async function buildCheckoutProductsPayload(items = []) {
         totalQuantity,
         referencePrice: Number(referencePrice.toFixed(2)),
         productionDays,
-        allowMotoboy
+        allowMotoboy,
+        canQuoteCorreios,
+        warnings
+    };
+}
+
+function buildCorreiosDiagnostics({ available, reasonCode, message }) {
+    return {
+        available: Boolean(available),
+        reasonCode: String(reasonCode || ""),
+        message: String(message || "")
+    };
+}
+
+async function quoteCorreiosOptions({ zipCode, products, productionDays, canQuoteCorreios }) {
+    if (!canQuoteCorreios) {
+        return {
+            options: [],
+            diagnostics: buildCorreiosDiagnostics({
+                available: false,
+                reasonCode: "missing_shipping_dimensions",
+                message: "Ainda faltam peso e dimensoes para cotar Correios."
+            })
+        };
+    }
+
+    const services = await quoteShipmentByProducts({
+        toPostalCode: zipCode,
+        products
+    });
+    const options = services
+        .filter((service) => !service.error)
+        .filter(isCorreiosPacOrSedex)
+        .map(mapShippingOption)
+        .map((option) => enrichShippingOption(option, productionDays))
+        .sort((left, right) => left.price - right.price);
+
+    return {
+        options,
+        diagnostics: buildCorreiosDiagnostics({
+            available: true,
+            reasonCode: "available",
+            message: options.length
+                ? "Correios disponivel para esta consulta."
+                : "Nenhuma opcao de Correios foi retornada para este CEP."
+        })
     };
 }
 
@@ -324,13 +408,13 @@ async function quoteShipping(req, res) {
 
         if (zipCode.length !== 8) {
             return res.status(400).json({
-                message: "Informe um CEP válido com 8 números."
+                message: "Informe um CEP valido com 8 numeros."
             });
         }
 
         if (!productId) {
             return res.status(400).json({
-                message: "Produto não informado para o cálculo de frete."
+                message: "Produto nao informado para o calculo de frete."
             });
         }
 
@@ -338,27 +422,26 @@ async function quoteShipping(req, res) {
 
         if (!product) {
             return res.status(404).json({
-                message: "Produto não encontrado para calcular o frete."
+                message: "Produto nao encontrado para calcular o frete."
             });
         }
 
         const { shippingProfile, products } = buildProductsPayload(product, quantity);
         const canUseMotoboy = allowsMotoboyShipping(product);
+        const canQuoteCorreios = hasValidShippingProfile(shippingProfile);
+        const warnings = [];
+        const productionDays = getProductProductionDays(product);
+        const orderSubtotal = Number(product?.price || 0) * quantity;
 
-        if (!hasValidShippingProfile(shippingProfile)) {
-            return res.status(400).json({
-                message: "Este produto ainda não tem peso e dimensões completos para calcular o frete."
-            });
+        if (!canQuoteCorreios) {
+            warnings.push("Este produto ainda nao tem peso e dimensoes completos para cotar Correios.");
         }
 
         if (shouldUseDemoShippingMode()) {
-            const productionDays = getProductProductionDays(product);
-
             if (await isOriginZipCode(zipCode)) {
-                const sameZipMotoboyOption = canUseMotoboy ? await buildSameZipMotoboyOption(
-                    Number(product?.price || 0) * quantity,
-                    productionDays
-                ) : null;
+                const sameZipMotoboyResult = canUseMotoboy
+                    ? await buildSameZipMotoboyOption(orderSubtotal, productionDays)
+                    : { option: null, diagnostics: null };
 
                 return res.json({
                     zipCode,
@@ -366,15 +449,22 @@ async function quoteShipping(req, res) {
                     quantity,
                     isDemo: true,
                     productionDays,
-                    options: sameZipMotoboyOption ? [sameZipMotoboyOption] : []
+                    options: sameZipMotoboyResult.option ? [sameZipMotoboyResult.option] : [],
+                    warnings,
+                    diagnostics: {
+                        motoboy: sameZipMotoboyResult.diagnostics,
+                        correios: buildCorreiosDiagnostics({
+                            available: false,
+                            reasonCode: "demo_same_zip_only",
+                            message: "No modo atual, para CEP igual ao da origem apenas o motoboy local e avaliado."
+                        })
+                    }
                 });
             }
 
-            const motoboyOption = canUseMotoboy ? await buildMotoboyOption(
-                zipCode,
-                Number(product?.price || 0) * quantity,
-                productionDays
-            ) : null;
+            const motoboyResult = canUseMotoboy
+                ? await buildMotoboyOption(zipCode, orderSubtotal, productionDays)
+                : { option: null, diagnostics: null };
 
             return res.json({
                 zipCode,
@@ -383,62 +473,80 @@ async function quoteShipping(req, res) {
                 isDemo: true,
                 productionDays,
                 options: [
-                    ...(motoboyOption ? [motoboyOption] : []),
+                    ...(motoboyResult.option ? [motoboyResult.option] : []),
                     ...buildDemoShippingOptions({
                         zipCode,
                         quantity,
                         product
                     })
-                ].sort((left, right) => left.price - right.price)
+                ].sort((left, right) => left.price - right.price),
+                warnings,
+                diagnostics: {
+                    motoboy: motoboyResult.diagnostics
+                }
             });
         }
 
         if (await isOriginZipCode(zipCode)) {
-            const sameZipMotoboyOption = canUseMotoboy ? await buildSameZipMotoboyOption(
-                Number(product?.price || 0) * quantity,
-                getProductProductionDays(product)
-            ) : null;
+            const sameZipMotoboyResult = canUseMotoboy
+                ? await buildSameZipMotoboyOption(orderSubtotal, productionDays)
+                : { option: null, diagnostics: null };
 
             return res.json({
                 zipCode,
                 productId,
                 quantity,
                 isDemo: false,
-                productionDays: getProductProductionDays(product),
-                options: sameZipMotoboyOption ? [sameZipMotoboyOption] : []
+                productionDays,
+                options: sameZipMotoboyResult.option ? [sameZipMotoboyResult.option] : [],
+                warnings,
+                diagnostics: {
+                    motoboy: sameZipMotoboyResult.diagnostics,
+                    correios: buildCorreiosDiagnostics({
+                        available: false,
+                        reasonCode: "same_zip_only",
+                        message: "Para CEP igual ao da origem, o frete exibido e somente o motoboy local."
+                    })
+                }
             });
         }
 
-        const services = await quoteShipmentByProducts({
-            toPostalCode: zipCode,
-            products
-        });
-        const filteredOptions = services
-            .filter((service) => !service.error)
-            .filter(isCorreiosPacOrSedex)
-            .map(mapShippingOption)
-            .map((option) => enrichShippingOption(option, getProductProductionDays(product)))
-            .sort((left, right) => left.price - right.price);
-        const motoboyOption = canUseMotoboy ? await buildMotoboyOption(
+        const correiosResult = await quoteCorreiosOptions({
             zipCode,
-            Number(product?.price || 0) * quantity,
-            getProductProductionDays(product)
-        ) : null;
+            products,
+            productionDays,
+            canQuoteCorreios
+        });
+        const motoboyResult = canUseMotoboy
+            ? await buildMotoboyOption(zipCode, orderSubtotal, productionDays)
+            : {
+                option: null,
+                diagnostics: {
+                    available: false,
+                    reasonCode: "motoboy_disabled_for_product",
+                    message: "Este produto nao permite entrega por motoboy."
+                }
+            };
 
         return res.json({
             zipCode,
             productId,
             quantity,
             isDemo: false,
-            productionDays: getProductProductionDays(product),
+            productionDays,
             options: [
-                ...(motoboyOption ? [motoboyOption] : []),
-                ...filteredOptions
-            ].sort((left, right) => left.price - right.price)
+                ...(motoboyResult.option ? [motoboyResult.option] : []),
+                ...correiosResult.options
+            ].sort((left, right) => left.price - right.price),
+            warnings,
+            diagnostics: {
+                motoboy: motoboyResult.diagnostics,
+                correios: correiosResult.diagnostics
+            }
         });
     } catch (error) {
         return res.status(error.status || 500).json({
-            message: error.message || "Não foi possível calcular o frete."
+            message: error.message || "Nao foi possivel calcular o frete."
         });
     }
 }
@@ -450,38 +558,54 @@ async function quoteCheckoutShipping(req, res) {
 
         if (zipCode.length !== 8) {
             return res.status(400).json({
-                message: "Informe um CEP válido com 8 números."
+                message: "Informe um CEP valido com 8 numeros."
             });
         }
 
         if (!items.length) {
             return res.status(400).json({
-                message: "Seu carrinho está vazio para calcular o frete."
+                message: "Seu carrinho esta vazio para calcular o frete."
             });
         }
 
-        const { payloadProducts, totalQuantity, referencePrice, productionDays, allowMotoboy } = await buildCheckoutProductsPayload(items);
+        const {
+            payloadProducts,
+            totalQuantity,
+            referencePrice,
+            productionDays,
+            allowMotoboy,
+            canQuoteCorreios,
+            warnings
+        } = await buildCheckoutProductsPayload(items);
 
         if (shouldUseDemoShippingMode()) {
             if (await isOriginZipCode(zipCode)) {
-                const sameZipMotoboyOption = allowMotoboy ? await buildSameZipMotoboyOption(referencePrice, productionDays) : null;
+                const sameZipMotoboyResult = allowMotoboy
+                    ? await buildSameZipMotoboyOption(referencePrice, productionDays)
+                    : { option: null, diagnostics: null };
 
                 return res.json({
                     zipCode,
                     isDemo: true,
                     productionDays,
-                    options: sameZipMotoboyOption ? [sameZipMotoboyOption] : []
+                    options: sameZipMotoboyResult.option ? [sameZipMotoboyResult.option] : [],
+                    warnings,
+                    diagnostics: {
+                        motoboy: sameZipMotoboyResult.diagnostics
+                    }
                 });
             }
 
-            const motoboyOption = allowMotoboy ? await buildMotoboyOption(zipCode, referencePrice, productionDays) : null;
+            const motoboyResult = allowMotoboy
+                ? await buildMotoboyOption(zipCode, referencePrice, productionDays)
+                : { option: null, diagnostics: null };
 
             return res.json({
                 zipCode,
                 isDemo: true,
                 productionDays,
                 options: [
-                    ...(motoboyOption ? [motoboyOption] : []),
+                    ...(motoboyResult.option ? [motoboyResult.option] : []),
                     ...buildDemoShippingOptions({
                         zipCode,
                         quantity: totalQuantity,
@@ -490,45 +614,65 @@ async function quoteCheckoutShipping(req, res) {
                             shipping: { productionDays }
                         }
                     })
-                ].sort((left, right) => left.price - right.price)
+                ].sort((left, right) => left.price - right.price),
+                warnings,
+                diagnostics: {
+                    motoboy: motoboyResult.diagnostics
+                }
             });
         }
 
         if (await isOriginZipCode(zipCode)) {
-            const sameZipMotoboyOption = allowMotoboy ? await buildSameZipMotoboyOption(referencePrice, productionDays) : null;
+            const sameZipMotoboyResult = allowMotoboy
+                ? await buildSameZipMotoboyOption(referencePrice, productionDays)
+                : { option: null, diagnostics: null };
 
             return res.json({
                 zipCode,
                 isDemo: false,
                 productionDays,
-                options: sameZipMotoboyOption ? [sameZipMotoboyOption] : []
+                options: sameZipMotoboyResult.option ? [sameZipMotoboyResult.option] : [],
+                warnings,
+                diagnostics: {
+                    motoboy: sameZipMotoboyResult.diagnostics
+                }
             });
         }
 
-        const services = await quoteShipmentByProducts({
-            toPostalCode: zipCode,
-            products: payloadProducts
+        const correiosResult = await quoteCorreiosOptions({
+            zipCode,
+            products: payloadProducts,
+            productionDays,
+            canQuoteCorreios
         });
-        const filteredOptions = services
-            .filter((service) => !service.error)
-            .filter(isCorreiosPacOrSedex)
-            .map(mapShippingOption)
-            .map((option) => enrichShippingOption(option, productionDays))
-            .sort((left, right) => left.price - right.price);
-        const motoboyOption = allowMotoboy ? await buildMotoboyOption(zipCode, referencePrice, productionDays) : null;
+        const motoboyResult = allowMotoboy
+            ? await buildMotoboyOption(zipCode, referencePrice, productionDays)
+            : {
+                option: null,
+                diagnostics: {
+                    available: false,
+                    reasonCode: "motoboy_disabled_for_cart",
+                    message: "Um ou mais produtos do carrinho nao permitem entrega por motoboy."
+                }
+            };
 
         return res.json({
             zipCode,
             isDemo: false,
             productionDays,
             options: [
-                ...(motoboyOption ? [motoboyOption] : []),
-                ...filteredOptions
-            ].sort((left, right) => left.price - right.price)
+                ...(motoboyResult.option ? [motoboyResult.option] : []),
+                ...correiosResult.options
+            ].sort((left, right) => left.price - right.price),
+            warnings,
+            diagnostics: {
+                motoboy: motoboyResult.diagnostics,
+                correios: correiosResult.diagnostics
+            }
         });
     } catch (error) {
         return res.status(error.status || 500).json({
-            message: error.message || "Não foi possível calcular o frete do pedido."
+            message: error.message || "Nao foi possivel calcular o frete do pedido."
         });
     }
 }
