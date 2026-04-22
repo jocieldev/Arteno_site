@@ -411,13 +411,7 @@ app.get("/admin/orders/:id", (req, res) => {
     return sendAdminHtmlFile(res, "order-detail.html");
 });
 
-app.get("/admin/integrations/melhor-envio/callback", (req, res, next) => {
-    if (!isAdminAuthenticated(req)) {
-        return res.redirect("/admin/login");
-    }
-
-    return next();
-}, require("./controllers/adminIntegrationController").handleMelhorEnvioCallback);
+app.get("/admin/integrations/melhor-envio/callback", require("./controllers/adminIntegrationController").handleMelhorEnvioCallback);
 
 app.use("/admin", express.static(adminViewsPath, {
     index: false,
