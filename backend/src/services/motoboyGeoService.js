@@ -7,6 +7,7 @@ const USER_AGENT = "ArtenoMotoboyDelivery/1.0";
 const CACHE_TTL_MS = 1000 * 60 * 60 * 12;
 const geocodeCache = new Map();
 const routeCache = new Map();
+const GEODESIC_FALLBACK_SPEED_KMH = 28;
 
 function now() {
     return Date.now();
@@ -71,6 +72,110 @@ async function fetchJson(url) {
     }
 
     return response.json();
+}
+
+function normalizeCoordinate(value) {
+    const normalized = Number(value);
+    return Number.isFinite(normalized) ? normalized : 0;
+}
+
+function toRadians(value) {
+    return (Number(value || 0) * Math.PI) / 180;
+}
+
+function calculateGeodesicDistanceKm(origin = {}, destination = {}) {
+    const originLat = normalizeCoordinate(origin.latitude);
+    const originLon = normalizeCoordinate(origin.longitude);
+    const destinationLat = normalizeCoordinate(destination.latitude);
+    const destinationLon = normalizeCoordinate(destination.longitude);
+
+    if (!originLat || !originLon || !destinationLat || !destinationLon) {
+        const error = new Error("Nao foi possivel calcular a distancia geografica do motoboy.");
+        error.status = 400;
+        throw error;
+    }
+
+    const earthRadiusKm = 6371;
+    const deltaLat = toRadians(destinationLat - originLat);
+    const deltaLon = toRadians(destinationLon - originLon);
+    const lat1 = toRadians(originLat);
+    const lat2 = toRadians(destinationLat);
+    const haversine =
+        Math.sin(deltaLat / 2) ** 2
+        + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLon / 2) ** 2;
+    const centralAngle = 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+
+    return earthRadiusKm * centralAngle;
+}
+
+function buildGeodesicFallbackRoute(origin = {}, destination = {}) {
+    const directDistanceKm = calculateGeodesicDistanceKm(origin, destination);
+    const adjustedDistanceKm = Number((directDistanceKm * 1.2).toFixed(2));
+    const estimatedDurationMinutes = Math.max(
+        1,
+        Math.round((adjustedDistanceKm / GEODESIC_FALLBACK_SPEED_KMH) * 60)
+    );
+
+    return {
+        distanceKm: adjustedDistanceKm,
+        durationMinutes: estimatedDurationMinutes,
+        distanceSource: "geodesic_fallback"
+    };
+}
+
+async function geocodeStructuredAddress(params = {}, notFoundMessage) {
+    const searchParams = new URLSearchParams();
+
+    Object.entries(params).forEach(([key, value]) => {
+        const normalizedValue = normalizeText(value);
+
+        if (normalizedValue) {
+            searchParams.set(key, normalizedValue);
+        }
+    });
+
+    if (!searchParams.toString()) {
+        return null;
+    }
+
+    searchParams.set("format", "jsonv2");
+    searchParams.set("limit", "1");
+    searchParams.set("countrycodes", "br");
+
+    const cacheKey = `structured:${searchParams.toString().toLowerCase()}`;
+    const cached = getCachedValue(geocodeCache, cacheKey);
+
+    if (cached) {
+        return cached;
+    }
+
+    const url = new URL(GEOCODE_ENDPOINT);
+    searchParams.forEach((value, key) => {
+        url.searchParams.set(key, value);
+    });
+
+    const results = await fetchJson(url.toString());
+    const [firstResult] = Array.isArray(results) ? results : [];
+
+    if (!firstResult?.lat || !firstResult?.lon) {
+        if (notFoundMessage) {
+            const error = new Error(notFoundMessage);
+            error.status = 400;
+            throw error;
+        }
+
+        return null;
+    }
+
+    const parsed = {
+        latitude: Number(firstResult.lat),
+        longitude: Number(firstResult.lon),
+        resolvedAddress: normalizeText(firstResult.display_name),
+        resolvedAt: new Date()
+    };
+
+    setCachedValue(geocodeCache, cacheKey, parsed);
+    return parsed;
 }
 
 async function geocodeQuery(query, notFoundMessage = "Nao foi possivel localizar este endereco no mapa.") {
@@ -156,6 +261,41 @@ async function geocodeFromViaCep(zipCode, extraAddress = {}, notFoundMessage) {
         const city = normalizeText(extraAddress.city) || normalizeText(viaCepResponse.localidade);
         const state = normalizeText(extraAddress.state) || normalizeText(viaCepResponse.uf);
 
+        const structuredCandidates = [
+            {
+                street: joinAddressParts([street, number]),
+                city,
+                state,
+                postalcode: formattedZipCode,
+                country: "Brasil"
+            },
+            {
+                street,
+                city,
+                state,
+                postalcode: formattedZipCode,
+                country: "Brasil"
+            },
+            {
+                city,
+                state,
+                postalcode: formattedZipCode,
+                country: "Brasil"
+            }
+        ];
+
+        for (const candidate of structuredCandidates) {
+            try {
+                const structuredResult = await geocodeStructuredAddress(candidate);
+
+                if (structuredResult) {
+                    return structuredResult;
+                }
+            } catch (_error) {
+                // Continua tentando os demais formatos.
+            }
+        }
+
         return tryGeocodeCandidates([
             joinAddressParts([street, number, neighborhood, city, state, formattedZipCode, "Brasil"]),
             joinAddressParts([street, neighborhood, city, state, formattedZipCode, "Brasil"]),
@@ -207,6 +347,19 @@ async function geocodePostalCode(zipCode = "") {
         throw error;
     }
 
+    try {
+        const structuredResult = await geocodeStructuredAddress({
+            postalcode: formattedZipCode,
+            country: "Brasil"
+        });
+
+        if (structuredResult) {
+            return structuredResult;
+        }
+    } catch (_error) {
+        // Continua tentando os demais formatos.
+    }
+
     const resolvedByZipCode = await geocodeFromViaCep(normalizedZipCode, {}, notFoundMessage);
 
     if (resolvedByZipCode) {
@@ -244,22 +397,30 @@ async function getRoadDistanceBetweenPoints(origin, destination) {
     url.searchParams.set("alternatives", "false");
     url.searchParams.set("steps", "false");
 
-    const result = await fetchJson(url.toString());
-    const route = Array.isArray(result?.routes) ? result.routes[0] : null;
+    try {
+        const result = await fetchJson(url.toString());
+        const route = Array.isArray(result?.routes) ? result.routes[0] : null;
 
-    if (!route?.distance) {
-        const error = new Error("Nao foi possivel calcular a distancia da entrega por motoboy.");
-        error.status = 502;
-        throw error;
+        if (!route?.distance) {
+            const error = new Error("Nao foi possivel calcular a distancia da entrega por motoboy.");
+            error.status = 502;
+            throw error;
+        }
+
+        const parsed = {
+            distanceKm: Number((Number(route.distance || 0) / 1000).toFixed(2)),
+            durationMinutes: Math.max(1, Math.round(Number(route.duration || 0) / 60)),
+            distanceSource: "road_route"
+        };
+
+        setCachedValue(routeCache, cacheKey, parsed);
+        return parsed;
+    } catch (error) {
+        const fallbackRoute = buildGeodesicFallbackRoute(origin, destination);
+        console.warn("Motoboy route fallback ativado:", error.message);
+        setCachedValue(routeCache, cacheKey, fallbackRoute);
+        return fallbackRoute;
     }
-
-    const parsed = {
-        distanceKm: Number((Number(route.distance || 0) / 1000).toFixed(2)),
-        durationMinutes: Math.max(1, Math.round(Number(route.duration || 0) / 60))
-    };
-
-    setCachedValue(routeCache, cacheKey, parsed);
-    return parsed;
 }
 
 module.exports = {

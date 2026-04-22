@@ -63,6 +63,7 @@ async function quoteMotoboyOption({ zipCode, orderSubtotal = 0 }) {
         deliveryTime: Math.max(1, Number(settings.transitDays || 1)),
         dispatchDays: Math.max(0, Number(settings.dispatchDaysAfterReady || 0)),
         distanceKm: route.distanceKm,
+        distanceSource: route.distanceSource || "road_route",
         estimatedDurationMinutes: route.durationMinutes,
         operatingDaysLabel,
         deliveryWindowLabel,
