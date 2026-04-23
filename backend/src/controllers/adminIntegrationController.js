@@ -8,6 +8,7 @@ const {
     hasRequiredScopes,
     disconnectMelhorEnvio
 } = require("../services/melhorEnvioOAuthService");
+const { getMercadoPagoConfig } = require("../services/mercadoPagoService");
 
 const STATE_COOKIE_NAME = "melhor_envio_oauth_state";
 
@@ -41,6 +42,10 @@ function buildFrontendAdminUrl(req, path, query = {}) {
     });
 
     return url.toString();
+}
+
+function buildPublicUrl(req, path) {
+    return new URL(path, `${getFrontendBaseUrl(req)}/`).toString();
 }
 
 function buildStateCookie(value = "") {
@@ -102,6 +107,57 @@ function serializeIntegrationStatus(setting) {
     };
 }
 
+function maskSecret(value = "", { keepStart = 4, keepEnd = 4 } = {}) {
+    const normalized = String(value || "").trim();
+
+    if (!normalized) {
+        return "";
+    }
+
+    if (normalized.length <= keepStart + keepEnd) {
+        return normalized;
+    }
+
+    return `${normalized.slice(0, keepStart)}...${normalized.slice(-keepEnd)}`;
+}
+
+function normalizeUrl(value = "") {
+    return String(value || "").trim().replace(/\/+$/, "");
+}
+
+function serializeMercadoPagoStatus(req) {
+    const config = getMercadoPagoConfig();
+    const webhookUrl = buildPublicUrl(req, "/api/integrations/mercado-pago/webhook");
+    const notificationUrl = normalizeUrl(config.notificationUrl) || webhookUrl;
+
+    return {
+        provider: "mercado_pago",
+        checkout: "payment_brick",
+        mode: config.mode,
+        environmentLabel: config.mode === "production" ? "Produção" : "Sandbox",
+        isConfigured: config.isConfigured,
+        isDevelopmentMode: !config.isConfigured,
+        hasAccessToken: Boolean(config.accessToken),
+        hasPublicKey: Boolean(config.publicKey),
+        hasWebhookSecret: Boolean(config.webhookSecret),
+        hasNotificationUrl: Boolean(config.notificationUrl),
+        accessTokenPreview: maskSecret(config.accessToken, { keepStart: 10, keepEnd: 6 }),
+        publicKeyPreview: maskSecret(config.publicKey, { keepStart: 12, keepEnd: 6 }),
+        webhookSecretPreview: maskSecret(config.webhookSecret, { keepStart: 6, keepEnd: 4 }),
+        notificationUrl,
+        configuredNotificationUrl: normalizeUrl(config.notificationUrl),
+        webhookUrl,
+        notificationUrlMatchesWebhook: notificationUrl === webhookUrl,
+        statementDescriptor: config.statementDescriptor || "",
+        requiredEnvVars: [
+            "MERCADO_PAGO_PUBLIC_KEY",
+            "MERCADO_PAGO_ACCESS_TOKEN",
+            "MERCADO_PAGO_NOTIFICATION_URL",
+            "MERCADO_PAGO_WEBHOOK_SECRET"
+        ]
+    };
+}
+
 async function getMelhorEnvioStatus(_req, res) {
     try {
         const setting = await getStoredIntegration();
@@ -109,6 +165,16 @@ async function getMelhorEnvioStatus(_req, res) {
     } catch (error) {
         return res.status(500).json({
             message: error.message || "Não foi possível carregar o status da integração."
+        });
+    }
+}
+
+function getMercadoPagoStatus(req, res) {
+    try {
+        return res.json(serializeMercadoPagoStatus(req));
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message || "Não foi possível carregar o status do Mercado Pago."
         });
     }
 }
@@ -180,6 +246,7 @@ async function disconnectMelhorEnvioConnection(_req, res) {
 
 module.exports = {
     getMelhorEnvioStatus,
+    getMercadoPagoStatus,
     startMelhorEnvioConnection,
     handleMelhorEnvioCallback,
     disconnectMelhorEnvioConnection

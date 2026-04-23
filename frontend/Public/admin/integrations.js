@@ -108,9 +108,25 @@ function setChecklistState(elementId, isReady) {
     element.classList.toggle("is-missing", !isReady);
 }
 
-function renderStatus(status) {
-    document.getElementById("melhorEnvioEnvironment").textContent = status.useSandbox ? "Sandbox" : "Produção";
-    document.getElementById("melhorEnvioConnectionState").textContent = status.isConnected ? "Conectado" : "Não conectado";
+function renderMercadoPagoStatus(status) {
+    document.getElementById("mercadoPagoEnvironment").textContent = status.environmentLabel || (status.isDevelopmentMode ? "Desenvolvimento" : "-");
+    document.getElementById("mercadoPagoCheckoutType").textContent = status.checkout === "payment_brick" ? "Payment Brick" : (status.checkout || "-");
+    document.getElementById("mercadoPagoPublicKey").textContent = status.publicKeyPreview || "Nao configurada";
+    document.getElementById("mercadoPagoAccessToken").textContent = status.accessTokenPreview || "Nao configurado";
+    document.getElementById("mercadoPagoNotificationUrl").textContent = status.notificationUrl || "-";
+    document.getElementById("mercadoPagoWebhookUrl").textContent = status.webhookUrl || "-";
+    document.getElementById("mercadoPagoWebhookSecret").textContent = status.webhookSecretPreview || "Nao configurado";
+    document.getElementById("mercadoPagoStatementDescriptor").textContent = status.statementDescriptor || "-";
+
+    setChecklistState("mercadoPagoPublicKeyCheck", status.hasPublicKey);
+    setChecklistState("mercadoPagoAccessTokenCheck", status.hasAccessToken);
+    setChecklistState("mercadoPagoNotificationUrlCheck", status.hasNotificationUrl && status.notificationUrlMatchesWebhook);
+    setChecklistState("mercadoPagoWebhookSecretCheck", status.hasWebhookSecret);
+}
+
+function renderMelhorEnvioStatus(status) {
+    document.getElementById("melhorEnvioEnvironment").textContent = status.useSandbox ? "Sandbox" : "ProduÃ§Ã£o";
+    document.getElementById("melhorEnvioConnectionState").textContent = status.isConnected ? "Conectado" : "NÃ£o conectado";
     document.getElementById("melhorEnvioAccountInfo").textContent = status.connectedAccountEmail || status.connectedAccountName || "-";
     document.getElementById("melhorEnvioOriginZip").textContent = status.fromPostalCode || "-";
     document.getElementById("melhorEnvioRedirectUri").textContent = status.redirectUri || "-";
@@ -136,19 +152,45 @@ function renderStatus(status) {
     }
 }
 
-async function loadStatus() {
-    clearFeedback();
+async function loadMercadoPagoStatus() {
+    const response = await fetch("/api/admin/integrations/mercado-pago/status", {
+        credentials: "same-origin"
+    });
+    const result = await response.json();
 
+    if (!response.ok) {
+        throw new Error(result.message || "NÃ£o foi possÃ­vel carregar o status do Mercado Pago.");
+    }
+
+    renderMercadoPagoStatus(result);
+}
+
+async function loadMelhorEnvioStatus() {
     const response = await fetch("/api/admin/integrations/melhor-envio/status", {
         credentials: "same-origin"
     });
     const result = await response.json();
 
     if (!response.ok) {
-        throw new Error(result.message || "Não foi possível carregar a integração.");
+        throw new Error(result.message || "NÃ£o foi possÃ­vel carregar a integraÃ§Ã£o.");
     }
 
-    renderStatus(result);
+    renderMelhorEnvioStatus(result);
+}
+
+async function loadStatuses() {
+    clearFeedback();
+
+    const results = await Promise.allSettled([
+        loadMercadoPagoStatus(),
+        loadMelhorEnvioStatus()
+    ]);
+
+    const firstError = results.find((result) => result.status === "rejected");
+
+    if (firstError?.reason) {
+        throw firstError.reason;
+    }
 }
 
 if (connectButton) {
@@ -177,13 +219,13 @@ if (disconnectButton) {
             const result = await response.json();
 
             if (!response.ok) {
-                throw new Error(result.message || "Não foi possível desconectar.");
+                throw new Error(result.message || "NÃ£o foi possÃ­vel desconectar.");
             }
 
             disconnectRequestInFlight = false;
             setButtonLoading(disconnectButton, false, "Desconectando...");
-            showFeedback(result.message || "Integração desconectada.", "success");
-            await loadStatus();
+            showFeedback(result.message || "IntegraÃ§Ã£o desconectada.", "success");
+            await loadStatuses();
         } catch (error) {
             showFeedback(error.message, "error");
         } finally {
@@ -203,4 +245,4 @@ if (params.get("success") === "connected") {
     showFeedback(decodeURIComponent(params.get("error")), "error");
 }
 
-loadStatus().catch((error) => showFeedback(error.message, "error"));
+loadStatuses().catch((error) => showFeedback(error.message, "error"));

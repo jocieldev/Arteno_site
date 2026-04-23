@@ -1,6 +1,7 @@
 const express = require("express");
 const {
     getMelhorEnvioStatus,
+    getMercadoPagoStatus,
     startMelhorEnvioConnection,
     handleMelhorEnvioCallback,
     disconnectMelhorEnvioConnection
@@ -8,6 +9,7 @@ const {
 
 const router = express.Router();
 
+router.get("/mercado-pago/status", getMercadoPagoStatus);
 router.get("/melhor-envio/status", getMelhorEnvioStatus);
 router.get("/melhor-envio/connect", startMelhorEnvioConnection);
 router.get("/melhor-envio/callback", handleMelhorEnvioCallback);

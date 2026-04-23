@@ -90,6 +90,65 @@
 
             <section class="admin-editor-card admin-integration-card">
                 <div class="admin-editor-card-header">
+                    <h3>Mercado Pago</h3>
+                </div>
+
+                <p class="admin-panel-subtitle">
+                    Acompanhe se o checkout transparente com Payment Brick está pronto para produção, qual webhook deve ser cadastrado e quais variáveis faltam no backend.
+                </p>
+
+                <div class="admin-integration-status-grid">
+                    <article class="admin-integration-status-item">
+                        <span class="admin-integration-label">Ambiente</span>
+                        <strong id="mercadoPagoEnvironment">Carregando...</strong>
+                    </article>
+                    <article class="admin-integration-status-item">
+                        <span class="admin-integration-label">Checkout</span>
+                        <strong id="mercadoPagoCheckoutType">Carregando...</strong>
+                    </article>
+                    <article class="admin-integration-status-item">
+                        <span class="admin-integration-label">Public Key</span>
+                        <strong id="mercadoPagoPublicKey">-</strong>
+                    </article>
+                    <article class="admin-integration-status-item">
+                        <span class="admin-integration-label">Access Token</span>
+                        <strong id="mercadoPagoAccessToken">-</strong>
+                    </article>
+                    <article class="admin-integration-status-item">
+                        <span class="admin-integration-label">Notification URL</span>
+                        <strong id="mercadoPagoNotificationUrl">-</strong>
+                    </article>
+                    <article class="admin-integration-status-item">
+                        <span class="admin-integration-label">Webhook esperado</span>
+                        <strong id="mercadoPagoWebhookUrl">-</strong>
+                    </article>
+                    <article class="admin-integration-status-item">
+                        <span class="admin-integration-label">Assinatura webhook</span>
+                        <strong id="mercadoPagoWebhookSecret">-</strong>
+                    </article>
+                    <article class="admin-integration-status-item">
+                        <span class="admin-integration-label">Descriptor</span>
+                        <strong id="mercadoPagoStatementDescriptor">-</strong>
+                    </article>
+                </div>
+
+                <div class="admin-integration-checklist">
+                    <h4>Checklist de ativação</h4>
+                    <ul>
+                        <li id="mercadoPagoPublicKeyCheck">`MERCADO_PAGO_PUBLIC_KEY` configurada</li>
+                        <li id="mercadoPagoAccessTokenCheck">`MERCADO_PAGO_ACCESS_TOKEN` configurado</li>
+                        <li id="mercadoPagoNotificationUrlCheck">`MERCADO_PAGO_NOTIFICATION_URL` apontando para o webhook público</li>
+                        <li id="mercadoPagoWebhookSecretCheck">`MERCADO_PAGO_WEBHOOK_SECRET` configurado para validar a assinatura</li>
+                    </ul>
+                </div>
+
+                <div class="admin-integration-actions">
+                    <a href="/checkout" target="_blank" rel="noreferrer" class="admin-auth-submit">Abrir checkout</a>
+                </div>
+            </section>
+
+            <section class="admin-editor-card admin-integration-card">
+                <div class="admin-editor-card-header">
                     <h3>Melhor Envio</h3>
                 </div>
 
