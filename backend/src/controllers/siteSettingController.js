@@ -110,12 +110,7 @@ async function listPublicSiteBanners(_req, res) {
 
         return res.json({
             contact: serializeSiteContact(setting.contact || {}),
-            banners: setting.banners.map((banner) => ({
-                id: String(banner._id),
-                name: banner.name || "",
-                linkUrl: banner.linkUrl || "",
-                imageUrl: banner.imageUrl || ""
-            }))
+            banners: setting.banners.map((banner) => serializeBanner(banner))
         });
     } catch (error) {
         return res.status(500).json({
