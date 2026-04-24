@@ -766,7 +766,7 @@ function applyCardExpiryMask(value = "") {
 }
 
 function isMercadoPagoCheckoutActive() {
-    return false;
+    return Boolean(checkoutConfig?.isConfigured && window.MercadoPago && checkoutPaymentBrick);
 }
 
 function setCheckoutSubmitAvailability() {
@@ -942,6 +942,13 @@ function setPaymentMethodUI() {
     });
 
     checkoutCardFields.hidden = selectedMethod !== "card";
+}
+
+function setCardTypeUI() {
+    document.querySelectorAll(".checkout-card-type-option").forEach((option) => {
+        const input = option.querySelector("input");
+        option.classList.toggle("active", Boolean(input?.checked));
+    });
 }
 
 async function loadCheckoutConfig() {
@@ -1349,6 +1356,7 @@ async function cleanupStoredPersonalizationImages(items = []) {
 
 async function legacyBuildCheckoutPayloadOriginal() {
     const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || "pix";
+    const cardType = document.querySelector('input[name="checkoutCardType"]:checked')?.value || "credit";
     const items = await resolveCheckoutItemsForSubmission(checkoutItems);
 
     return {
@@ -1504,6 +1512,10 @@ function bindCheckoutInteractions() {
         input.addEventListener("change", setPaymentMethodUI);
     });
 
+    document.querySelectorAll('input[name="checkoutCardType"]').forEach((input) => {
+        input.addEventListener("change", setCardTypeUI);
+    });
+
     checkoutForm.addEventListener("submit", handleCheckoutSubmitReal);
 
     document.getElementById("checkoutZipCode").addEventListener("input", (event) => {
@@ -1612,22 +1624,22 @@ function setMercadoPagoCheckoutVisibility() {
     const enabled = Boolean(checkoutConfig?.isConfigured);
 
     if (checkoutMercadoPagoPanel) {
-        checkoutMercadoPagoPanel.hidden = true;
+        checkoutMercadoPagoPanel.hidden = !enabled;
     }
 
     if (checkoutLegacyPaymentOptions) {
-        checkoutLegacyPaymentOptions.hidden = false;
+        checkoutLegacyPaymentOptions.hidden = enabled;
     }
 
     if (checkoutSubmitNote) {
         checkoutSubmitNote.textContent = enabled
-            ? "Mercado Pago ativo: o Pix sera gerado no layout da loja com QR Code e chave Pix."
+            ? "Mercado Pago ativo: use o formulario seguro abaixo para pagar com Pix, Cartao de Credito ou Cartao de Debito."
             : "Modo teste ativo: ao finalizar, o pedido sera criado com pagamento confirmado automaticamente.";
     }
 
     if (checkoutMercadoPagoHint) {
         checkoutMercadoPagoHint.textContent = enabled
-            ? "O formulario visual do Mercado Pago foi ocultado para manter o layout proprio da loja."
+            ? "No formulario seguro do Mercado Pago voce pode escolher Pix, Credito ou Debito."
             : "Conecte suas credenciais de teste do Mercado Pago para renderizar o Payment Brick aqui.";
     }
 
@@ -1635,7 +1647,11 @@ function setMercadoPagoCheckoutVisibility() {
 }
 
 async function renderMercadoPagoBrick() {
-    return;
+    if (!isMercadoPagoCheckoutActive()) {
+        return;
+    }
+
+    await legacyRenderMercadoPagoBrick();
 }
 
 function renderPixResult(result) {
@@ -1678,6 +1694,7 @@ function renderPixResult(result) {
 
 async function buildCheckoutPayload() {
     const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || "pix";
+    const cardType = document.querySelector('input[name="checkoutCardType"]:checked')?.value || "credit";
     const items = await resolveCheckoutItemsForSubmission(checkoutItems);
 
     return {
@@ -1701,6 +1718,7 @@ async function buildCheckoutPayload() {
         paymentMethod,
         items,
         card: paymentMethod === "card" ? {
+            type: cardType,
             number: document.getElementById("checkoutCardNumber").value.trim(),
             holderName: document.getElementById("checkoutCardHolder").value.trim(),
             expiry: document.getElementById("checkoutCardExpiry").value.trim(),
@@ -1714,6 +1732,12 @@ async function handleCheckoutSubmitReal(event) {
 
     try {
         clearCheckoutFeedback();
+
+        if (isMercadoPagoCheckoutActive()) {
+            showCheckoutFeedback("Use o formulario seguro do Mercado Pago para concluir o pagamento.", "info");
+            return;
+        }
+
         await submitCheckoutOrder();
     } catch (error) {
         showCheckoutFeedback(error.message, "error");
@@ -1727,6 +1751,7 @@ prefillStoredShippingZipCode();
 renderCheckoutSummary();
 bindCheckoutInteractions();
 setPaymentMethodUI();
+setCardTypeUI();
 tryAutoCalculateStoredShipping();
 window.addEventListener("storage", handleCartStateChange);
 window.addEventListener("cart:updated", handleCartStateChange);

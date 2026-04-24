@@ -306,6 +306,9 @@ function buildOrderCardMarkup(order) {
 
             <div class="account-order-summary-link-row">
                 <a href="/meus-pedidos/${encodeURIComponent(order._id || "")}" class="account-order-summary-link">Ver mais informações</a>
+                ${order.paymentAction?.canPayNow ? `
+                    <a href="/meus-pedidos/${encodeURIComponent(order._id || "")}?pay=1" class="account-order-summary-link account-order-pay-link">Pagar agora</a>
+                ` : ""}
             </div>
 
             <div class="account-order-summary-footer">

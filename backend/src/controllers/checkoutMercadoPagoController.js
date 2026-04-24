@@ -8,7 +8,8 @@ const {
     isMercadoPagoReady,
     mapMercadoPagoStatusToOrderStatus
 } = require("../services/mercadoPagoService");
-const legacyCheckoutController = require("./checkoutController");
+const { verifyCheckoutShippingQuoteToken } = require("../services/shippingQuoteService");
+const { uploadCheckoutPersonalizationImage: uploadCheckoutPersonalizationImageLegacy } = require("./checkoutController");
 
 const ORDER_STATUS_LABELS = {
     payment_pending: "Pagamento pendente",
@@ -84,6 +85,20 @@ function buildDirectMercadoPagoFormData(paymentMethod, customer = {}) {
         };
     }
 
+    if (paymentMethod === "boleto") {
+        return {
+            payment_method_id: "bolbradesco",
+            installments: 1,
+            payer: {
+                email: customer.email || "",
+                identification: {
+                    type: "CPF",
+                    number: normalizeDocumentNumber(customer.documentNumber)
+                }
+            }
+        };
+    }
+
     return null;
 }
 
@@ -116,7 +131,9 @@ function normalizeShippingOption(option = {}) {
         distanceKm: normalizeSignedNumber(option.distanceKm, 0),
         estimatedDurationMinutes: normalizeQuantity(option.estimatedDurationMinutes || 0),
         deliveryWindowLabel: normalizeText(option.deliveryWindowLabel),
-        originLabel: normalizeText(option.originLabel)
+        originLabel: normalizeText(option.originLabel),
+        quoteToken: normalizeText(option.quoteToken),
+        quoteExpiresAt: normalizeText(option.quoteExpiresAt)
     };
 }
 
@@ -249,6 +266,42 @@ async function buildCouponSummary(couponInput, subtotal) {
     }
 
     return previewCouponApplication(normalizedCode, subtotal);
+}
+
+async function previewCheckoutCoupon(req, res) {
+    try {
+        const items = Array.isArray(req.body.items) ? req.body.items : [];
+
+        if (!items.length) {
+            return res.status(400).json({
+                message: "Seu carrinho esta vazio."
+            });
+        }
+
+        const resolvedItems = await resolveCheckoutItemsFromCatalog(items);
+        const subtotal = Number(resolvedItems.reduce((sum, item) => sum + item.lineTotal, 0).toFixed(2));
+        const coupon = await buildCouponSummary(req.body.coupon || req.body, subtotal);
+
+        if (!coupon) {
+            return res.status(400).json({
+                message: "Informe um cupom para validar."
+            });
+        }
+
+        return res.json({
+            ok: true,
+            coupon,
+            totals: {
+                subtotal,
+                discount: coupon.discountAmount,
+                subtotalAfterDiscount: Number((subtotal - coupon.discountAmount).toFixed(2))
+            }
+        });
+    } catch (error) {
+        return res.status(error.status || 500).json({
+            message: error.message || "Nao foi possivel validar o cupom."
+        });
+    }
 }
 
 function buildStatusHistoryEntry(status, note = "") {
@@ -473,7 +526,27 @@ function buildPaymentSimulation({ paymentMethod, card, orderNumber, total }) {
 }
 
 function resolveDevelopmentMode() {
-    return !isMercadoPagoReady();
+    if (isMercadoPagoReady()) {
+        return false;
+    }
+
+    if (process.env.NODE_ENV === "production") {
+        return false;
+    }
+
+    return process.env.ALLOW_DEVELOPMENT_PAYMENTS === "true";
+}
+
+function getSupportedPaymentMethods({ hasMercadoPagoIntegration = false, isDevelopmentMode = false } = {}) {
+    if (hasMercadoPagoIntegration) {
+        return ["pix", "boleto", "card"];
+    }
+
+    if (isDevelopmentMode) {
+        return ["pix", "boleto", "card"];
+    }
+
+    return [];
 }
 
 async function createCheckoutOrder(req, res) {
@@ -482,25 +555,43 @@ async function createCheckoutOrder(req, res) {
         const paymentMethod = normalizeText(req.body.paymentMethod).toLowerCase();
         const isDevelopmentMode = resolveDevelopmentMode();
         const hasMercadoPagoIntegration = isMercadoPagoReady();
+        const supportedPaymentMethods = getSupportedPaymentMethods({
+            hasMercadoPagoIntegration,
+            isDevelopmentMode
+        });
         const mercadoPagoPaymentInput = req.body.mercadoPagoPayment && typeof req.body.mercadoPagoPayment === "object"
             ? req.body.mercadoPagoPayment
             : null;
 
         if (!items.length) {
-            return res.status(400).json({ message: "Seu carrinho está vazio." });
+            return res.status(400).json({ message: "Seu carrinho esta vazio." });
         }
 
         if (Order.db.readyState !== 1) {
             return res.status(503).json({
-                message: "O banco de dados está indisponível no momento. Conecte o MongoDB antes de processar pedidos."
+                message: "O banco de dados esta indisponivel no momento. Conecte o MongoDB antes de processar pedidos."
             });
         }
 
-        if (!["pix", "card", "boleto"].includes(paymentMethod)) {
-            return res.status(400).json({ message: "Selecione uma forma de pagamento válida." });
+        if (!supportedPaymentMethods.includes(paymentMethod)) {
+            if (hasMercadoPagoIntegration) {
+                return res.status(400).json({
+                    message: "No checkout atual, use Pix ou Boleto para concluir o pagamento."
+                });
+            }
+
+            if (!isDevelopmentMode) {
+                return res.status(503).json({
+                    message: "Pagamentos indisponiveis no momento. Configure o Mercado Pago para ativar o checkout."
+                });
+            }
+
+            return res.status(400).json({
+                message: "Selecione uma forma de pagamento valida."
+            });
         }
 
-        if (!hasMercadoPagoIntegration && paymentMethod === "card") {
+        if (paymentMethod === "card") {
             const cardNumber = String(req.body.card?.number || "").replace(/\D/g, "");
             const cardHolder = normalizeText(req.body.card?.holderName);
             const cardExpiry = normalizeText(req.body.card?.expiry);
@@ -508,9 +599,15 @@ async function createCheckoutOrder(req, res) {
 
             if (cardNumber.length < 13 || !cardHolder || cardExpiry.length < 4 || cardCvv.length < 3) {
                 return res.status(400).json({
-                    message: "Preencha os dados principais do cartão para testar esse pagamento."
+                    message: "Preencha os dados principais do cartao para testar esse pagamento."
                 });
             }
+        }
+
+        if (!hasMercadoPagoIntegration && !isDevelopmentMode) {
+            return res.status(503).json({
+                message: "Pagamentos indisponiveis no momento. Configure o Mercado Pago para ativar o checkout."
+            });
         }
 
         const customer = {
@@ -534,8 +631,34 @@ async function createCheckoutOrder(req, res) {
         }
 
         if (!shippingAddress.zipCode || !shippingAddress.street || !shippingAddress.number || !shippingAddress.neighborhood || !shippingAddress.city || !shippingAddress.state) {
-            return res.status(400).json({ message: "Preencha os dados principais do endereço de entrega." });
+            return res.status(400).json({ message: "Preencha os dados principais do endereco de entrega." });
         }
+
+        const shippingOption = normalizeShippingOption(req.body.shippingOption);
+
+        if (!shippingOption.serviceId || shippingOption.price < 0) {
+            return res.status(400).json({
+                message: "Selecione uma opcao de frete valida antes de finalizar a compra."
+            });
+        }
+
+        const shippingQuoteVerification = verifyCheckoutShippingQuoteToken({
+            token: shippingOption.quoteToken,
+            zipCode: shippingAddress.zipCode,
+            items
+        });
+
+        if (!shippingQuoteVerification.ok) {
+            return res.status(400).json({
+                message: shippingQuoteVerification.message
+            });
+        }
+
+        const trustedShippingOption = {
+            ...shippingOption,
+            ...(shippingQuoteVerification.option || {}),
+            quoteExpiresAt: shippingQuoteVerification.expiresAt
+        };
 
         const directMercadoPagoFormData = buildDirectMercadoPagoFormData(paymentMethod, customer);
         const mercadoPagoFormData = mercadoPagoPaymentInput?.formData || directMercadoPagoFormData;
@@ -548,19 +671,11 @@ async function createCheckoutOrder(req, res) {
             });
         }
 
-        const shippingOption = normalizeShippingOption(req.body.shippingOption);
-
-        if (!shippingOption.serviceId || shippingOption.price < 0) {
-            return res.status(400).json({
-                message: "Selecione uma opção de frete válida antes de finalizar a compra."
-            });
-        }
-
         const resolvedItems = await resolveCheckoutItemsFromCatalog(items);
         const subtotal = Number(resolvedItems.reduce((sum, item) => sum + item.lineTotal, 0).toFixed(2));
         const appliedCoupon = await buildCouponSummary(req.body.coupon, subtotal);
         const discount = Number(appliedCoupon?.discountAmount || 0);
-        const shipping = shippingOption.price;
+        const shipping = trustedShippingOption.price;
         const total = Number((subtotal - discount + shipping).toFixed(2));
         const orderNumber = generateOrderNumber();
         const defaultOrderStatus = hasMercadoPagoIntegration ? "payment_pending" : "payment_confirmed";
@@ -575,18 +690,18 @@ async function createCheckoutOrder(req, res) {
             coupon: appliedCoupon || undefined,
             totals: { subtotal, discount, shipping, total },
             shippingIntegration: {
-                provider: shippingOption.provider || "melhor-envio",
-                serviceId: shippingOption.serviceId,
-                serviceName: shippingOption.serviceName,
-                companyName: shippingOption.companyName,
-                quotePrice: shippingOption.price,
-                deliveryTime: shippingOption.deliveryTime,
-                dispatchDays: shippingOption.dispatchDays,
-                distanceKm: shippingOption.distanceKm,
-                estimatedDurationMinutes: shippingOption.estimatedDurationMinutes,
-                deliveryWindowLabel: shippingOption.deliveryWindowLabel,
-                originLabel: shippingOption.originLabel,
-                status: shippingOption.provider === "motoboy" ? "awaiting_dispatch" : "customer_selected",
+                provider: trustedShippingOption.provider || "melhor-envio",
+                serviceId: trustedShippingOption.serviceId,
+                serviceName: trustedShippingOption.serviceName,
+                companyName: trustedShippingOption.companyName,
+                quotePrice: trustedShippingOption.price,
+                deliveryTime: trustedShippingOption.deliveryTime,
+                dispatchDays: trustedShippingOption.dispatchDays,
+                distanceKm: trustedShippingOption.distanceKm,
+                estimatedDurationMinutes: trustedShippingOption.estimatedDurationMinutes,
+                deliveryWindowLabel: trustedShippingOption.deliveryWindowLabel,
+                originLabel: trustedShippingOption.originLabel,
+                status: trustedShippingOption.provider === "motoboy" ? "awaiting_dispatch" : "customer_selected",
                 purchasedAt: null,
                 labelGeneratedAt: null,
                 payload: {}
@@ -596,7 +711,9 @@ async function createCheckoutOrder(req, res) {
                 mode: hasMercadoPagoIntegration ? "real" : "development",
                 method: paymentMethod,
                 status: defaultPaymentStatus,
-                details: {}
+                details: {
+                    customerDocumentNumber: customer.documentNumber
+                }
             },
             orderStatus: defaultOrderStatus,
             tracking: {
@@ -611,12 +728,6 @@ async function createCheckoutOrder(req, res) {
         });
 
         if (hasMercadoPagoIntegration) {
-            if (!mercadoPagoFormData) {
-                return res.status(400).json({
-                    message: "O formulário seguro do Mercado Pago não foi enviado. Recarregue a página e tente novamente."
-                });
-            }
-
             try {
                 const paymentResponse = await createMercadoPagoPayment({
                     amount: total,
@@ -625,13 +736,15 @@ async function createCheckoutOrder(req, res) {
                     shippingAddress,
                     items: resolvedItems,
                     orderNumber,
-                    formData: mercadoPagoFormData
+                    formData: mercadoPagoFormData,
+                    idempotencyKey: `checkout:${orderNumber}:1`
                 });
                 const mappedMethod = mapMercadoPagoPaymentMethod(paymentResponse, paymentMethod);
                 const mappedOrderStatus = mapMercadoPagoStatusToOrderStatus(paymentResponse.status);
                 const paymentDetails = {
                     ...extractMercadoPagoResultDetails(paymentResponse),
-                    additionalData: mercadoPagoPaymentInput?.additionalData || {}
+                    additionalData: mercadoPagoPaymentInput?.additionalData || {},
+                    customerDocumentNumber: customer.documentNumber
                 };
 
                 order.payment = {
@@ -671,7 +784,7 @@ async function createCheckoutOrder(req, res) {
                         status: mappedOrderStatus,
                         totals: { subtotal, discount, shipping, total },
                         coupon: appliedCoupon || null,
-                        shippingOption,
+                        shippingOption: trustedShippingOption,
                         customer
                     },
                     payment: {
@@ -690,7 +803,8 @@ async function createCheckoutOrder(req, res) {
                     status: "error",
                     details: {
                         message: error.message,
-                        details: error.details || null
+                        details: error.details || null,
+                        customerDocumentNumber: customer.documentNumber
                     }
                 };
                 order.orderStatus = "payment_pending";
@@ -701,15 +815,9 @@ async function createCheckoutOrder(req, res) {
                 await order.save();
 
                 return res.status(error.status || 502).json({
-                    message: error.message || "Não foi possível iniciar o pagamento no Mercado Pago."
+                    message: error.message || "Nao foi possivel iniciar o pagamento no Mercado Pago."
                 });
             }
-        }
-
-        if (!isDevelopmentMode) {
-            return res.status(501).json({
-                message: "A integração real com o Mercado Pago ainda não foi ativada neste ambiente."
-            });
         }
 
         const paymentSimulation = buildPaymentSimulation({
@@ -724,7 +832,10 @@ async function createCheckoutOrder(req, res) {
             mode: "development",
             method: paymentMethod,
             status: paymentSimulation.status,
-            details: paymentSimulation.details
+            details: {
+                ...paymentSimulation.details,
+                customerDocumentNumber: customer.documentNumber
+            }
         };
         order.orderStatus = paymentSimulation.orderStatus;
         order.statusHistory = [
@@ -741,23 +852,25 @@ async function createCheckoutOrder(req, res) {
                 status: paymentSimulation.orderStatus,
                 totals: { subtotal, discount, shipping, total },
                 coupon: appliedCoupon || null,
-                shippingOption,
+                shippingOption: trustedShippingOption,
                 customer
             },
             payment: {
                 provider: "mercado_pago",
                 method: paymentMethod,
                 status: paymentSimulation.status,
-                details: paymentSimulation.details
+                details: {
+                    ...paymentSimulation.details,
+                    customerDocumentNumber: customer.documentNumber
+                }
             }
         });
     } catch (error) {
         return res.status(error.status || 500).json({
-            message: error.message || "Não foi possível finalizar a compra."
+            message: error.message || "Nao foi possivel finalizar a compra."
         });
     }
 }
-
 function getCheckoutPublicConfig(_req, res) {
     return res.json(buildMercadoPagoPublicConfig());
 }
@@ -765,6 +878,6 @@ function getCheckoutPublicConfig(_req, res) {
 module.exports = {
     createCheckoutOrder,
     getCheckoutPublicConfig,
-    previewCheckoutCoupon: legacyCheckoutController.previewCheckoutCoupon,
-    uploadCheckoutPersonalizationImage: legacyCheckoutController.uploadCheckoutPersonalizationImage
+    previewCheckoutCoupon,
+    uploadCheckoutPersonalizationImage: uploadCheckoutPersonalizationImageLegacy
 };

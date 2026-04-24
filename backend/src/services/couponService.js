@@ -59,7 +59,13 @@ async function validateCouponEligibility(coupon, subtotal) {
     const maxUsesTotal = Number.parseInt(coupon.rules?.maxUsesTotal, 10);
 
     if (Number.isInteger(maxUsesTotal) && maxUsesTotal > 0) {
-        const currentUsageCount = await Order.countDocuments({ "coupon.couponId": coupon._id });
+        const currentUsageCount = await Order.countDocuments({
+            "coupon.couponId": coupon._id,
+            $or: [
+                { orderStatus: "payment_confirmed" },
+                { "payment.status": "approved" }
+            ]
+        });
 
         if (currentUsageCount >= maxUsesTotal) {
             const error = new Error("Este cupom atingiu o limite máximo de usos.");

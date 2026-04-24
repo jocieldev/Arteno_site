@@ -3,6 +3,7 @@ const { quoteShipmentByProducts } = require("../services/melhorEnvioService");
 const { quoteMotoboyOptionDetailed } = require("../services/motoboyService");
 const { getMelhorEnvioOAuthConfig } = require("../services/melhorEnvioOAuthService");
 const { getMotoboySettings } = require("../services/motoboySettingsService");
+const { createCheckoutShippingQuoteToken } = require("../services/shippingQuoteService");
 
 function normalizeZipCode(value = "") {
     return String(value).replace(/\D/g, "").slice(0, 8);
@@ -261,6 +262,19 @@ function normalizeCheckoutItems(items = []) {
             quantity: normalizeQuantity(item?.quantity, 1)
         }))
         .filter((item) => item.productId || item.slug);
+}
+
+function attachCheckoutQuoteTokens(options = [], { zipCode = "", items = [], expiresAt = "" } = {}) {
+    return (Array.isArray(options) ? options : []).map((option = {}) => ({
+        ...option,
+        quoteExpiresAt: expiresAt,
+        quoteToken: createCheckoutShippingQuoteToken({
+            zipCode,
+            items,
+            option,
+            expiresAt
+        })
+    }));
 }
 
 async function resolveCheckoutProducts(items = []) {
@@ -555,6 +569,7 @@ async function quoteCheckoutShipping(req, res) {
     try {
         const zipCode = normalizeZipCode(req.body.zipCode || req.body.cep);
         const items = Array.isArray(req.body.items) ? req.body.items : [];
+        const quoteExpiresAt = new Date(Date.now() + (15 * 60 * 1000)).toISOString();
 
         if (zipCode.length !== 8) {
             return res.status(400).json({
@@ -583,12 +598,18 @@ async function quoteCheckoutShipping(req, res) {
                 const sameZipMotoboyResult = allowMotoboy
                     ? await buildSameZipMotoboyOption(referencePrice, productionDays)
                     : { option: null, diagnostics: null };
+                const options = sameZipMotoboyResult.option ? [sameZipMotoboyResult.option] : [];
 
                 return res.json({
                     zipCode,
                     isDemo: true,
                     productionDays,
-                    options: sameZipMotoboyResult.option ? [sameZipMotoboyResult.option] : [],
+                    quoteExpiresAt,
+                    options: attachCheckoutQuoteTokens(options, {
+                        zipCode,
+                        items,
+                        expiresAt: quoteExpiresAt
+                    }),
                     warnings,
                     diagnostics: {
                         motoboy: sameZipMotoboyResult.diagnostics
@@ -599,22 +620,28 @@ async function quoteCheckoutShipping(req, res) {
             const motoboyResult = allowMotoboy
                 ? await buildMotoboyOption(zipCode, referencePrice, productionDays)
                 : { option: null, diagnostics: null };
+            const options = [
+                ...(motoboyResult.option ? [motoboyResult.option] : []),
+                ...buildDemoShippingOptions({
+                    zipCode,
+                    quantity: totalQuantity,
+                    product: {
+                        price: referencePrice,
+                        shipping: { productionDays }
+                    }
+                })
+            ].sort((left, right) => left.price - right.price);
 
             return res.json({
                 zipCode,
                 isDemo: true,
                 productionDays,
-                options: [
-                    ...(motoboyResult.option ? [motoboyResult.option] : []),
-                    ...buildDemoShippingOptions({
-                        zipCode,
-                        quantity: totalQuantity,
-                        product: {
-                            price: referencePrice,
-                            shipping: { productionDays }
-                        }
-                    })
-                ].sort((left, right) => left.price - right.price),
+                quoteExpiresAt,
+                options: attachCheckoutQuoteTokens(options, {
+                    zipCode,
+                    items,
+                    expiresAt: quoteExpiresAt
+                }),
                 warnings,
                 diagnostics: {
                     motoboy: motoboyResult.diagnostics
@@ -626,12 +653,18 @@ async function quoteCheckoutShipping(req, res) {
             const sameZipMotoboyResult = allowMotoboy
                 ? await buildSameZipMotoboyOption(referencePrice, productionDays)
                 : { option: null, diagnostics: null };
+            const options = sameZipMotoboyResult.option ? [sameZipMotoboyResult.option] : [];
 
             return res.json({
                 zipCode,
                 isDemo: false,
                 productionDays,
-                options: sameZipMotoboyResult.option ? [sameZipMotoboyResult.option] : [],
+                quoteExpiresAt,
+                options: attachCheckoutQuoteTokens(options, {
+                    zipCode,
+                    items,
+                    expiresAt: quoteExpiresAt
+                }),
                 warnings,
                 diagnostics: {
                     motoboy: sameZipMotoboyResult.diagnostics
@@ -655,15 +688,21 @@ async function quoteCheckoutShipping(req, res) {
                     message: "Um ou mais produtos do carrinho nao permitem entrega por motoboy."
                 }
             };
+        const options = [
+            ...(motoboyResult.option ? [motoboyResult.option] : []),
+            ...correiosResult.options
+        ].sort((left, right) => left.price - right.price);
 
         return res.json({
             zipCode,
             isDemo: false,
             productionDays,
-            options: [
-                ...(motoboyResult.option ? [motoboyResult.option] : []),
-                ...correiosResult.options
-            ].sort((left, right) => left.price - right.price),
+            quoteExpiresAt,
+            options: attachCheckoutQuoteTokens(options, {
+                zipCode,
+                items,
+                expiresAt: quoteExpiresAt
+            }),
             warnings,
             diagnostics: {
                 motoboy: motoboyResult.diagnostics,

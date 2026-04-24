@@ -225,7 +225,9 @@ function buildMercadoPagoPaymentBody({ amount, description, customer, shippingAd
     return body;
 }
 
-async function createMercadoPagoPayment({ amount, description, customer, shippingAddress, items, orderNumber, formData }) {
+async function createMercadoPagoPayment({ amount, description, customer, shippingAddress, items, orderNumber, formData, idempotencyKey = "" }) {
+    const normalizedIdempotencyKey = normalizeText(idempotencyKey) || crypto.randomUUID();
+
     return requestMercadoPago("/v1/payments", {
         method: "POST",
         body: buildMercadoPagoPaymentBody({
@@ -238,7 +240,7 @@ async function createMercadoPagoPayment({ amount, description, customer, shippin
             formData
         }),
         headers: {
-            "X-Idempotency-Key": crypto.randomUUID()
+            "X-Idempotency-Key": normalizedIdempotencyKey
         }
     });
 }
@@ -274,7 +276,7 @@ function verifyMercadoPagoWebhookSignature(req) {
     const config = getMercadoPagoConfig();
 
     if (!config.webhookSecret) {
-        return true;
+        return process.env.NODE_ENV !== "production";
     }
 
     const signature = parseMercadoPagoSignature(req.headers["x-signature"] || "");

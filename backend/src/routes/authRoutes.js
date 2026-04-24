@@ -9,7 +9,7 @@ const {
     verifyPasswordResetCode,
     resetPasswordWithCode
 } = require("../controllers/authController");
-const { getCustomerOrderById, listCustomerOrders } = require("../controllers/customerOrderController");
+const { getCustomerOrderById, listCustomerOrders, retryCustomerOrderPayment } = require("../controllers/customerOrderController");
 const requireUserAuth = require("../middleware/requireUserAuth");
 
 const router = express.Router();
@@ -24,5 +24,6 @@ router.post("/logout", logoutUser);
 router.get("/account", requireUserAuth, getAccountDetails);
 router.get("/orders", requireUserAuth, listCustomerOrders);
 router.get("/orders/:id", requireUserAuth, getCustomerOrderById);
+router.post("/orders/:id/pay", requireUserAuth, retryCustomerOrderPayment);
 
 module.exports = router;

@@ -386,6 +386,8 @@ textarea {
 .account-order-summary-link-row {
     display: flex;
     justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .account-order-summary-link {
@@ -397,6 +399,24 @@ textarea {
 
 .account-order-summary-link:hover {
     text-decoration: underline;
+}
+
+.account-order-pay-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(27, 23, 19, 0.16);
+    background: rgba(27, 23, 19, 0.08);
+    color: #1b1713;
+    text-decoration: none;
+}
+
+.account-order-pay-link:hover {
+    text-decoration: none;
+    background: rgba(27, 23, 19, 0.12);
 }
 
 .account-order-summary-footer {
@@ -692,6 +712,129 @@ textarea {
     color: #6c6257;
     font-size: 13px;
     line-height: 1.5;
+}
+
+.account-payment-actions {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(27, 23, 19, 0.1);
+    background: rgba(255, 255, 255, 0.9);
+    display: grid;
+    gap: 10px;
+}
+
+.account-payment-actions p {
+    margin: 0;
+    color: #6c6257;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.account-payment-actions-expiration {
+    font-weight: 700;
+    color: #1b1713 !important;
+}
+
+.account-payment-actions-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.account-payment-actions-controls select {
+    min-height: 38px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(27, 23, 19, 0.14);
+    background: #fff;
+    color: #1b1713;
+    font: inherit;
+}
+
+.account-order-pay-now-button {
+    min-height: 38px;
+    padding: 0 14px;
+    border: 1px solid #1b1713;
+    border-radius: 10px;
+    background: #1b1713;
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.account-order-pay-now-button:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+.account-payment-instructions {
+    margin-top: 12px;
+    padding: 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(27, 23, 19, 0.1);
+    background: rgba(255, 255, 255, 0.9);
+    display: grid;
+    gap: 10px;
+}
+
+.account-payment-instructions.is-expired {
+    border-color: rgba(154, 47, 47, 0.32);
+    background: rgba(154, 47, 47, 0.06);
+}
+
+.account-payment-instructions-title {
+    margin: 0;
+    color: #1b1713;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.account-payment-instructions-note {
+    margin: 0;
+    color: #6c6257;
+    font-size: 12px;
+}
+
+.account-payment-qr-image {
+    width: min(220px, 100%);
+    border-radius: 12px;
+    border: 1px solid rgba(27, 23, 19, 0.1);
+    background: #fff;
+    padding: 6px;
+}
+
+.account-payment-copy-box {
+    display: grid;
+    gap: 8px;
+}
+
+.account-payment-copy-box textarea {
+    width: 100%;
+    min-height: 88px;
+    border-radius: 10px;
+    border: 1px solid rgba(27, 23, 19, 0.12);
+    padding: 10px;
+    resize: vertical;
+    font: inherit;
+    font-size: 12px;
+    color: #1b1713;
+    background: #fff;
+}
+
+.account-payment-copy-button {
+    width: fit-content;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(27, 23, 19, 0.14);
+    background: rgba(27, 23, 19, 0.08);
+    color: #1b1713;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
 }
 
 .account-detail-back {
