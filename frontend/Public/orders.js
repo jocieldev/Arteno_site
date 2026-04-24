@@ -276,6 +276,7 @@ function buildOrderCardMarkup(order) {
     const extraItems = items.slice(1);
     const hasExtraItems = extraItems.length > 0;
     const itemCount = getOrderItemsCount(order);
+    const orderDetailUrl = `/meus-pedidos/${encodeURIComponent(order._id || "")}`;
 
     return `
         <article class="account-order-summary-card">
@@ -306,9 +307,6 @@ function buildOrderCardMarkup(order) {
 
             <div class="account-order-summary-link-row">
                 <a href="/meus-pedidos/${encodeURIComponent(order._id || "")}" class="account-order-summary-link">Ver mais informações</a>
-                ${order.paymentAction?.canPayNow ? `
-                    <a href="/meus-pedidos/${encodeURIComponent(order._id || "")}?pay=1" class="account-order-summary-link account-order-pay-link">Pagar agora</a>
-                ` : ""}
             </div>
 
             <div class="account-order-summary-footer">
@@ -316,9 +314,14 @@ function buildOrderCardMarkup(order) {
                     <span>Total de ${escapeHtml(itemCount)} item(ns)</span>
                     <strong>${escapeHtml(formatCurrency(order.totals?.total || 0))}</strong>
                 </div>
-                <button type="button" class="account-order-rebuy-button" data-order-rebuy="${escapeHtml(order._id || "")}">
-                    Comprar novamente
-                </button>
+                <div class="account-order-summary-actions">
+                    ${order.paymentAction?.canPayNow ? `
+                        <a href="${orderDetailUrl}" class="account-order-pay-link">Pagar agora</a>
+                    ` : ""}
+                    <button type="button" class="account-order-rebuy-button" data-order-rebuy="${escapeHtml(order._id || "")}">
+                        Comprar novamente
+                    </button>
+                </div>
             </div>
         </article>
     `;

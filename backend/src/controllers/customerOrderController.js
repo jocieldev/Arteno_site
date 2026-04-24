@@ -1,11 +1,12 @@
 const Order = require("../models/Order");
-const { markCouponAsUsed } = require("../services/couponService");
-const { sendPixPaymentInstructionsEmail } = require("../services/emailService");
+const { isMercadoPagoReady } = require("../services/mercadoPagoService");
 const {
-    createMercadoPagoPayment,
-    isMercadoPagoReady,
-    mapMercadoPagoStatusToOrderStatus
-} = require("../services/mercadoPagoService");
+    applyExpiredPaymentState,
+    cleanupExpiredPendingOrders,
+    getPaymentExpiration,
+    shouldExpireOrderPayment,
+    stripExpiredPaymentInstructions
+} = require("../services/orderPaymentCleanupService");
 
 const ORDER_STATUS_META = {
     payment_pending: { label: "Pagamento pendente", step: 1 },
@@ -25,54 +26,9 @@ function normalizeStatus(value = "") {
     return ORDER_STATUS_META[normalized] ? normalized : "payment_confirmed";
 }
 
-function normalizeEmail(value = "") {
-    return normalizeText(value).toLowerCase();
-}
-
-function normalizePhone(value = "") {
-    return String(value || "").replace(/\D/g, "");
-}
-
-function normalizeDocumentNumber(value = "") {
-    return String(value || "").replace(/\D/g, "");
-}
-
 function normalizePaymentMethod(value = "") {
     const normalized = normalizeText(value).toLowerCase();
     return ["pix", "boleto", "card"].includes(normalized) ? normalized : "";
-}
-
-function hasCouponUsageBeenMarked(order = {}) {
-    return Boolean(order.payment?.details?.couponUsageMarkedAt);
-}
-
-function shouldMarkCouponAsUsed(order = {}) {
-    return Boolean(
-        order.coupon?.couponId
-        && !hasCouponUsageBeenMarked(order)
-        && (
-            normalizeText(order.orderStatus) === "payment_confirmed"
-            || normalizeText(order.payment?.status) === "approved"
-        )
-    );
-}
-
-async function markCouponAsUsedForConfirmedOrder(order) {
-    if (!shouldMarkCouponAsUsed(order)) {
-        return false;
-    }
-
-    const usedAt = new Date();
-    await markCouponAsUsed(order.coupon.couponId, usedAt);
-    order.payment = {
-        ...(order.payment || {}),
-        details: {
-            ...(order.payment?.details || {}),
-            couponUsageMarkedAt: usedAt.toISOString()
-        }
-    };
-
-    return true;
 }
 
 function buildCustomerOrderQuery(user = {}) {
@@ -118,31 +74,6 @@ function getSupportedPendingPaymentMethods() {
     return [];
 }
 
-function getPaymentExpiration(order = {}) {
-    const expiresAt = normalizeText(order.payment?.details?.expiresAt);
-
-    if (!expiresAt) {
-        return {
-            expiresAt: "",
-            isExpired: false
-        };
-    }
-
-    const timestamp = new Date(expiresAt).getTime();
-
-    if (!Number.isFinite(timestamp)) {
-        return {
-            expiresAt,
-            isExpired: false
-        };
-    }
-
-    return {
-        expiresAt,
-        isExpired: timestamp <= Date.now()
-    };
-}
-
 function hasPendingPaymentStatus(order = {}) {
     const paymentStatus = normalizeText(order.payment?.status).toLowerCase();
 
@@ -154,15 +85,16 @@ function canRetryCustomerPayment(order = {}) {
     const provider = normalizeText(order.payment?.provider || "mercado_pago");
 
     return provider === "mercado_pago"
-        && ["payment_pending", "cancelled"].includes(orderStatus)
+        && orderStatus === "payment_pending"
         && Number(order.totals?.total || 0) > 0;
 }
 
 function buildPaymentAction(order = {}) {
     const { expiresAt, isExpired } = getPaymentExpiration(order);
+    const hasCurrentInstructions = shouldReuseCurrentPendingPayment(order, order.payment?.method || "");
 
     return {
-        canPayNow: canRetryCustomerPayment(order),
+        canPayNow: Boolean(canRetryCustomerPayment(order) && !isExpired && hasCurrentInstructions),
         isExpired,
         expiresAt,
         availableMethods: getSupportedPendingPaymentMethods()
@@ -172,6 +104,13 @@ function buildPaymentAction(order = {}) {
 function serializeCustomerOrder(order) {
     const plainOrder = typeof order.toObject === "function" ? order.toObject() : { ...order };
     const normalizedStatus = normalizeStatus(plainOrder.orderStatus);
+    const shouldHideExpiredInstructions = shouldExpireOrderPayment(plainOrder);
+    const paymentStatus = shouldHideExpiredInstructions
+        ? "expired"
+        : (String(plainOrder.payment?.status || "").trim() || "approved");
+    const paymentDetails = shouldHideExpiredInstructions
+        ? stripExpiredPaymentInstructions(plainOrder.payment?.details || {})
+        : (plainOrder.payment?.details || {});
 
     return {
         _id: String(plainOrder._id),
@@ -183,9 +122,9 @@ function serializeCustomerOrder(order) {
         payment: {
             provider: String(plainOrder.payment?.provider || "").trim(),
             mode: String(plainOrder.payment?.mode || "").trim(),
-            status: String(plainOrder.payment?.status || "").trim() || "approved",
+            status: paymentStatus,
             method: plainOrder.payment?.method || "",
-            details: plainOrder.payment?.details || {}
+            details: paymentDetails
         },
         paymentAction: buildPaymentAction(plainOrder),
         customer: plainOrder.customer || {},
@@ -205,92 +144,6 @@ function serializeCustomerOrder(order) {
         })) : [],
         createdAt: plainOrder.createdAt,
         updatedAt: plainOrder.updatedAt
-    };
-}
-
-function buildStatusHistoryEntry(status, note = "") {
-    const normalizedStatus = normalizeStatus(status);
-
-    return {
-        status: normalizedStatus,
-        label: ORDER_STATUS_META[normalizedStatus]?.label || "Atualizacao",
-        note: normalizeText(note),
-        createdAt: new Date()
-    };
-}
-
-function buildDirectMercadoPagoFormData(paymentMethod, order = {}) {
-    const customer = order.customer || {};
-    const customerDocumentNumber = normalizeDocumentNumber(
-        customer.documentNumber
-        || order.payment?.details?.customerDocumentNumber
-    );
-
-    if (paymentMethod === "pix") {
-        return {
-            payment_method_id: "pix",
-            installments: 1,
-            payer: {
-                email: normalizeEmail(customer.email),
-                identification: {
-                    type: "CPF",
-                    number: customerDocumentNumber
-                }
-            }
-        };
-    }
-
-    if (paymentMethod === "boleto") {
-        return {
-            payment_method_id: normalizeText(order.payment?.details?.paymentMethodId || "bolbradesco") || "bolbradesco",
-            installments: 1,
-            payer: {
-                email: normalizeEmail(customer.email),
-                identification: {
-                    type: "CPF",
-                    number: customerDocumentNumber
-                }
-            }
-        };
-    }
-
-    return null;
-}
-
-function mapMercadoPagoPaymentMethod(paymentResponse = {}, fallbackMethod = "") {
-    const paymentMethodId = normalizeText(paymentResponse.payment_method_id || fallbackMethod).toLowerCase();
-    const paymentTypeId = normalizeText(paymentResponse.payment_type_id).toLowerCase();
-
-    if (paymentMethodId === "pix" || paymentTypeId === "bank_transfer") {
-        return "pix";
-    }
-
-    if (paymentMethodId.startsWith("bol") || paymentTypeId === "ticket") {
-        return "boleto";
-    }
-
-    return "card";
-}
-
-function extractMercadoPagoResultDetails(paymentResponse = {}) {
-    const transactionData = paymentResponse.point_of_interaction?.transaction_data || {};
-    const barcode = paymentResponse.barcode || {};
-
-    return {
-        mercadoPagoPaymentId: paymentResponse.id || "",
-        paymentMethodId: paymentResponse.payment_method_id || "",
-        ticketUrl: paymentResponse.transaction_details?.external_resource_url || "",
-        qrCode: transactionData.qr_code || "",
-        qrCodeBase64: transactionData.qr_code_base64 || "",
-        boletoLine: barcode.content || transactionData.barcode_content || "",
-        expiresAt: paymentResponse.date_of_expiration || "",
-        paidAt: paymentResponse.date_approved || "",
-        statusDetail: paymentResponse.status_detail || "",
-        message: paymentResponse.status === "approved"
-            ? "Pagamento aprovado pelo Mercado Pago."
-            : paymentResponse.status === "pending"
-                ? "Pagamento criado. Aguarde a confirmacao pelo Mercado Pago."
-                : "O Mercado Pago retornou uma atualizacao para esta compra."
     };
 }
 
@@ -320,46 +173,11 @@ function shouldReuseCurrentPendingPayment(order = {}, paymentMethod = "") {
     return false;
 }
 
-function buildPixCode(orderNumber, total) {
-    const cents = Math.round(total * 100)
-        .toString()
-        .padStart(10, "0");
-
-    return [
-        "00020101021226850014br.gov.bcb.pix2563pix.mercadopago.com/dev/",
-        orderNumber,
-        `520400005303986540${cents}5802BR5907ARTENO6009SAOPAULO62070503***6304`
-    ].join("");
-}
-
-function buildBoletoLine(orderNumber) {
-    const seed = String(orderNumber || "").replace(/\D/g, "").slice(-10).padStart(10, "0");
-    return `23791.11125 ${seed.slice(0, 5)}.444440 55000.123456 7 999900000${seed}`;
-}
-
-function buildDevelopmentPendingDetails(order = {}, paymentMethod = "") {
-    if (paymentMethod === "pix") {
-        return {
-            paymentMethodId: "pix",
-            qrCode: buildPixCode(order.orderNumber, Number(order.totals?.total || 0)),
-            expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-            instructions: "Escaneie o QR Code ou copie a chave Pix para pagar.",
-            message: "Pix regenerado em modo de desenvolvimento."
-        };
-    }
-
-    return {
-        paymentMethodId: "bolbradesco",
-        boletoLine: buildBoletoLine(order.orderNumber),
-        expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-        instructions: "Use a linha digitavel para pagar o boleto.",
-        message: "Boleto regenerado em modo de desenvolvimento."
-    };
-}
-
 async function listCustomerOrders(req, res) {
     try {
+        await cleanupExpiredPendingOrders();
         const orders = await Order.find(buildCustomerOrderQuery(req.user)).sort({ createdAt: -1 });
+        await Promise.all(orders.map((order) => applyExpiredPaymentState(order)));
 
         return res.json({
             ok: true,
@@ -374,6 +192,7 @@ async function listCustomerOrders(req, res) {
 
 async function getCustomerOrderById(req, res) {
     try {
+        await cleanupExpiredPendingOrders();
         const orderId = String(req.params.id || "").trim();
 
         if (!orderId) {
@@ -393,6 +212,8 @@ async function getCustomerOrderById(req, res) {
             });
         }
 
+        await applyExpiredPaymentState(order);
+
         return res.json({
             ok: true,
             order: serializeCustomerOrder(order)
@@ -406,6 +227,7 @@ async function getCustomerOrderById(req, res) {
 
 async function retryCustomerOrderPayment(req, res) {
     try {
+        await cleanupExpiredPendingOrders();
         const orderId = normalizeText(req.params.id);
 
         if (!orderId) {
@@ -424,6 +246,8 @@ async function retryCustomerOrderPayment(req, res) {
                 message: "Pedido nao encontrado."
             });
         }
+
+        await applyExpiredPaymentState(order);
 
         if (!canRetryCustomerPayment(order)) {
             return res.status(400).json({
@@ -450,12 +274,6 @@ async function retryCustomerOrderPayment(req, res) {
         }
 
         if (shouldReuseCurrentPendingPayment(order, paymentMethod)) {
-            order.statusHistory = Array.isArray(order.statusHistory) ? order.statusHistory : [];
-            order.statusHistory.push(
-                buildStatusHistoryEntry("payment_pending", "Cliente reabriu as instrucoes de pagamento pendente.")
-            );
-            await order.save();
-
             return res.json({
                 ok: true,
                 reusedPayment: true,
@@ -463,113 +281,12 @@ async function retryCustomerOrderPayment(req, res) {
                 order: serializeCustomerOrder(order)
             });
         }
-
-        if (!isMercadoPagoReady()) {
-            const devDetails = buildDevelopmentPendingDetails(order, paymentMethod);
-
-            order.payment = {
-                ...(order.payment || {}),
-                provider: "mercado_pago",
-                mode: "development",
-                method: paymentMethod,
-                status: "pending",
-                details: {
-                    ...(order.payment?.details || {}),
-                    ...devDetails
-                }
-            };
-            order.orderStatus = "payment_pending";
-            order.statusHistory = Array.isArray(order.statusHistory) ? order.statusHistory : [];
-            order.statusHistory.push(
-                buildStatusHistoryEntry("payment_pending", `Pagamento ${paymentMethod === "pix" ? "Pix" : "Boleto"} regenerado em modo de desenvolvimento.`)
-            );
-            await order.save();
-
-            return res.json({
-                ok: true,
-                reusedPayment: false,
-                message: "Novo pagamento gerado com sucesso.",
-                order: serializeCustomerOrder(order)
-            });
-        }
-
-        const formData = buildDirectMercadoPagoFormData(paymentMethod, order);
-
-        if (!formData) {
-            return res.status(400).json({
-                message: "Nao foi possivel preparar os dados de pagamento para esse metodo."
-            });
-        }
-
-        if (!formData?.payer?.identification?.number) {
-            return res.status(400).json({
-                message: "Este pedido nao possui CPF vinculado para gerar um novo pagamento. Fale com o suporte para regularizar."
-            });
-        }
-
-        const nextRetrySequence = Number(order.payment?.details?.retrySequence || 0) + 1;
-        const paymentResponse = await createMercadoPagoPayment({
-            amount: Number(order.totals?.total || 0),
-            description: `Pedido ${order.orderNumber}`,
-            customer: {
-                ...(order.customer || {}),
-                documentNumber: order.customer?.documentNumber || ""
-            },
-            shippingAddress: order.shippingAddress || {},
-            items: Array.isArray(order.items) ? order.items : [],
-            orderNumber: order.orderNumber,
-            formData,
-            idempotencyKey: `order-retry:${order.orderNumber}:${paymentMethod}:${nextRetrySequence}`
-        });
-
-        const mappedMethod = mapMercadoPagoPaymentMethod(paymentResponse, paymentMethod);
-        const mappedOrderStatus = mapMercadoPagoStatusToOrderStatus(paymentResponse.status);
-        const paymentDetails = {
-            ...(order.payment?.details || {}),
-            ...extractMercadoPagoResultDetails(paymentResponse),
-            retrySequence: nextRetrySequence
-        };
-
-        order.payment = {
-            ...(order.payment || {}),
-            provider: "mercado_pago",
-            mode: paymentResponse.live_mode ? "production" : "sandbox",
-            method: mappedMethod,
-            status: normalizeText(paymentResponse.status) || "pending",
-            details: paymentDetails
-        };
-        order.orderStatus = mappedOrderStatus;
-        order.statusHistory = Array.isArray(order.statusHistory) ? order.statusHistory : [];
-        order.statusHistory.push(
-            buildStatusHistoryEntry(mappedOrderStatus, `Cliente gerou novo pagamento usando ${mappedMethod === "pix" ? "Pix" : mappedMethod === "boleto" ? "Boleto" : "Cartao"}.`)
-        );
-
-        await markCouponAsUsedForConfirmedOrder(order);
-        await order.save();
-
-        if (mappedMethod === "pix" && order.customer?.email) {
-            sendPixPaymentInstructionsEmail({
-                toEmail: order.customer.email,
-                toName: order.customer.name,
-                orderNumber: order.orderNumber,
-                amount: Number(order.totals?.total || 0),
-                qrCode: paymentDetails.qrCode,
-                qrCodeBase64: paymentDetails.qrCodeBase64,
-                expiresAt: paymentDetails.expiresAt
-            }).catch((emailError) => {
-                console.error("Erro ao reenviar email do Pix:", emailError);
-            });
-        }
-
-        return res.json({
-            ok: true,
-            reusedPayment: false,
-            message: "Novo pagamento gerado com sucesso.",
-            order: serializeCustomerOrder(order)
+        return res.status(400).json({
+            message: "Este pagamento expirou ou nao possui mais instrucoes disponiveis."
         });
     } catch (error) {
         return res.status(error.status || 500).json({
-            message: error.message || "Nao foi possivel gerar um novo pagamento para este pedido."
+            message: error.message || "Nao foi possivel consultar o pagamento deste pedido."
         });
     }
 }

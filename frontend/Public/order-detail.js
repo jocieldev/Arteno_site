@@ -10,8 +10,6 @@ const footerCategoriesMenu = document.getElementById("footerCategoriesMenu");
 const accountFeedback = document.getElementById("accountFeedback");
 const accountOrderDetailTitle = document.getElementById("accountOrderDetailTitle");
 const accountOrderDetailContent = document.getElementById("accountOrderDetailContent");
-let currentOrder = null;
-let paymentActionRequestInFlight = false;
 
 const ORDER_STATUS_META = {
     payment_pending: { label: "A pagar", pillClass: "pending", progressIndex: 1 },
@@ -335,14 +333,31 @@ function getPaymentMethodLabel(method = "") {
     return value || "-";
 }
 
+function getPaymentStatusLabel(status = "") {
+    const value = String(status || "").trim().toLowerCase();
+
+    if (value === "approved") {
+        return "Pagamento aprovado";
+    }
+
+    if (value === "pending") {
+        return "Aguardando pagamento";
+    }
+
+    if (value === "expired") {
+        return "Pagamento expirado";
+    }
+
+    if (value === "cancelled") {
+        return "Pagamento cancelado";
+    }
+
+    return status || "-";
+}
+
 function getOrderIdFromPath() {
     const match = window.location.pathname.match(/^\/meus-pedidos\/([^/]+)\/?$/);
     return match ? decodeURIComponent(match[1]) : "";
-}
-
-function shouldAutoOpenPaymentArea() {
-    const searchParams = new URLSearchParams(window.location.search);
-    return searchParams.get("pay") === "1";
 }
 
 function getPaymentExpiration(order = {}) {
@@ -370,25 +385,20 @@ function getPaymentExpiration(order = {}) {
     };
 }
 
-function getAvailablePaymentMethods(order = {}) {
-    const fromApi = Array.isArray(order.paymentAction?.availableMethods)
-        ? order.paymentAction.availableMethods
-        : [];
-    const normalized = fromApi
-        .map((method) => String(method || "").trim().toLowerCase())
-        .filter((method) => ["pix", "boleto", "card"].includes(method));
-
-    if (normalized.length) {
-        return normalized;
-    }
-
-    return ["pix", "boleto"];
-}
-
 function buildPaymentInstructionsMarkup(order = {}) {
     const details = order.payment?.details || {};
     const paymentMethod = String(order.payment?.method || "").trim().toLowerCase();
     const { expiresAt, isExpired } = getPaymentExpiration(order);
+
+    if (isExpired) {
+        return `
+            <div class="account-payment-instructions is-expired">
+                <p class="account-payment-instructions-title">Pagamento expirado</p>
+                ${expiresAt ? `<p class="account-payment-instructions-note">Validade encerrada em ${escapeHtml(formatDateTime(expiresAt))}.</p>` : ""}
+                <p class="account-payment-expired-text">As instrucoes deste pagamento nao estao mais disponiveis.</p>
+            </div>
+        `;
+    }
 
     if (paymentMethod === "pix") {
         const qrCode = String(details.qrCode || "").trim();
@@ -435,54 +445,11 @@ function buildPaymentInstructionsMarkup(order = {}) {
     return "";
 }
 
-function buildPendingPaymentActionMarkup(order = {}) {
-    if (!order.paymentAction?.canPayNow) {
-        return "";
-    }
-
-    const availableMethods = getAvailablePaymentMethods(order);
-    const currentMethod = String(order.payment?.method || "").trim().toLowerCase();
-    const selectedMethod = availableMethods.includes(currentMethod) ? currentMethod : availableMethods[0];
-    const { expiresAt, isExpired } = getPaymentExpiration(order);
-
-    return `
-        <div class="account-payment-actions" id="accountPaymentActions">
-            <p>${isExpired
-                ? "Este pagamento venceu. Gere um novo codigo para continuar."
-                : "Voce pode ver as instrucoes atuais, trocar a forma de pagamento ou gerar um novo codigo."}</p>
-            ${expiresAt ? `<p class="account-payment-actions-expiration">Validade atual: ${escapeHtml(formatDateTime(expiresAt))}${isExpired ? " (expirado)" : ""}</p>` : ""}
-            <div class="account-payment-actions-controls">
-                <select data-order-payment-method>
-                    ${availableMethods.map((method) => `
-                        <option value="${escapeHtml(method)}" ${method === selectedMethod ? "selected" : ""}>${escapeHtml(getPaymentMethodLabel(method))}</option>
-                    `).join("")}
-                </select>
-                <button type="button" class="account-order-pay-now-button" data-order-pay-now="true">Pagar agora</button>
-            </div>
-        </div>
-    `;
-}
-
-function maybeAutoOpenPaymentArea() {
-    if (!shouldAutoOpenPaymentArea()) {
-        return;
-    }
-
-    const paymentPanel = document.getElementById("accountPaymentPanel");
-
-    if (!paymentPanel) {
-        return;
-    }
-
-    paymentPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
 function renderOrderDetail(order) {
     if (!accountOrderDetailContent) {
         return;
     }
 
-    currentOrder = order;
     const statusMeta = getOrderStatusMeta(order.orderStatus);
 
     if (accountOrderDetailTitle) {
@@ -578,14 +545,13 @@ function renderOrderDetail(order) {
                         </div>
                         <div class="account-order-detail-row">
                             <strong>Status</strong>
-                            <span>${escapeHtml(order.payment?.status || "-")}</span>
+                            <span>${escapeHtml(getPaymentStatusLabel(order.payment?.status))}</span>
                         </div>
                         <div class="account-order-detail-row">
                             <strong>Fornecedor</strong>
                             <span>${escapeHtml(order.payment?.provider || "-")}</span>
                         </div>
                     </div>
-                    ${buildPendingPaymentActionMarkup(order)}
                     ${buildPaymentInstructionsMarkup(order)}
                 </section>
 
@@ -616,8 +582,6 @@ function renderOrderDetail(order) {
             </div>
         </article>
     `;
-
-    maybeAutoOpenPaymentArea();
 }
 
 async function fetchOrderDetail(orderId) {
@@ -629,57 +593,6 @@ async function fetchOrderDetail(orderId) {
     }
 
     return result.order || {};
-}
-
-async function requestOrderPayment(orderId, paymentMethod) {
-    const response = await fetch(`/api/auth/orders/${encodeURIComponent(orderId)}/pay`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ paymentMethod })
-    });
-    const result = await response.json();
-
-    if (!response.ok) {
-        throw new Error(result.message || "Nao foi possivel iniciar o pagamento deste pedido.");
-    }
-
-    return result;
-}
-
-async function handlePayNowAction(buttonElement) {
-    const orderId = getOrderIdFromPath();
-
-    if (!orderId || paymentActionRequestInFlight) {
-        return;
-    }
-
-    const paymentMethodSelect = accountOrderDetailContent?.querySelector("[data-order-payment-method]");
-    const paymentMethod = String(paymentMethodSelect?.value || currentOrder?.payment?.method || "pix").trim().toLowerCase();
-
-    paymentActionRequestInFlight = true;
-    buttonElement.disabled = true;
-    const previousLabel = buttonElement.textContent;
-    buttonElement.textContent = "Processando...";
-
-    try {
-        hideOrderDetailError();
-        const result = await requestOrderPayment(orderId, paymentMethod);
-        renderOrderDetail(result.order || currentOrder || {});
-
-        if (window.showSiteToast) {
-            window.showSiteToast(result.message || "Pagamento atualizado com sucesso.", "success", {
-                duration: 4600
-            });
-        }
-    } catch (error) {
-        showOrderDetailError(error.message);
-        buttonElement.disabled = false;
-        buttonElement.textContent = previousLabel;
-    } finally {
-        paymentActionRequestInFlight = false;
-    }
 }
 
 async function handleCopyPaymentValue(targetId) {
@@ -716,14 +629,6 @@ async function handleCopyPaymentValue(targetId) {
 
 if (accountOrderDetailContent) {
     accountOrderDetailContent.addEventListener("click", async (event) => {
-        const payNowButton = event.target.closest("[data-order-pay-now]");
-
-        if (payNowButton instanceof HTMLButtonElement) {
-            event.preventDefault();
-            await handlePayNowAction(payNowButton);
-            return;
-        }
-
         const copyButton = event.target.closest("[data-copy-payment-target]");
 
         if (copyButton instanceof HTMLButtonElement) {
