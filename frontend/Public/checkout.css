@@ -789,6 +789,17 @@ textarea {
     align-items: start;
 }
 
+.checkout-pix-image {
+    display: block;
+    width: 220px;
+    max-width: 100%;
+    padding: 10px;
+    border-radius: 24px;
+    background: #fff;
+    border: 1px solid rgba(28, 23, 19, 0.08);
+    box-sizing: border-box;
+}
+
 .checkout-pseudo-qr {
     display: grid;
     grid-template-columns: repeat(17, 1fr);

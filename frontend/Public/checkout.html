@@ -216,10 +216,14 @@
                             <input type="text" id="checkoutCustomerName" autocomplete="name" required>
                         </label>
                         <label class="checkout-field">
+                            <span>CPF</span>
+                            <input type="text" id="checkoutCustomerDocument" inputmode="numeric" autocomplete="off" required>
+                        </label>
+                        <label class="checkout-field">
                             <span>Telefone</span>
                             <input type="text" id="checkoutCustomerPhone" autocomplete="tel" required>
                         </label>
-                        <label class="checkout-field checkout-field-full">
+                        <label class="checkout-field">
                             <span>Email</span>
                             <input type="email" id="checkoutCustomerEmail" autocomplete="email" required>
                         </label>
@@ -314,7 +318,7 @@
                         <span>4</span>
                         <div>
                             <h2>Forma de pagamento</h2>
-                            <p>Use o formulário seguro do Mercado Pago quando ele estiver ativo. Sem credenciais, o checkout continua em modo de desenvolvimento.</p>
+                            <p>Escolha a forma de pagamento. Quando o Mercado Pago estiver configurado, o Pix será gerado no seu layout da loja.</p>
                         </div>
                     </div>
                     <div class="checkout-mercado-pago-panel" id="checkoutMercadoPagoPanel" hidden>

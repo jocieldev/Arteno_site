@@ -1,6 +1,7 @@
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 const { previewCouponApplication, markCouponAsUsed } = require("../services/couponService");
+const { sendPixPaymentInstructionsEmail } = require("../services/emailService");
 const {
     buildMercadoPagoPublicConfig,
     createMercadoPagoPayment,
@@ -60,8 +61,30 @@ function normalizePhone(value = "") {
     return String(value || "").replace(/\D/g, "");
 }
 
+function normalizeDocumentNumber(value = "") {
+    return String(value || "").replace(/\D/g, "");
+}
+
 function normalizeZipCode(value = "") {
     return String(value || "").replace(/\D/g, "").slice(0, 8);
+}
+
+function buildDirectMercadoPagoFormData(paymentMethod, customer = {}) {
+    if (paymentMethod === "pix") {
+        return {
+            payment_method_id: "pix",
+            installments: 1,
+            payer: {
+                email: customer.email || "",
+                identification: {
+                    type: "CPF",
+                    number: normalizeDocumentNumber(customer.documentNumber)
+                }
+            }
+        };
+    }
+
+    return null;
 }
 
 function normalizePrice(value) {
@@ -492,6 +515,7 @@ async function createCheckoutOrder(req, res) {
 
         const customer = {
             name: normalizeText(req.body.customer?.name),
+            documentNumber: normalizeDocumentNumber(req.body.customer?.documentNumber),
             email: normalizeEmail(req.body.customer?.email),
             phone: normalizePhone(req.body.customer?.phone)
         };
@@ -505,17 +529,22 @@ async function createCheckoutOrder(req, res) {
             complement: normalizeText(req.body.shippingAddress?.complement)
         };
 
-        if (!customer.name || !customer.email || !customer.phone) {
-            return res.status(400).json({ message: "Preencha nome, e-mail e telefone para continuar" });
+        if (!customer.name || !customer.email || !customer.phone || customer.documentNumber.length !== 11) {
+            return res.status(400).json({ message: "Preencha nome, CPF, e-mail e telefone para continuar" });
         }
 
         if (!shippingAddress.zipCode || !shippingAddress.street || !shippingAddress.number || !shippingAddress.neighborhood || !shippingAddress.city || !shippingAddress.state) {
             return res.status(400).json({ message: "Preencha os dados principais do endereço de entrega." });
         }
 
-        if (hasMercadoPagoIntegration && !mercadoPagoPaymentInput?.formData) {
+        const directMercadoPagoFormData = buildDirectMercadoPagoFormData(paymentMethod, customer);
+        const mercadoPagoFormData = mercadoPagoPaymentInput?.formData || directMercadoPagoFormData;
+
+        if (hasMercadoPagoIntegration && !mercadoPagoFormData) {
             return res.status(400).json({
-                message: "O formulÃ¡rio seguro do Mercado Pago nÃ£o foi enviado. Recarregue a pÃ¡gina e tente novamente."
+                    message: paymentMethod === "card"
+                        ? "Pagamento com cartao exige tokenizacao segura e ainda nao esta disponivel no layout atual. Use Pix por enquanto."
+                        : "Nao foi possivel preparar os dados do pagamento no Mercado Pago."
             });
         }
 
@@ -582,7 +611,7 @@ async function createCheckoutOrder(req, res) {
         });
 
         if (hasMercadoPagoIntegration) {
-            if (!mercadoPagoPaymentInput?.formData) {
+            if (!mercadoPagoFormData) {
                 return res.status(400).json({
                     message: "O formulário seguro do Mercado Pago não foi enviado. Recarregue a página e tente novamente."
                 });
@@ -596,7 +625,7 @@ async function createCheckoutOrder(req, res) {
                     shippingAddress,
                     items: resolvedItems,
                     orderNumber,
-                    formData: mercadoPagoPaymentInput.formData
+                    formData: mercadoPagoFormData
                 });
                 const mappedMethod = mapMercadoPagoPaymentMethod(paymentResponse, paymentMethod);
                 const mappedOrderStatus = mapMercadoPagoStatusToOrderStatus(paymentResponse.status);
@@ -619,6 +648,20 @@ async function createCheckoutOrder(req, res) {
                 );
                 await markCouponAsUsedForConfirmedOrder(order);
                 await order.save();
+
+                if (mappedMethod === "pix" && customer.email) {
+                    sendPixPaymentInstructionsEmail({
+                        toEmail: customer.email,
+                        toName: customer.name,
+                        orderNumber,
+                        amount: total,
+                        qrCode: paymentDetails.qrCode,
+                        qrCodeBase64: paymentDetails.qrCodeBase64,
+                        expiresAt: paymentDetails.expiresAt
+                    }).catch((emailError) => {
+                        console.error("Erro ao enviar email do Pix:", emailError);
+                    });
+                }
 
                 return res.status(201).json({
                     ok: true,

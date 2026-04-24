@@ -707,6 +707,10 @@ function normalizePhone(value = "") {
     return String(value).replace(/\D/g, "").slice(0, 11);
 }
 
+function normalizeDocumentNumber(value = "") {
+    return String(value).replace(/\D/g, "").slice(0, 14);
+}
+
 function applyZipCodeMask(value = "") {
     const digits = normalizeZipCode(value);
     return digits.length <= 5 ? digits : `${digits.slice(0, 5)}-${digits.slice(5)}`;
@@ -730,6 +734,24 @@ function applyPhoneMask(value = "") {
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
 }
 
+function applyCpfMask(value = "") {
+    const digits = normalizeDocumentNumber(value).slice(0, 11);
+
+    if (digits.length <= 3) {
+        return digits;
+    }
+
+    if (digits.length <= 6) {
+        return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+    }
+
+    if (digits.length <= 9) {
+        return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+    }
+
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+}
+
 function applyCardNumberMask(value = "") {
     return String(value)
         .replace(/\D/g, "")
@@ -744,7 +766,7 @@ function applyCardExpiryMask(value = "") {
 }
 
 function isMercadoPagoCheckoutActive() {
-    return Boolean(checkoutConfig?.isConfigured && checkoutPaymentBrick && window.MercadoPago);
+    return false;
 }
 
 function setCheckoutSubmitAvailability() {
@@ -1515,6 +1537,10 @@ function bindCheckoutInteractions() {
         event.target.value = applyPhoneMask(event.target.value);
     });
 
+    document.getElementById("checkoutCustomerDocument").addEventListener("input", (event) => {
+        event.target.value = applyCpfMask(event.target.value);
+    });
+
     document.getElementById("checkoutCardNumber").addEventListener("input", (event) => {
         event.target.value = applyCardNumberMask(event.target.value);
     });
@@ -1580,6 +1606,103 @@ function bindCheckoutInteractions() {
             renderCheckoutSummary();
         });
     }
+}
+
+function setMercadoPagoCheckoutVisibility() {
+    const enabled = Boolean(checkoutConfig?.isConfigured);
+
+    if (checkoutMercadoPagoPanel) {
+        checkoutMercadoPagoPanel.hidden = true;
+    }
+
+    if (checkoutLegacyPaymentOptions) {
+        checkoutLegacyPaymentOptions.hidden = false;
+    }
+
+    if (checkoutSubmitNote) {
+        checkoutSubmitNote.textContent = enabled
+            ? "Mercado Pago ativo: o Pix sera gerado no layout da loja com QR Code e chave Pix."
+            : "Modo teste ativo: ao finalizar, o pedido sera criado com pagamento confirmado automaticamente.";
+    }
+
+    if (checkoutMercadoPagoHint) {
+        checkoutMercadoPagoHint.textContent = enabled
+            ? "O formulario visual do Mercado Pago foi ocultado para manter o layout proprio da loja."
+            : "Conecte suas credenciais de teste do Mercado Pago para renderizar o Payment Brick aqui.";
+    }
+
+    setCheckoutSubmitAvailability();
+}
+
+function renderPixResult(result) {
+    const qrCode = result.payment?.details?.qrCode || "";
+    const qrCodeBase64 = result.payment?.details?.qrCodeBase64 || "";
+    const expiresAt = result.payment?.details?.expiresAt || "";
+    const qrCodeMarkup = qrCodeBase64
+        ? `<img src="data:image/png;base64,${escapeHtml(qrCodeBase64)}" alt="QR Code Pix" class="checkout-pix-image">`
+        : buildPseudoQrMarkup(qrCode);
+
+    checkoutResultTitle.textContent = "Pix gerado com sucesso";
+    checkoutResultSubtitle.textContent = "Seu pedido foi criado e esta aguardando o pagamento via Pix.";
+
+    checkoutResultShell.innerHTML = `
+        <article class="checkout-result-card pending">
+            <h3>Aguardando pagamento</h3>
+            <p>${escapeHtml(result.payment?.details?.instructions || "Escaneie o QR Code abaixo ou copie a chave Pix.")}</p>
+            <div class="checkout-result-meta">
+                <div><span>Pedido</span><strong>${escapeHtml(result.order?.orderNumber || "-")}</strong></div>
+                <div><span>Total</span><strong>${formatCurrency(result.order?.totals?.total || 0)}</strong></div>
+                <div><span>Validade</span><strong>${escapeHtml(formatDate(expiresAt))}</strong></div>
+            </div>
+        </article>
+        <article class="checkout-result-card">
+            <div class="checkout-pix-layout">
+                ${qrCodeMarkup}
+                <div>
+                    <h3>QR Code Pix</h3>
+                    <p>Escaneie o QR Code abaixo ou copie a chave Pix com o valor da compra. Essas instrucoes tambem foram enviadas para o email informado no checkout.</p>
+                    <div class="checkout-copy-box">
+                        <textarea id="pixCopyCode" readonly>${escapeHtml(qrCode)}</textarea>
+                        <button type="button" class="checkout-copy-button" data-copy-target="pixCopyCode">Copiar chave Pix</button>
+                    </div>
+                </div>
+            </div>
+            ${buildResultActions()}
+        </article>
+    `;
+}
+
+async function buildCheckoutPayload() {
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || "pix";
+    const items = await resolveCheckoutItemsForSubmission(checkoutItems);
+
+    return {
+        customer: {
+            name: document.getElementById("checkoutCustomerName").value.trim(),
+            documentNumber: document.getElementById("checkoutCustomerDocument").value.trim(),
+            email: document.getElementById("checkoutCustomerEmail").value.trim(),
+            phone: document.getElementById("checkoutCustomerPhone").value.trim()
+        },
+        shippingAddress: {
+            zipCode: document.getElementById("checkoutZipCode").value.trim(),
+            street: document.getElementById("checkoutStreet").value.trim(),
+            number: document.getElementById("checkoutStreetNumber").value.trim(),
+            neighborhood: document.getElementById("checkoutNeighborhood").value.trim(),
+            city: document.getElementById("checkoutCity").value.trim(),
+            state: document.getElementById("checkoutState").value.trim(),
+            complement: document.getElementById("checkoutComplement").value.trim()
+        },
+        shippingOption: selectedShippingOption || {},
+        coupon: appliedCoupon ? { code: appliedCoupon.code } : null,
+        paymentMethod,
+        items,
+        card: paymentMethod === "card" ? {
+            number: document.getElementById("checkoutCardNumber").value.trim(),
+            holderName: document.getElementById("checkoutCardHolder").value.trim(),
+            expiry: document.getElementById("checkoutCardExpiry").value.trim(),
+            cvv: document.getElementById("checkoutCardCvv").value.trim()
+        } : {}
+    };
 }
 
 loadSharedCategories();

@@ -130,7 +130,7 @@ function buildMercadoPagoPayer({ customer = {}, shippingAddress = {}, formData =
         last_name: normalizeText(formPayer.last_name || lastName),
         identification: {
             type: normalizeText(identification.type || "CPF"),
-            number: normalizeDocumentNumber(identification.number)
+            number: normalizeDocumentNumber(identification.number || customer.documentNumber)
         },
         address: {
             zip_code: normalizeText(shippingAddress.zipCode),
