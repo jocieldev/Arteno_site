@@ -53,6 +53,8 @@ let selectedShippingOption = null;
 let lastAutoQuotedZipCode = "";
 let lastAutoQuotedCartSignature = "";
 let lastObservedZipCode = "";
+let lastAddressLookupZipCode = "";
+let addressLookupRequestInFlight = false;
 let checkoutSubmitRequestInFlight = false;
 let appliedCoupon = null;
 let checkoutConfig = null;
@@ -502,6 +504,60 @@ function renderCheckoutSummary() {
 
     if (isMercadoPagoCheckoutActive()) {
         void renderMercadoPagoBrick();
+    }
+}
+
+function fillCheckoutAddressFromZipCode(address = {}) {
+    const streetInput = document.getElementById("checkoutStreet");
+    const neighborhoodInput = document.getElementById("checkoutNeighborhood");
+    const cityInput = document.getElementById("checkoutCity");
+    const stateInput = document.getElementById("checkoutState");
+
+    if (streetInput) {
+        streetInput.value = String(address.street || "").trim();
+    }
+
+    if (neighborhoodInput) {
+        neighborhoodInput.value = String(address.neighborhood || "").trim();
+    }
+
+    if (cityInput) {
+        cityInput.value = String(address.city || "").trim();
+    }
+
+    if (stateInput) {
+        stateInput.value = String(address.state || "").trim().toUpperCase();
+    }
+}
+
+async function lookupAddressByZipCode(zipCode) {
+    const normalizedZipCode = normalizeZipCode(zipCode);
+
+    if (normalizedZipCode.length !== 8 || addressLookupRequestInFlight || normalizedZipCode === lastAddressLookupZipCode) {
+        return;
+    }
+
+    addressLookupRequestInFlight = true;
+
+    try {
+        const response = await fetch(`https://viacep.com.br/ws/${normalizedZipCode}/json/`);
+        const result = await response.json();
+
+        if (!response.ok || result?.erro) {
+            throw new Error("CEP nao encontrado.");
+        }
+
+        fillCheckoutAddressFromZipCode({
+            street: result.logradouro,
+            neighborhood: result.bairro,
+            city: result.localidade,
+            state: result.uf
+        });
+        lastAddressLookupZipCode = normalizedZipCode;
+    } catch (_error) {
+        lastAddressLookupZipCode = "";
+    } finally {
+        addressLookupRequestInFlight = false;
     }
 }
 
@@ -1009,6 +1065,10 @@ function prefillStoredShippingZipCode() {
 
     checkoutZipCodeInput.value = applyZipCodeMask(storedZipCode);
     lastObservedZipCode = storedZipCode;
+
+    if (storedZipCode.length === 8) {
+        void lookupAddressByZipCode(storedZipCode);
+    }
 }
 
 function tryAutoCalculateStoredShipping() {
@@ -1537,6 +1597,14 @@ function bindCheckoutInteractions() {
         if (normalizedZipCode !== lastAutoQuotedZipCode) {
             lastAutoQuotedZipCode = "";
             lastAutoQuotedCartSignature = "";
+        }
+
+        if (normalizedZipCode !== lastAddressLookupZipCode) {
+            lastAddressLookupZipCode = "";
+        }
+
+        if (normalizedZipCode.length === 8) {
+            void lookupAddressByZipCode(normalizedZipCode);
         }
 
         if (normalizedZipCode.length === 8 && normalizedZipCode !== lastAutoQuotedZipCode) {

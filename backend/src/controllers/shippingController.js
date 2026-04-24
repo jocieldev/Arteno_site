@@ -391,27 +391,39 @@ async function quoteCorreiosOptions({ zipCode, products, productionDays, canQuot
         };
     }
 
-    const services = await quoteShipmentByProducts({
-        toPostalCode: zipCode,
-        products
-    });
-    const options = services
-        .filter((service) => !service.error)
-        .filter(isCorreiosPacOrSedex)
-        .map(mapShippingOption)
-        .map((option) => enrichShippingOption(option, productionDays))
-        .sort((left, right) => left.price - right.price);
+    try {
+        const services = await quoteShipmentByProducts({
+            toPostalCode: zipCode,
+            products
+        });
+        const options = services
+            .filter((service) => !service.error)
+            .filter(isCorreiosPacOrSedex)
+            .map(mapShippingOption)
+            .map((option) => enrichShippingOption(option, productionDays))
+            .sort((left, right) => left.price - right.price);
 
-    return {
-        options,
-        diagnostics: buildCorreiosDiagnostics({
-            available: true,
-            reasonCode: "available",
-            message: options.length
-                ? "Correios disponivel para esta consulta."
-                : "Nenhuma opcao de Correios foi retornada para este CEP."
-        })
-    };
+        return {
+            options,
+            diagnostics: buildCorreiosDiagnostics({
+                available: true,
+                reasonCode: "available",
+                message: options.length
+                    ? "Correios disponivel para esta consulta."
+                    : "Nenhuma opcao de Correios foi retornada para este CEP."
+            })
+        };
+    } catch (error) {
+        console.error("Correios indisponivel nesta consulta:", error.message);
+        return {
+            options: [],
+            diagnostics: buildCorreiosDiagnostics({
+                available: false,
+                reasonCode: "correios_quote_failed",
+                message: error.message || "Nao foi possivel consultar os Correios nesta tentativa."
+            })
+        };
+    }
 }
 
 async function quoteShipping(req, res) {

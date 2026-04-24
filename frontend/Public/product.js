@@ -1283,6 +1283,12 @@ async function calculateShippingQuote() {
         }));
 
         if (Array.isArray(result.options) && result.options.length) {
+            const motoboyMessage = result?.diagnostics?.motoboy?.available === false
+                ? result?.diagnostics?.motoboy?.message
+                : "";
+            const warnings = Array.isArray(result?.warnings) && result.warnings.length
+                ? ` ${result.warnings.join(" ")}`
+                : "";
             showShippingFeedback(
                 result.isDemo
                     ? "Simulação carregada com sucesso para este CEP."
