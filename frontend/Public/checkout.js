@@ -766,7 +766,7 @@ function applyCardExpiryMask(value = "") {
 }
 
 function isMercadoPagoCheckoutActive() {
-    return Boolean(checkoutConfig?.isConfigured && window.MercadoPago && checkoutPaymentBrick);
+    return false;
 }
 
 function setCheckoutSubmitAvailability() {
@@ -1621,7 +1621,9 @@ function bindCheckoutInteractions() {
 }
 
 function setMercadoPagoCheckoutVisibility() {
-    const enabled = Boolean(checkoutConfig?.isConfigured);
+    const enabled = false;
+    const cardPaymentInput = document.querySelector('input[name="paymentMethod"][value="card"]');
+    const cardPaymentOption = cardPaymentInput ? cardPaymentInput.closest(".checkout-payment-option") : null;
 
     if (checkoutMercadoPagoPanel) {
         checkoutMercadoPagoPanel.hidden = !enabled;
@@ -1631,18 +1633,29 @@ function setMercadoPagoCheckoutVisibility() {
         checkoutLegacyPaymentOptions.hidden = enabled;
     }
 
+    if (cardPaymentOption) {
+        cardPaymentOption.hidden = Boolean(checkoutConfig?.isConfigured);
+    }
+
+    if (cardPaymentInput && checkoutConfig?.isConfigured && cardPaymentInput.checked) {
+        const pixPaymentInput = document.querySelector('input[name="paymentMethod"][value="pix"]');
+
+        if (pixPaymentInput) {
+            pixPaymentInput.checked = true;
+        }
+    }
+
     if (checkoutSubmitNote) {
-        checkoutSubmitNote.textContent = enabled
-            ? "Mercado Pago ativo: use o formulario seguro abaixo para pagar com Pix, Cartao de Credito ou Cartao de Debito."
+        checkoutSubmitNote.textContent = checkoutConfig?.isConfigured
+            ? "Finalize usando o checkout da loja. Pix e boleto continuam disponiveis neste fluxo."
             : "Modo teste ativo: ao finalizar, o pedido sera criado com pagamento confirmado automaticamente.";
     }
 
     if (checkoutMercadoPagoHint) {
-        checkoutMercadoPagoHint.textContent = enabled
-            ? "No formulario seguro do Mercado Pago voce pode escolher Pix, Credito ou Debito."
-            : "Conecte suas credenciais de teste do Mercado Pago para renderizar o Payment Brick aqui.";
+        checkoutMercadoPagoHint.textContent = "O formulario incorporado do Mercado Pago esta desativado neste checkout.";
     }
 
+    setPaymentMethodUI();
     setCheckoutSubmitAvailability();
 }
 
