@@ -138,6 +138,22 @@ function renderStatus(settings) {
     document.getElementById("motoboyMaxDistance").textContent = settings.maxDistanceKm ? `${Number(settings.maxDistanceKm).toFixed(1)} km` : "-";
     document.getElementById("motoboyPricePerKmStatus").textContent = formatCurrency(settings.pricePerKm || 0);
     document.getElementById("motoboyUpdatedAt").textContent = formatDateTime(settings.updatedAt);
+
+    const issuesNode = document.getElementById("motoboyStatusIssues");
+    const readinessIssues = Array.isArray(settings.readinessIssues) ? settings.readinessIssues : [];
+
+    if (!issuesNode) {
+        return;
+    }
+
+    if (!readinessIssues.length) {
+        issuesNode.hidden = true;
+        issuesNode.innerHTML = "";
+        return;
+    }
+
+    issuesNode.hidden = false;
+    issuesNode.innerHTML = readinessIssues.map((issue) => `<p>${issue}</p>`).join("");
 }
 
 function fillForm(settings) {

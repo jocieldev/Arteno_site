@@ -135,9 +135,9 @@
             <div>
                 <p class="checkout-page-kicker">Finalizar compra</p>
                 <h1>Checkout da sua compra</h1>
-                <p class="checkout-page-subtitle">Monte o pedido completo e finalize no checkout da loja. Pix e boleto seguem aparecendo no seu proprio formulario.</p>
+                <p class="checkout-page-subtitle">Revise seus dados, escolha o frete e finalize seu pedido com praticidade.</p>
             </div>
-            <div class="checkout-mode-badge" id="checkoutModeBadge">Modo desenvolvimento</div>
+            <div class="checkout-mode-badge" id="checkoutModeBadge" hidden></div>
         </section>
 
         <div class="checkout-page-feedback" id="checkoutFeedback" hidden></div>
@@ -323,7 +323,7 @@
                     </div>
                     <div class="checkout-mercado-pago-panel" id="checkoutMercadoPagoPanel" hidden>
                         <div class="checkout-mercado-pago-shell" id="checkoutPaymentBrick"></div>
-                        <p class="checkout-dev-tip" id="checkoutMercadoPagoHint">Conecte suas credenciais de teste do Mercado Pago para renderizar o Payment Brick aqui.</p>
+                        <p class="checkout-dev-tip" id="checkoutMercadoPagoHint" hidden></p>
                     </div>
                     <div class="checkout-payment-options" id="checkoutLegacyPaymentOptions">
                         <label class="checkout-payment-option active">
@@ -332,22 +332,18 @@
                         </label>
                         <label class="checkout-payment-option">
                             <input type="radio" name="paymentMethod" value="card">
-                            <div><strong>Cartão</strong><span>Simula aprovado ou recusado</span></div>
-                        </label>
-                        <label class="checkout-payment-option">
-                            <input type="radio" name="paymentMethod" value="boleto">
-                            <div><strong>Boleto</strong><span>Gera linha digitável para pagamento</span></div>
+                            <div><strong>Cartão</strong><span>Pagamento por crédito ou débito</span></div>
                         </label>
                     </div>
                     <div class="checkout-card-fields" id="checkoutCardFields" hidden>
                         <div class="checkout-card-type-toggle" role="group" aria-label="Tipo do cartao">
                             <label class="checkout-card-type-option active">
                                 <input type="radio" name="checkoutCardType" value="credit" checked>
-                                <span>Credito</span>
+                                <span>Crédito</span>
                             </label>
                             <label class="checkout-card-type-option">
                                 <input type="radio" name="checkoutCardType" value="debit">
-                                <span>Debito</span>
+                                <span>Débito</span>
                             </label>
                         </div>
                         <div class="checkout-grid checkout-grid-two">
@@ -368,7 +364,6 @@
                                 <input type="text" id="checkoutCardCvv" inputmode="numeric" autocomplete="off" placeholder="123">
                             </label>
                         </div>
-                        <p class="checkout-dev-tip">No modo de desenvolvimento, cartões com último número par ficam aprovados e ímpares ficam recusados.</p>
                     </div>
                 </article>
             </form>
@@ -401,7 +396,7 @@
                         <strong id="checkoutTotal">R$ 0,00</strong>
                     </div>
                     <button type="submit" form="checkoutForm" class="checkout-submit-button" id="checkoutSubmitButton">Finalizar compra</button>
-                    <p class="checkout-submit-note" id="checkoutSubmitNote">Modo teste ativo: ao finalizar, o pedido será criado com pagamento confirmado automaticamente.</p>
+                    <p class="checkout-submit-note" id="checkoutSubmitNote" hidden></p>
                 </div>
             </aside>
         </section>
@@ -452,7 +447,6 @@
                     <span>Visa</span>
                     <span>Mastercard</span>
                     <span>Pix</span>
-                    <span>Boleto</span>
                 </div>
             </div>
         </div>

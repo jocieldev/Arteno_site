@@ -348,19 +348,6 @@ function buildPaymentSimulation({ paymentMethod, card, orderNumber, total }) {
         };
     }
 
-    if (paymentMethod === "boleto") {
-        return {
-            status: "approved",
-            orderStatus: "payment_confirmed",
-            details: {
-                boletoLine: buildBoletoLine(orderNumber),
-                expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-                instructions: "Pedido confirmado automaticamente no modo de teste sem Mercado Pago conectado.",
-                message: "Pagamento confirmado automaticamente no modo de teste."
-            }
-        };
-    }
-
     const cardSimulation = buildCardSimulation(card);
 
     if (cardSimulation.status === "approved") {
@@ -553,7 +540,7 @@ async function createCheckoutOrder(req, res) {
             });
         }
 
-        if (!["pix", "card", "boleto"].includes(paymentMethod)) {
+        if (!["pix", "card"].includes(paymentMethod)) {
             return res.status(400).json({
                 message: "Selecione uma forma de pagamento válida."
             });

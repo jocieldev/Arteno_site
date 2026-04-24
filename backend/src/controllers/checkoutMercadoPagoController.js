@@ -85,20 +85,6 @@ function buildDirectMercadoPagoFormData(paymentMethod, customer = {}) {
         };
     }
 
-    if (paymentMethod === "boleto") {
-        return {
-            payment_method_id: "bolbradesco",
-            installments: 1,
-            payer: {
-                email: customer.email || "",
-                identification: {
-                    type: "CPF",
-                    number: normalizeDocumentNumber(customer.documentNumber)
-                }
-            }
-        };
-    }
-
     return null;
 }
 
@@ -509,19 +495,6 @@ function buildPaymentSimulation({ paymentMethod, card, orderNumber, total }) {
         };
     }
 
-    if (paymentMethod === "boleto") {
-        return {
-            status: "approved",
-            orderStatus: "payment_confirmed",
-            details: {
-                boletoLine: buildBoletoLine(orderNumber),
-                expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-                instructions: "Pedido confirmado automaticamente no modo de teste sem Mercado Pago conectado.",
-                message: "Pagamento confirmado automaticamente no modo de teste."
-            }
-        };
-    }
-
     return buildCardSimulation(card);
 }
 
@@ -539,11 +512,11 @@ function resolveDevelopmentMode() {
 
 function getSupportedPaymentMethods({ hasMercadoPagoIntegration = false, isDevelopmentMode = false } = {}) {
     if (hasMercadoPagoIntegration) {
-        return ["pix", "boleto", "card"];
+        return ["pix", "card"];
     }
 
     if (isDevelopmentMode) {
-        return ["pix", "boleto", "card"];
+        return ["pix", "card"];
     }
 
     return [];

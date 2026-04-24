@@ -321,7 +321,7 @@ textarea {
 
 .checkout-payment-options {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
 }
 
@@ -379,6 +379,68 @@ textarea {
     margin-top: 18px;
     padding-top: 18px;
     border-top: 1px solid rgba(28, 23, 19, 0.08);
+}
+
+.checkout-card-type-toggle {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.checkout-card-type-option {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 56px;
+    padding: 0 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(28, 23, 19, 0.1);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 241, 231, 0.92) 100%);
+    color: #433930;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+    overflow: hidden;
+}
+
+.checkout-card-type-option::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(154, 99, 56, 0.14), rgba(182, 120, 71, 0.04));
+    opacity: 0;
+    transition: opacity 0.18s ease;
+}
+
+.checkout-card-type-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.checkout-card-type-option span {
+    position: relative;
+    z-index: 1;
+}
+
+.checkout-card-type-option:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(28, 23, 19, 0.08);
+}
+
+.checkout-card-type-option.active {
+    border-color: rgba(154, 99, 56, 0.45);
+    background: linear-gradient(135deg, #9a6338 0%, #b67847 100%);
+    color: #ffffff;
+    box-shadow: 0 14px 28px rgba(154, 99, 56, 0.2);
+}
+
+.checkout-card-type-option.active::before {
+    opacity: 1;
 }
 
 .checkout-dev-tip {

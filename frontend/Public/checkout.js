@@ -897,7 +897,6 @@ async function legacyRenderMercadoPagoBrick() {
                 creditCard: "all",
                 debitCard: "all",
                 prepaidCard: "all",
-                ticket: "all",
                 bankTransfer: "all"
             }
         },
@@ -907,7 +906,7 @@ async function legacyRenderMercadoPagoBrick() {
             },
             onSubmit: ({ selectedPaymentMethod, formData }, additionalData) => {
                 return submitCheckoutOrder({
-                    paymentMethod: selectedPaymentMethod === "bankTransfer" ? "pix" : selectedPaymentMethod === "ticket" ? "boleto" : "card",
+                    paymentMethod: selectedPaymentMethod === "bankTransfer" ? "pix" : "card",
                     mercadoPagoPayment: {
                         selectedPaymentMethod,
                         formData,

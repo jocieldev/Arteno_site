@@ -74,6 +74,40 @@ function buildOriginLabel(origin = {}) {
     return parts.join(", ");
 }
 
+function buildMotoboyReadinessIssues(settings = {}) {
+    const issues = [];
+
+    if (!settings.enabled) {
+        issues.push("Motoboy desativado no painel.");
+    }
+
+    if (!normalizeZipCode(settings.origin?.zipCode)) {
+        issues.push("CEP de origem nao informado.");
+    }
+
+    if (!normalizeText(settings.origin?.city)) {
+        issues.push("Cidade de origem nao informada.");
+    }
+
+    if (!normalizeText(settings.origin?.state)) {
+        issues.push("UF de origem nao informada.");
+    }
+
+    if (!normalizeNumber(settings.coordinates?.latitude, 0) || !normalizeNumber(settings.coordinates?.longitude, 0)) {
+        issues.push("Endereco de origem ainda nao foi localizado no mapa.");
+    }
+
+    if (normalizePositiveNumber(settings.pricePerKm, 0) <= 0) {
+        issues.push("Valor por km deve ser maior que zero.");
+    }
+
+    if (normalizePositiveNumber(settings.maxDistanceKm, 0) <= 0) {
+        issues.push("Distancia maxima deve ser maior que zero.");
+    }
+
+    return issues;
+}
+
 function getDefaultMotoboySettings() {
     return {
         enabled: false,
@@ -147,19 +181,14 @@ function serializeMotoboySettings(setting) {
     const metadata = setting?.metadata && typeof setting.metadata === "object" ? setting.metadata : {};
     const normalized = normalizeMotoboySettingsPayload(metadata);
 
+    const readinessIssues = buildMotoboyReadinessIssues(normalized);
+
     return {
         ...defaults,
         ...normalized,
         updatedAt: setting?.updatedAt || null,
-        isReady:
-            normalized.enabled
-            && Boolean(normalized.origin.zipCode)
-            && Boolean(normalized.origin.city)
-            && Boolean(normalized.origin.state)
-            && Boolean(normalized.coordinates.latitude)
-            && Boolean(normalized.coordinates.longitude)
-            && normalized.pricePerKm > 0
-            && normalized.maxDistanceKm > 0
+        readinessIssues,
+        isReady: readinessIssues.length === 0
     };
 }
 

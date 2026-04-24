@@ -691,6 +691,22 @@ textarea {
     gap: 14px;
 }
 
+.motoboy-status-issues {
+    margin-top: 14px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(145, 43, 43, 0.18);
+    background: rgba(145, 43, 43, 0.06);
+    display: grid;
+    gap: 6px;
+}
+
+.motoboy-status-issues p {
+    margin: 0;
+    color: #7a2727;
+    line-height: 1.5;
+}
+
 .motoboy-status-item {
     padding: 18px;
     border-radius: 18px;
