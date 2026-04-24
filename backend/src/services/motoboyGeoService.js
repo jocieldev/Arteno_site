@@ -347,6 +347,12 @@ async function geocodePostalCode(zipCode = "") {
         throw error;
     }
 
+    const resolvedByZipCode = await geocodeFromViaCep(normalizedZipCode, {}, notFoundMessage);
+
+    if (resolvedByZipCode) {
+        return resolvedByZipCode;
+    }
+
     try {
         const structuredResult = await geocodeStructuredAddress({
             postalcode: formattedZipCode,
@@ -358,12 +364,6 @@ async function geocodePostalCode(zipCode = "") {
         }
     } catch (_error) {
         // Continua tentando os demais formatos.
-    }
-
-    const resolvedByZipCode = await geocodeFromViaCep(normalizedZipCode, {}, notFoundMessage);
-
-    if (resolvedByZipCode) {
-        return resolvedByZipCode;
     }
 
     return tryGeocodeCandidates([
