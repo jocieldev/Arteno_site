@@ -313,6 +313,32 @@ async function geocodeFromViaCep(zipCode, extraAddress = {}, notFoundMessage) {
     }
 }
 
+function isLikelyMatchingViaCepAddress(result = {}, expectedAddress = {}) {
+    const displayName = normalizeText(result.display_name || result.resolvedAddress).toLowerCase();
+    const city = normalizeText(expectedAddress.city).toLowerCase();
+    const state = normalizeText(expectedAddress.state).toLowerCase();
+    const street = normalizeText(expectedAddress.street).toLowerCase();
+    const neighborhood = normalizeText(expectedAddress.neighborhood).toLowerCase();
+
+    if (!displayName || !city || !state) {
+        return false;
+    }
+
+    if (!displayName.includes(city) || !displayName.includes(state)) {
+        return false;
+    }
+
+    if (street && displayName.includes(street)) {
+        return true;
+    }
+
+    if (neighborhood && displayName.includes(neighborhood)) {
+        return true;
+    }
+
+    return displayName.includes(city) && displayName.includes(state);
+}
+
 async function geocodeMotoboyOrigin(origin = {}) {
     const notFoundMessage = "Nao foi possivel localizar o endereco de origem do motoboy no mapa. Revise CEP, rua, numero, cidade e UF.";
     const originLabel = buildOriginLabel(origin);
@@ -347,6 +373,7 @@ async function geocodePostalCode(zipCode = "") {
         throw error;
     }
 
+    const viaCepAddress = await fetchJson(`${VIACEP_ENDPOINT}/${normalizedZipCode}/json/`).catch(() => null);
     const resolvedByZipCode = await geocodeFromViaCep(normalizedZipCode, {}, notFoundMessage);
 
     if (resolvedByZipCode) {
@@ -359,7 +386,15 @@ async function geocodePostalCode(zipCode = "") {
             country: "Brasil"
         });
 
-        if (structuredResult) {
+        if (
+            structuredResult
+            && isLikelyMatchingViaCepAddress(structuredResult, {
+                street: viaCepAddress?.logradouro,
+                neighborhood: viaCepAddress?.bairro,
+                city: viaCepAddress?.localidade,
+                state: viaCepAddress?.uf
+            })
+        ) {
             return structuredResult;
         }
     } catch (_error) {
