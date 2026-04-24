@@ -782,15 +782,15 @@ function setCheckoutSubmitAvailability() {
     checkoutSubmitButton.disabled = false;
 }
 
-function setMercadoPagoCheckoutVisibility() {
-    const enabled = isMercadoPagoCheckoutActive();
+function legacySetMercadoPagoCheckoutVisibility() {
+    const enabled = Boolean(checkoutConfig?.isConfigured);
 
     if (checkoutMercadoPagoPanel) {
-        checkoutMercadoPagoPanel.hidden = !enabled;
+        checkoutMercadoPagoPanel.hidden = true;
     }
 
     if (checkoutLegacyPaymentOptions) {
-        checkoutLegacyPaymentOptions.hidden = enabled;
+        checkoutLegacyPaymentOptions.hidden = false;
     }
 
     if (checkoutSubmitNote) {
@@ -861,7 +861,7 @@ async function submitCheckoutOrder(extraPayload = {}) {
     }
 }
 
-async function renderMercadoPagoBrick() {
+async function legacyRenderMercadoPagoBrick() {
     if (!isMercadoPagoCheckoutActive()) {
         return;
     }
@@ -1082,7 +1082,7 @@ function renderApprovedResult(result) {
     `;
 }
 
-function renderPixResult(result) {
+function legacyRenderPixResultOriginal(result) {
     const qrCode = result.payment?.details?.qrCode || "";
     const expiresAt = result.payment?.details?.expiresAt || "";
 
@@ -1347,7 +1347,7 @@ async function cleanupStoredPersonalizationImages(items = []) {
     }));
 }
 
-async function buildCheckoutPayload() {
+async function legacyBuildCheckoutPayloadOriginal() {
     const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || "pix";
     const items = await resolveCheckoutItemsForSubmission(checkoutItems);
 
@@ -1482,7 +1482,7 @@ async function handleCheckoutSubmit(event) {
     }
 }
 
-async function handleCheckoutSubmitReal(event) {
+async function legacyHandleCheckoutSubmitRealOriginal(event) {
     event.preventDefault();
 
     try {
@@ -1634,6 +1634,10 @@ function setMercadoPagoCheckoutVisibility() {
     setCheckoutSubmitAvailability();
 }
 
+async function renderMercadoPagoBrick() {
+    return;
+}
+
 function renderPixResult(result) {
     const qrCode = result.payment?.details?.qrCode || "";
     const qrCodeBase64 = result.payment?.details?.qrCodeBase64 || "";
@@ -1703,6 +1707,17 @@ async function buildCheckoutPayload() {
             cvv: document.getElementById("checkoutCardCvv").value.trim()
         } : {}
     };
+}
+
+async function handleCheckoutSubmitReal(event) {
+    event.preventDefault();
+
+    try {
+        clearCheckoutFeedback();
+        await submitCheckoutOrder();
+    } catch (error) {
+        showCheckoutFeedback(error.message, "error");
+    }
 }
 
 loadSharedCategories();

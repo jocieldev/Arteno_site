@@ -172,7 +172,6 @@ function buildAdditionalInfo({ items = [], customer = {}, shippingAddress = {} }
                 street_number: normalizeText(shippingAddress.number),
                 floor: normalizeText(shippingAddress.complement),
                 apartment: normalizeText(shippingAddress.complement),
-                neighborhood: normalizeText(shippingAddress.neighborhood),
                 city_name: normalizeText(shippingAddress.city),
                 state_name: normalizeText(shippingAddress.state).toUpperCase()
             }

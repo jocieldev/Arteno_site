@@ -542,9 +542,9 @@ async function createCheckoutOrder(req, res) {
 
         if (hasMercadoPagoIntegration && !mercadoPagoFormData) {
             return res.status(400).json({
-                    message: paymentMethod === "card"
-                        ? "Pagamento com cartao exige tokenizacao segura e ainda nao esta disponivel no layout atual. Use Pix por enquanto."
-                        : "Nao foi possivel preparar os dados do pagamento no Mercado Pago."
+                message: paymentMethod === "card"
+                    ? "Pagamento com cartao exige tokenizacao segura e ainda nao esta disponivel no layout atual. Use Pix por enquanto."
+                    : "Nao foi possivel preparar os dados do pagamento no Mercado Pago."
             });
         }
 
@@ -631,7 +631,7 @@ async function createCheckoutOrder(req, res) {
                 const mappedOrderStatus = mapMercadoPagoStatusToOrderStatus(paymentResponse.status);
                 const paymentDetails = {
                     ...extractMercadoPagoResultDetails(paymentResponse),
-                    additionalData: mercadoPagoPaymentInput.additionalData || {}
+                    additionalData: mercadoPagoPaymentInput?.additionalData || {}
                 };
 
                 order.payment = {
