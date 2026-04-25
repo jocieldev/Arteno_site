@@ -8,6 +8,8 @@ const CACHE_TTL_MS = 1000 * 60 * 60 * 12;
 const geocodeCache = new Map();
 const routeCache = new Map();
 const GEODESIC_FALLBACK_SPEED_KMH = 28;
+const SUSPICIOUS_ROUTE_DISTANCE_RATIO = 6;
+const SUSPICIOUS_ROUTE_ABSOLUTE_KM = 250;
 
 function now() {
     return Date.now();
@@ -55,6 +57,15 @@ function joinAddressParts(parts = []) {
         .map((part) => normalizeText(part))
         .filter(Boolean)
         .join(", ");
+}
+
+function buildParsedGeocodeResult(rawResult = {}) {
+    return {
+        latitude: Number(rawResult.lat),
+        longitude: Number(rawResult.lon),
+        resolvedAddress: normalizeText(rawResult.display_name),
+        resolvedAt: new Date()
+    };
 }
 
 async function fetchJson(url) {
@@ -167,12 +178,7 @@ async function geocodeStructuredAddress(params = {}, notFoundMessage) {
         return null;
     }
 
-    const parsed = {
-        latitude: Number(firstResult.lat),
-        longitude: Number(firstResult.lon),
-        resolvedAddress: normalizeText(firstResult.display_name),
-        resolvedAt: new Date()
-    };
+    const parsed = buildParsedGeocodeResult(firstResult);
 
     setCachedValue(geocodeCache, cacheKey, parsed);
     return parsed;
@@ -209,12 +215,7 @@ async function geocodeQuery(query, notFoundMessage = "Nao foi possivel localizar
         throw error;
     }
 
-    const parsed = {
-        latitude: Number(firstResult.lat),
-        longitude: Number(firstResult.lon),
-        resolvedAddress: normalizeText(firstResult.display_name),
-        resolvedAt: new Date()
-    };
+    const parsed = buildParsedGeocodeResult(firstResult);
 
     setCachedValue(geocodeCache, cacheKey, parsed);
     return parsed;
@@ -240,9 +241,8 @@ async function tryGeocodeCandidates(candidates = [], notFoundMessage) {
     throw error;
 }
 
-async function geocodeFromViaCep(zipCode, extraAddress = {}, notFoundMessage) {
+async function fetchViaCepAddress(zipCode) {
     const normalizedZipCode = normalizeZipCode(zipCode);
-    const formattedZipCode = formatZipCode(normalizedZipCode);
 
     if (normalizedZipCode.length !== 8) {
         return null;
@@ -252,6 +252,27 @@ async function geocodeFromViaCep(zipCode, extraAddress = {}, notFoundMessage) {
         const viaCepResponse = await fetchJson(`${VIACEP_ENDPOINT}/${normalizedZipCode}/json/`);
 
         if (viaCepResponse?.erro) {
+            return null;
+        }
+
+        return viaCepResponse;
+    } catch (_error) {
+        return null;
+    }
+}
+
+async function geocodeFromViaCep(zipCode, extraAddress = {}, notFoundMessage, providedViaCepAddress = null) {
+    const normalizedZipCode = normalizeZipCode(zipCode);
+    const formattedZipCode = formatZipCode(normalizedZipCode);
+
+    if (normalizedZipCode.length !== 8) {
+        return null;
+    }
+
+    try {
+        const viaCepResponse = providedViaCepAddress || await fetchViaCepAddress(normalizedZipCode);
+
+        if (!viaCepResponse || viaCepResponse?.erro) {
             return null;
         }
 
@@ -342,13 +363,14 @@ function isLikelyMatchingViaCepAddress(result = {}, expectedAddress = {}) {
 async function geocodeMotoboyOrigin(origin = {}) {
     const notFoundMessage = "Nao foi possivel localizar o endereco de origem do motoboy no mapa. Revise CEP, rua, numero, cidade e UF.";
     const originLabel = buildOriginLabel(origin);
+    const viaCepAddress = await fetchViaCepAddress(origin.zipCode);
     const resolvedByZipCode = await geocodeFromViaCep(origin.zipCode, {
         street: origin.street,
         number: origin.number,
         neighborhood: origin.neighborhood,
         city: origin.city,
         state: origin.state
-    }, notFoundMessage);
+    }, notFoundMessage, viaCepAddress);
 
     if (resolvedByZipCode) {
         return resolvedByZipCode;
@@ -373,8 +395,8 @@ async function geocodePostalCode(zipCode = "") {
         throw error;
     }
 
-    const viaCepAddress = await fetchJson(`${VIACEP_ENDPOINT}/${normalizedZipCode}/json/`).catch(() => null);
-    const resolvedByZipCode = await geocodeFromViaCep(normalizedZipCode, {}, notFoundMessage);
+    const viaCepAddress = await fetchViaCepAddress(normalizedZipCode);
+    const resolvedByZipCode = await geocodeFromViaCep(normalizedZipCode, {}, notFoundMessage, viaCepAddress);
 
     if (resolvedByZipCode) {
         return resolvedByZipCode;
@@ -447,6 +469,21 @@ async function getRoadDistanceBetweenPoints(origin, destination) {
             durationMinutes: Math.max(1, Math.round(Number(route.duration || 0) / 60)),
             distanceSource: "road_route"
         };
+
+        const geodesicRoute = buildGeodesicFallbackRoute(origin, destination);
+        const isSuspiciousRoute =
+            parsed.distanceKm > SUSPICIOUS_ROUTE_ABSOLUTE_KM
+            && geodesicRoute.distanceKm > 0
+            && parsed.distanceKm >= Number((geodesicRoute.distanceKm * SUSPICIOUS_ROUTE_DISTANCE_RATIO).toFixed(2));
+
+        if (isSuspiciousRoute) {
+            console.warn(
+                "Motoboy route fallback ativado por distancia suspeita:",
+                `${parsed.distanceKm}km rota vs ${geodesicRoute.distanceKm}km geodesica`
+            );
+            setCachedValue(routeCache, cacheKey, geodesicRoute);
+            return geodesicRoute;
+        }
 
         setCachedValue(routeCache, cacheKey, parsed);
         return parsed;
