@@ -554,12 +554,16 @@ async function createCheckoutOrder(req, res) {
         }
 
         if (paymentMethod === "card") {
+            const secureFormData = mercadoPagoPaymentInput?.formData && typeof mercadoPagoPaymentInput.formData === "object"
+                ? mercadoPagoPaymentInput.formData
+                : null;
+            const hasSecureCardToken = Boolean(normalizeText(secureFormData?.token));
             const cardNumber = String(req.body.card?.number || "").replace(/\D/g, "");
             const cardHolder = normalizeText(req.body.card?.holderName);
             const cardExpiry = normalizeText(req.body.card?.expiry);
             const cardCvv = String(req.body.card?.cvv || "").replace(/\D/g, "");
 
-            if (cardNumber.length < 13 || !cardHolder || cardExpiry.length < 4 || cardCvv.length < 3) {
+            if (!hasSecureCardToken && (cardNumber.length < 13 || !cardHolder || cardExpiry.length < 4 || cardCvv.length < 3)) {
                 return res.status(400).json({
                     message: "Preencha os dados principais do cartao para testar esse pagamento."
                 });
@@ -624,6 +628,17 @@ async function createCheckoutOrder(req, res) {
 
         const directMercadoPagoFormData = buildDirectMercadoPagoFormData(paymentMethod, customer);
         const mercadoPagoFormData = mercadoPagoPaymentInput?.formData || directMercadoPagoFormData;
+
+        if (hasMercadoPagoIntegration && paymentMethod === "card") {
+            const token = normalizeText(mercadoPagoFormData?.token);
+            const paymentMethodId = normalizeText(mercadoPagoFormData?.payment_method_id || mercadoPagoFormData?.paymentMethodId);
+
+            if (!token || !paymentMethodId) {
+                return res.status(400).json({
+                    message: "Nao foi possivel validar o pagamento com cartao. Recarregue a pagina e tente novamente."
+                });
+            }
+        }
 
         if (hasMercadoPagoIntegration && !mercadoPagoFormData) {
             return res.status(400).json({
