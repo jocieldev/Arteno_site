@@ -1026,6 +1026,7 @@ function setCardTypeUI(options = {}) {
     document.querySelectorAll(".checkout-card-type-option").forEach((option) => {
         const input = option.querySelector("input");
         option.classList.toggle("active", Boolean(input?.checked));
+        option.classList.toggle("disabled", Boolean(input?.disabled));
     });
 
     if (shouldRefreshPaymentMethod && mercadoPagoCardBin.length >= MERCADO_PAGO_MIN_BIN_LENGTH) {
@@ -1775,6 +1776,23 @@ function setSelectedCardType(cardType) {
     return changed;
 }
 
+function setCardTypeAvailability({ hasCredit = true, hasDebit = true } = {}) {
+    document.querySelectorAll('input[name="checkoutCardType"]').forEach((input) => {
+        if (!(input instanceof HTMLInputElement)) {
+            return;
+        }
+
+        if (input.value === "credit") {
+            input.disabled = !hasCredit;
+            return;
+        }
+
+        if (input.value === "debit") {
+            input.disabled = !hasDebit;
+        }
+    });
+}
+
 function resolvePreferredCardType(methods = []) {
     const normalizedMethods = Array.isArray(methods) ? methods : [];
     const hasCredit = normalizedMethods.some((method = {}) => String(method.payment_type_id || "").toLowerCase() === "credit_card");
@@ -1978,12 +1996,17 @@ async function updateMercadoPagoPaymentMethod(bin = "") {
 
     if (!mercadoPagoInstance || mercadoPagoCardBin.length < MERCADO_PAGO_MIN_BIN_LENGTH) {
         mercadoPagoDetectedCardType = "";
+        setCardTypeAvailability({ hasCredit: true, hasDebit: true });
+        setCardTypeUI({ shouldRefreshPaymentMethod: false });
         resetCheckoutInstallments();
         return;
     }
 
     const response = await mercadoPagoInstance.getPaymentMethods({ bin: mercadoPagoCardBin });
     const availableMethods = Array.isArray(response?.results) ? response.results : [];
+    const hasCredit = availableMethods.some((method = {}) => String(method.payment_type_id || "").toLowerCase() === "credit_card");
+    const hasDebit = availableMethods.some((method = {}) => String(method.payment_type_id || "").toLowerCase() === "debit_card");
+    setCardTypeAvailability({ hasCredit, hasDebit });
     const preferredType = resolvePreferredCardType(availableMethods);
     mercadoPagoDetectedCardType = preferredType;
     const cardTypeChanged = setSelectedCardType(preferredType);
@@ -2039,6 +2062,8 @@ async function ensureMercadoPagoSecureFields() {
                 mercadoPagoCardBin = "";
                 mercadoPagoCardPaymentMethodId = "";
                 mercadoPagoDetectedCardType = "";
+                setCardTypeAvailability({ hasCredit: true, hasDebit: true });
+                setCardTypeUI({ shouldRefreshPaymentMethod: false });
                 setCheckoutInstallmentsHint("Digite os 6 primeiros digitos para carregar as parcelas");
                 return;
             }
