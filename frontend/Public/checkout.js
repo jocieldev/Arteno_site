@@ -822,7 +822,7 @@ function applyCardExpiryMask(value = "") {
 }
 
 function isMercadoPagoCheckoutActive() {
-    return false;
+    return Boolean(checkoutConfig?.isConfigured && checkoutConfig?.publicKey && window.MercadoPago);
 }
 
 function setCheckoutSubmitAvailability() {
@@ -1688,7 +1688,7 @@ function bindCheckoutInteractions() {
 }
 
 function setMercadoPagoCheckoutVisibility() {
-    const enabled = false;
+    const enabled = Boolean(checkoutConfig?.isConfigured && checkoutConfig?.publicKey);
     const cardPaymentInput = document.querySelector('input[name="paymentMethod"][value="card"]');
     const cardPaymentOption = cardPaymentInput ? cardPaymentInput.closest(".checkout-payment-option") : null;
 
@@ -1701,25 +1701,23 @@ function setMercadoPagoCheckoutVisibility() {
     }
 
     if (cardPaymentOption) {
-        cardPaymentOption.hidden = Boolean(checkoutConfig?.isConfigured);
+        cardPaymentOption.hidden = false;
     }
 
-    if (cardPaymentInput && checkoutConfig?.isConfigured && cardPaymentInput.checked) {
-        const pixPaymentInput = document.querySelector('input[name="paymentMethod"][value="pix"]');
-
-        if (pixPaymentInput) {
-            pixPaymentInput.checked = true;
-        }
+    if (cardPaymentInput && enabled) {
+        cardPaymentInput.checked = true;
     }
 
     if (checkoutSubmitNote) {
-        checkoutSubmitNote.textContent = checkoutConfig?.isConfigured
-            ? "Finalize usando o checkout da loja. Pix e boleto continuam disponiveis neste fluxo."
+        checkoutSubmitNote.textContent = enabled
+            ? "Finalize pelo formulario seguro do Mercado Pago. Pix e boleto continuam disponiveis no mesmo checkout."
             : "Modo teste ativo: ao finalizar, o pedido sera criado com pagamento confirmado automaticamente.";
     }
 
     if (checkoutMercadoPagoHint) {
-        checkoutMercadoPagoHint.textContent = "O formulario incorporado do Mercado Pago esta desativado neste checkout.";
+        checkoutMercadoPagoHint.textContent = enabled
+            ? "Pagamento por cartao, Pix e boleto processados com seguranca pelo Mercado Pago."
+            : "O formulario incorporado do Mercado Pago esta desativado neste checkout.";
     }
 
     setPaymentMethodUI();
