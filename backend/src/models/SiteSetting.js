@@ -76,6 +76,46 @@ const siteSettingSchema = new mongoose.Schema(
         banners: {
             type: [siteBannerSchema],
             default: []
+        },
+        cardSettings: {
+            enabled: {
+                type: Boolean,
+                default: true
+            },
+            maxInstallments: {
+                type: Number,
+                default: 12
+            },
+            defaultInterestFreeInstallments: {
+                type: Number,
+                default: 1
+            },
+            promoRules: {
+                type: [{
+                    name: {
+                        type: String,
+                        default: "",
+                        trim: true
+                    },
+                    enabled: {
+                        type: Boolean,
+                        default: true
+                    },
+                    minimumAmount: {
+                        type: Number,
+                        default: 0
+                    },
+                    maximumAmount: {
+                        type: Number,
+                        default: 0
+                    },
+                    interestFreeInstallments: {
+                        type: Number,
+                        default: 1
+                    }
+                }],
+                default: []
+            }
         }
     },
     {

@@ -55,6 +55,7 @@ const checkoutCardIdentificationType = document.getElementById("checkoutCardIden
 const SHIPPING_ZIP_STORAGE_KEY = "arteno-shipping-zip-code";
 const PERSONALIZATION_IMAGE_DB_NAME = "arteno-personalization-images";
 const PERSONALIZATION_IMAGE_STORE_NAME = "uploads";
+const MERCADO_PAGO_MIN_BIN_LENGTH = 6;
 
 let checkoutItems = [];
 let checkoutCompleted = false;
@@ -1027,7 +1028,7 @@ function setCardTypeUI(options = {}) {
         option.classList.toggle("active", Boolean(input?.checked));
     });
 
-    if (shouldRefreshPaymentMethod && mercadoPagoCardBin.length >= 8) {
+    if (shouldRefreshPaymentMethod && mercadoPagoCardBin.length >= MERCADO_PAGO_MIN_BIN_LENGTH) {
         void updateMercadoPagoPaymentMethod(mercadoPagoCardBin).catch(() => {
             mercadoPagoCardPaymentMethodId = "";
             resetCheckoutInstallments();
@@ -1837,6 +1838,15 @@ function setCheckoutInstallmentsOptions(options = [], selectedInstallments = 1) 
     }
 }
 
+function setCheckoutInstallmentsHint(message) {
+    if (!checkoutCardInstallments) {
+        return;
+    }
+
+    checkoutCardInstallments.innerHTML = `<option value="1">${escapeHtml(message)}</option>`;
+    checkoutCardInstallments.value = "1";
+}
+
 function resetCheckoutInstallments() {
     mercadoPagoInstallmentsCacheKey = "";
     setCheckoutInstallmentsOptions([{ value: 1, label: "1x sem juros" }], 1);
@@ -1867,7 +1877,8 @@ async function fetchCheckoutCardInstallments({ amount, bin, paymentMethodId }) {
 
     return {
         payerCosts: Array.isArray(result.payerCosts) ? result.payerCosts : [],
-        issuerId: String(result.issuerId || "").trim()
+        issuerId: String(result.issuerId || "").trim(),
+        policy: result.policy && typeof result.policy === "object" ? result.policy : null
     };
 }
 
@@ -1892,8 +1903,8 @@ async function refreshCheckoutInstallments({ force = false } = {}) {
         return;
     }
 
-    if (mercadoPagoCardBin.length < 8 || !mercadoPagoCardPaymentMethodId) {
-        setCheckoutInstallmentsOptions([{ value: 1, label: "1x sem juros" }], 1);
+    if (mercadoPagoCardBin.length < MERCADO_PAGO_MIN_BIN_LENGTH || !mercadoPagoCardPaymentMethodId) {
+        setCheckoutInstallmentsHint("Digite os 6 primeiros digitos para carregar as parcelas");
         return;
     }
 
@@ -1906,7 +1917,7 @@ async function refreshCheckoutInstallments({ force = false } = {}) {
     const requestId = ++mercadoPagoInstallmentsRequestId;
 
     try {
-        const { payerCosts, issuerId } = await fetchCheckoutCardInstallments({
+        const { payerCosts, issuerId, policy } = await fetchCheckoutCardInstallments({
             amount,
             bin: mercadoPagoCardBin,
             paymentMethodId: mercadoPagoCardPaymentMethodId
@@ -1923,7 +1934,9 @@ async function refreshCheckoutInstallments({ force = false } = {}) {
                     return null;
                 }
 
-                const label = String(cost.recommended_message || "").trim()
+                const promotionLabel = String(cost.promotionLabel || "").trim();
+                const label = promotionLabel
+                    || String(cost.recommended_message || "").trim()
                     || `${installments}x de ${formatCurrency(cost.installment_amount || 0)} (total ${formatCurrency(cost.total_amount || 0)})`;
                 return {
                     value: installments,
@@ -1942,6 +1955,12 @@ async function refreshCheckoutInstallments({ force = false } = {}) {
             checkoutCardIssuer.innerHTML = `<option value="${escapeHtml(resolvedIssuerId)}">${escapeHtml(resolvedIssuerId || "default")}</option>`;
             checkoutCardIssuer.value = resolvedIssuerId;
         }
+        if (policy?.enabled && Number(policy.desiredInterestFreeInstallments || 1) > Number(policy.appliedInterestFreeInstallments || 1)) {
+            showCheckoutFeedback(
+                `Sua promocao permite ate ${Number(policy.desiredInterestFreeInstallments || 1)}x sem juros, mas a operadora deste cartao liberou ate ${Number(policy.appliedInterestFreeInstallments || 1)}x sem juros para este pedido.`,
+                "info"
+            );
+        }
         installmentsLoadWarningShown = false;
     } catch (_error) {
         resetCheckoutInstallments();
@@ -1957,7 +1976,7 @@ async function updateMercadoPagoPaymentMethod(bin = "") {
     mercadoPagoCardPaymentMethodId = "";
     mercadoPagoInstallmentsCacheKey = "";
 
-    if (!mercadoPagoInstance || mercadoPagoCardBin.length < 8) {
+    if (!mercadoPagoInstance || mercadoPagoCardBin.length < MERCADO_PAGO_MIN_BIN_LENGTH) {
         mercadoPagoDetectedCardType = "";
         resetCheckoutInstallments();
         return;
@@ -2016,11 +2035,11 @@ async function ensureMercadoPagoSecureFields() {
 
     if (mountedCardNumberField?.on) {
         mountedCardNumberField.on("binChange", ({ bin }) => {
-            if (!bin || String(bin).trim().length < 8) {
+            if (!bin || String(bin).trim().length < MERCADO_PAGO_MIN_BIN_LENGTH) {
                 mercadoPagoCardBin = "";
                 mercadoPagoCardPaymentMethodId = "";
                 mercadoPagoDetectedCardType = "";
-                resetCheckoutInstallments();
+                setCheckoutInstallmentsHint("Digite os 6 primeiros digitos para carregar as parcelas");
                 return;
             }
 
@@ -2037,7 +2056,7 @@ async function ensureMercadoPagoSecureFields() {
     }
 
     if (checkoutCardInstallments) {
-        resetCheckoutInstallments();
+        setCheckoutInstallmentsHint("Digite os 6 primeiros digitos para carregar as parcelas");
     }
 
     mercadoPagoSecureFieldsReady = true;

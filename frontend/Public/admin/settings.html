@@ -139,6 +139,53 @@
                     </form>
                 </section>
 
+                <section class="admin-editor-card admin-site-settings-card">
+                    <div class="admin-editor-card-header">
+                        <div>
+                            <h3>Cartoes e parcelamento</h3>
+                            <p class="admin-panel-subtitle">Defina regras promocionais para pagamentos no credito.</p>
+                        </div>
+                    </div>
+
+                    <form id="siteCardSettingsForm" class="admin-site-banner-form">
+                        <div class="admin-site-banner-fields">
+                            <label class="admin-auth-field admin-checkbox-field">
+                                <span>
+                                    <input type="checkbox" id="cardSettingsEnabled" checked>
+                                    Ativar regras promocionais de cartao
+                                </span>
+                            </label>
+                        </div>
+
+                        <div class="admin-site-banner-fields admin-site-banner-fields-3">
+                            <label class="admin-auth-field">
+                                <span>Maximo de parcelas exibidas</span>
+                                <input type="number" id="cardSettingsMaxInstallments" min="1" max="24" value="12">
+                            </label>
+
+                            <label class="admin-auth-field">
+                                <span>Parcelas sem juros padrao</span>
+                                <input type="number" id="cardSettingsDefaultInterestFreeInstallments" min="1" max="24" value="1">
+                                <small class="admin-field-help">Usado quando nenhuma regra por valor for aplicada.</small>
+                            </label>
+                        </div>
+
+                        <div class="admin-editor-card-header">
+                            <div>
+                                <h3>Regras por valor</h3>
+                                <p class="admin-panel-subtitle">Exemplo: compras acima de R$ 200 em ate 6x sem juros.</p>
+                            </div>
+                            <button type="button" class="admin-secondary-button" id="cardPromoAddRuleButton">Adicionar regra</button>
+                        </div>
+
+                        <div id="cardPromoRulesList" class="admin-card-rules-list"></div>
+
+                        <div class="admin-site-banner-form-actions">
+                            <button type="submit" class="admin-auth-submit" id="siteCardSettingsSubmitButton">Salvar configuracoes de cartao</button>
+                        </div>
+                    </form>
+                </section>
+
                 <section class="admin-editor-card admin-site-settings-card admin-site-settings-form-card">
                     <div class="admin-editor-card-header">
                         <div>

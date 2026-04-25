@@ -1,5 +1,6 @@
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+const SiteSetting = require("../models/SiteSetting");
 const { previewCouponApplication, markCouponAsUsed } = require("../services/couponService");
 const { sendPixPaymentInstructionsEmail } = require("../services/emailService");
 const {
@@ -18,6 +19,7 @@ const ORDER_STATUS_LABELS = {
     payment_confirmed: "Pagamento confirmado",
     cancelled: "Cancelado"
 };
+const SITE_SETTINGS_KEY = "site-home";
 
 function hasCouponUsageBeenMarked(order = {}) {
     return Boolean(order.payment?.details?.couponUsageMarkedAt);
@@ -93,6 +95,119 @@ function buildDirectMercadoPagoFormData(paymentMethod, customer = {}) {
 function normalizePrice(value) {
     const normalized = Number(value);
     return Number.isFinite(normalized) && normalized >= 0 ? normalized : 0;
+}
+
+function normalizePositiveInteger(value, fallback = 1, min = 1, max = 24) {
+    const normalized = Number.parseInt(value, 10);
+
+    if (!Number.isInteger(normalized)) {
+        return fallback;
+    }
+
+    return Math.max(min, Math.min(max, normalized));
+}
+
+function normalizeCardSettings(cardSettings = {}) {
+    const promoRules = Array.isArray(cardSettings.promoRules)
+        ? cardSettings.promoRules
+            .map((rule = {}) => ({
+                name: normalizeText(rule.name),
+                enabled: Boolean(rule.enabled !== false),
+                minimumAmount: normalizePrice(rule.minimumAmount),
+                maximumAmount: normalizePrice(rule.maximumAmount),
+                interestFreeInstallments: normalizePositiveInteger(rule.interestFreeInstallments, 1, 1, 24)
+            }))
+            .filter((rule) => rule.enabled && rule.interestFreeInstallments >= 1)
+            .sort((a, b) => a.minimumAmount - b.minimumAmount || a.interestFreeInstallments - b.interestFreeInstallments)
+        : [];
+
+    return {
+        enabled: Boolean(cardSettings.enabled !== false),
+        maxInstallments: normalizePositiveInteger(cardSettings.maxInstallments, 12, 1, 24),
+        defaultInterestFreeInstallments: normalizePositiveInteger(cardSettings.defaultInterestFreeInstallments, 1, 1, 24),
+        promoRules
+    };
+}
+
+async function getCheckoutCardSettings() {
+    const setting = await SiteSetting.findOne({ key: SITE_SETTINGS_KEY }).select({ cardSettings: 1 }).lean();
+    return normalizeCardSettings(setting?.cardSettings || {});
+}
+
+function resolveInterestFreeInstallmentsLimit(amount, cardSettings = {}) {
+    const normalizedAmount = normalizePrice(amount);
+    let maxInstallments = normalizePositiveInteger(cardSettings.defaultInterestFreeInstallments, 1, 1, 24);
+
+    for (const rule of (Array.isArray(cardSettings.promoRules) ? cardSettings.promoRules : [])) {
+        const minimumAmount = normalizePrice(rule.minimumAmount);
+        const maximumAmount = normalizePrice(rule.maximumAmount);
+        const upperLimit = maximumAmount > 0 ? maximumAmount : Number.POSITIVE_INFINITY;
+        const matchesAmount = normalizedAmount >= minimumAmount && normalizedAmount <= upperLimit;
+
+        if (!matchesAmount) {
+            continue;
+        }
+
+        maxInstallments = Math.max(maxInstallments, normalizePositiveInteger(rule.interestFreeInstallments, 1, 1, 24));
+    }
+
+    return maxInstallments;
+}
+
+function applyCardInstallmentsPolicy(payerCosts = [], amount, cardSettings = {}) {
+    const normalizedSettings = normalizeCardSettings(cardSettings);
+    const normalizedAmount = normalizePrice(amount);
+
+    if (!normalizedSettings.enabled) {
+        return {
+            payerCosts: Array.isArray(payerCosts) ? payerCosts : [],
+            policy: {
+                enabled: false,
+                maxInstallments: normalizedSettings.maxInstallments,
+                desiredInterestFreeInstallments: 1,
+                appliedInterestFreeInstallments: 1
+            }
+        };
+    }
+
+    const filteredCosts = (Array.isArray(payerCosts) ? payerCosts : [])
+        .filter((cost = {}) => normalizePositiveInteger(cost.installments, 1, 1, 24) <= normalizedSettings.maxInstallments)
+        .sort((a, b) => normalizePositiveInteger(a.installments, 1, 1, 24) - normalizePositiveInteger(b.installments, 1, 1, 24));
+
+    const desiredInterestFreeInstallments = Math.min(
+        normalizedSettings.maxInstallments,
+        resolveInterestFreeInstallmentsLimit(normalizedAmount, normalizedSettings)
+    );
+    const availableInterestFreeInstallments = filteredCosts.reduce((maxInstallments, cost = {}) => {
+        const currentInstallments = normalizePositiveInteger(cost.installments, 1, 1, 24);
+        const hasNoInterest = Number(cost.installment_rate || 0) <= 0;
+        return hasNoInterest ? Math.max(maxInstallments, currentInstallments) : maxInstallments;
+    }, 1);
+    const appliedInterestFreeInstallments = Math.min(desiredInterestFreeInstallments, availableInterestFreeInstallments);
+
+    const promotedCosts = filteredCosts.map((cost = {}) => {
+        const installments = normalizePositiveInteger(cost.installments, 1, 1, 24);
+        const hasNoInterest = Number(cost.installment_rate || 0) <= 0;
+
+        if (installments <= appliedInterestFreeInstallments && hasNoInterest) {
+            return {
+                ...cost,
+                promotionLabel: `${installments}x sem juros`
+            };
+        }
+
+        return cost;
+    });
+
+    return {
+        payerCosts: promotedCosts,
+        policy: {
+            enabled: true,
+            maxInstallments: normalizedSettings.maxInstallments,
+            desiredInterestFreeInstallments,
+            appliedInterestFreeInstallments
+        }
+    };
 }
 
 function normalizeSignedNumber(value, fallback = 0) {
@@ -901,11 +1016,14 @@ async function getCheckoutCardInstallments(req, res) {
         const firstResult = Array.isArray(results) ? results[0] : null;
         const payerCosts = Array.isArray(firstResult?.payer_costs) ? firstResult.payer_costs : [];
         const issuerId = normalizeText(firstResult?.issuer?.id);
+        const cardSettings = await getCheckoutCardSettings();
+        const installmentsResult = applyCardInstallmentsPolicy(payerCosts, amount, cardSettings);
 
         return res.json({
             ok: true,
-            payerCosts,
-            issuerId
+            payerCosts: installmentsResult.payerCosts,
+            issuerId,
+            policy: installmentsResult.policy
         });
     } catch (error) {
         return res.status(error.status || 500).json({

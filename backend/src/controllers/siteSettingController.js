@@ -17,6 +17,26 @@ function normalizeWhatsappNumber(value = "") {
     return digits;
 }
 
+function normalizeNumber(value, fallback = 0) {
+    const normalized = Number(value);
+    return Number.isFinite(normalized) ? normalized : fallback;
+}
+
+function normalizeCurrency(value, fallback = 0) {
+    const normalized = normalizeNumber(value, fallback);
+    return normalized >= 0 ? Number(normalized.toFixed(2)) : fallback;
+}
+
+function normalizePositiveInteger(value, fallback = 1, min = 1, max = 24) {
+    const normalized = Number.parseInt(value, 10);
+
+    if (!Number.isInteger(normalized)) {
+        return fallback;
+    }
+
+    return Math.max(min, Math.min(max, normalized));
+}
+
 function serializeSiteContact(contact = {}) {
     const whatsappNumber = normalizeWhatsappNumber(contact.whatsappNumber || "");
     const email = normalizeText(contact.email);
@@ -28,6 +48,49 @@ function serializeSiteContact(contact = {}) {
         email,
         emailUrl: email ? `mailto:${email}` : "",
         instagramUrl
+    };
+}
+
+function serializeCardSettings(cardSettings = {}) {
+    const normalizedPromoRules = Array.isArray(cardSettings.promoRules)
+        ? cardSettings.promoRules
+            .map((rule = {}, index = 0) => ({
+                id: String(rule._id || `${index}`),
+                name: normalizeText(rule.name || `Regra ${index + 1}`),
+                enabled: Boolean(rule.enabled !== false),
+                minimumAmount: normalizeCurrency(rule.minimumAmount, 0),
+                maximumAmount: normalizeCurrency(rule.maximumAmount, 0),
+                interestFreeInstallments: normalizePositiveInteger(rule.interestFreeInstallments, 1, 1, 24)
+            }))
+            .sort((a, b) => a.minimumAmount - b.minimumAmount || a.interestFreeInstallments - b.interestFreeInstallments)
+        : [];
+
+    return {
+        enabled: Boolean(cardSettings.enabled !== false),
+        maxInstallments: normalizePositiveInteger(cardSettings.maxInstallments, 12, 1, 24),
+        defaultInterestFreeInstallments: normalizePositiveInteger(cardSettings.defaultInterestFreeInstallments, 1, 1, 24),
+        promoRules: normalizedPromoRules
+    };
+}
+
+function normalizeCardSettingsInput(payload = {}) {
+    const parsedRules = Array.isArray(payload.promoRules) ? payload.promoRules : [];
+    const promoRules = parsedRules
+        .map((rule = {}, index = 0) => ({
+            name: normalizeText(rule.name || `Regra ${index + 1}`),
+            enabled: Boolean(rule.enabled !== false),
+            minimumAmount: normalizeCurrency(rule.minimumAmount, 0),
+            maximumAmount: normalizeCurrency(rule.maximumAmount, 0),
+            interestFreeInstallments: normalizePositiveInteger(rule.interestFreeInstallments, 1, 1, 24)
+        }))
+        .filter((rule) => rule.interestFreeInstallments >= 1)
+        .sort((a, b) => a.minimumAmount - b.minimumAmount || a.interestFreeInstallments - b.interestFreeInstallments);
+
+    return {
+        enabled: Boolean(payload.enabled !== false),
+        maxInstallments: normalizePositiveInteger(payload.maxInstallments, 12, 1, 24),
+        defaultInterestFreeInstallments: normalizePositiveInteger(payload.defaultInterestFreeInstallments, 1, 1, 24),
+        promoRules
     };
 }
 
@@ -95,7 +158,8 @@ async function listAdminSiteBanners(_req, res) {
 
         return res.json({
             contact: serializeSiteContact(setting.contact || {}),
-            banners: setting.banners.map((banner) => serializeBanner(banner))
+            banners: setting.banners.map((banner) => serializeBanner(banner)),
+            cardSettings: serializeCardSettings(setting.cardSettings || {})
         });
     } catch (error) {
         return res.status(500).json({
@@ -143,6 +207,39 @@ async function getPublicSiteContact(_req, res) {
     } catch (error) {
         return res.status(500).json({
             message: error.message || "Não foi possível carregar os contatos do site."
+        });
+    }
+}
+
+async function getAdminCardSettings(_req, res) {
+    try {
+        const setting = await getSiteSettingsDocument();
+
+        return res.json({
+            cardSettings: serializeCardSettings(setting.cardSettings || {})
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message || "Nao foi possivel carregar as configuracoes de cartao."
+        });
+    }
+}
+
+async function updateAdminCardSettings(req, res) {
+    try {
+        const setting = await getSiteSettingsDocument();
+        const normalizedCardSettings = normalizeCardSettingsInput(req.body || {});
+
+        setting.cardSettings = normalizedCardSettings;
+        await setting.save();
+
+        return res.json({
+            message: "Configuracoes de cartao atualizadas com sucesso.",
+            cardSettings: serializeCardSettings(setting.cardSettings || {})
+        });
+    } catch (error) {
+        return res.status(400).json({
+            message: error.message || "Nao foi possivel atualizar as configuracoes de cartao."
         });
     }
 }
@@ -290,8 +387,11 @@ module.exports = {
     listPublicSiteBanners,
     getAdminSiteContact,
     getPublicSiteContact,
+    getAdminCardSettings,
     updateSiteContact,
+    updateAdminCardSettings,
     createSiteBanner,
     updateSiteBanner,
-    deleteSiteBanner
+    deleteSiteBanner,
+    serializeCardSettings
 };

@@ -394,8 +394,45 @@ textarea {
 
 .checkout-card-fields {
     margin-top: 18px;
-    padding-top: 18px;
-    border-top: 1px solid rgba(28, 23, 19, 0.08);
+    padding: 18px;
+    border-radius: 20px;
+    border: 1px solid rgba(154, 99, 56, 0.16);
+    background:
+        radial-gradient(circle at 100% 0%, rgba(182, 120, 71, 0.08), transparent 54%),
+        linear-gradient(180deg, #fffdf9 0%, #f7f1e8 100%);
+}
+
+.checkout-card-fields .checkout-field span {
+    color: #3f2f24;
+    letter-spacing: 0.01em;
+}
+
+.checkout-card-fields .checkout-field input,
+.checkout-card-fields .checkout-field select,
+.checkout-card-fields .checkout-mercado-pago-field {
+    border: 1px solid rgba(154, 99, 56, 0.22);
+    background: #fff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.checkout-card-fields .checkout-field input::placeholder {
+    color: #9f8f7f;
+}
+
+.checkout-card-fields .checkout-field input:focus,
+.checkout-card-fields .checkout-field select:focus {
+    border-color: rgba(154, 99, 56, 0.54);
+    box-shadow: 0 0 0 4px rgba(154, 99, 56, 0.12);
+}
+
+#checkoutCardInstallmentsField {
+    margin-top: 6px;
+}
+
+#checkoutCardInstallments {
+    font-weight: 700;
+    color: #2e241c;
 }
 
 .checkout-card-type-toggle {
