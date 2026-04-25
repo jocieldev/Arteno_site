@@ -503,7 +503,7 @@ const orderSchema = new mongoose.Schema(
             },
             method: {
                 type: String,
-                enum: ["pix", "card", "boleto"],
+                enum: ["pix", "card"],
                 required: true
             },
             status: {

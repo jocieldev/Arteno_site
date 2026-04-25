@@ -28,7 +28,7 @@ function normalizeStatus(value = "") {
 
 function normalizePaymentMethod(value = "") {
     const normalized = normalizeText(value).toLowerCase();
-    return ["pix", "boleto", "card"].includes(normalized) ? normalized : "";
+    return ["pix", "card"].includes(normalized) ? normalized : "";
 }
 
 function buildCustomerOrderQuery(user = {}) {
@@ -64,11 +64,11 @@ function resolveDevelopmentMode() {
 
 function getSupportedPendingPaymentMethods() {
     if (isMercadoPagoReady()) {
-        return ["pix", "boleto"];
+        return ["pix"];
     }
 
     if (resolveDevelopmentMode()) {
-        return ["pix", "boleto"];
+        return ["pix"];
     }
 
     return [];
@@ -164,10 +164,6 @@ function shouldReuseCurrentPendingPayment(order = {}, paymentMethod = "") {
 
     if (paymentMethod === "pix") {
         return Boolean(order.payment?.details?.qrCode || order.payment?.details?.qrCodeBase64);
-    }
-
-    if (paymentMethod === "boleto") {
-        return Boolean(order.payment?.details?.boletoLine || order.payment?.details?.ticketUrl);
     }
 
     return false;

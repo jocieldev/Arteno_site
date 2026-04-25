@@ -42,7 +42,7 @@ function hasPendingPaymentStatus(order = {}) {
 
 function hasExpirablePaymentMethod(order = {}) {
     const paymentMethod = normalizeText(order.payment?.method).toLowerCase();
-    return paymentMethod === "pix" || paymentMethod === "boleto";
+    return paymentMethod === "pix";
 }
 
 function shouldExpireOrderPayment(order = {}) {
@@ -60,7 +60,6 @@ function stripExpiredPaymentInstructions(details = {}) {
         ...details,
         qrCode: "",
         qrCodeBase64: "",
-        boletoLine: "",
         ticketUrl: "",
         instructions: "",
         message: "Pagamento expirado."
@@ -88,7 +87,6 @@ async function applyExpiredPaymentState(order, { save = true } = {}) {
     const hasLiveInstructions = Boolean(
         normalizeText(order.payment?.details?.qrCode)
         || normalizeText(order.payment?.details?.qrCodeBase64)
-        || normalizeText(order.payment?.details?.boletoLine)
         || normalizeText(order.payment?.details?.ticketUrl)
     );
 
@@ -165,7 +163,7 @@ async function cleanupExpiredPendingOrders() {
 
     const orders = await Order.find({
         "payment.details.expiresAt": { $exists: true, $ne: "" },
-        "payment.method": { $in: ["pix", "boleto"] },
+        "payment.method": { $in: ["pix"] },
         "payment.status": { $in: ["pending", "in_process", "authorized", "expired"] }
     });
 

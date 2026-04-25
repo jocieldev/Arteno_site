@@ -321,10 +321,6 @@
                             <p>Escolha a forma de pagamento e finalize pelo formulario do proprio site.</p>
                         </div>
                     </div>
-                    <div class="checkout-mercado-pago-panel" id="checkoutMercadoPagoPanel" hidden>
-                        <div class="checkout-mercado-pago-shell" id="checkoutPaymentBrick"></div>
-                        <p class="checkout-dev-tip" id="checkoutMercadoPagoHint" hidden></p>
-                    </div>
                     <div class="checkout-payment-options" id="checkoutLegacyPaymentOptions">
                         <label class="checkout-payment-option active">
                             <input type="radio" name="paymentMethod" value="pix" checked>
@@ -349,7 +345,8 @@
                         <div class="checkout-grid checkout-grid-two">
                             <label class="checkout-field checkout-field-full">
                                 <span>Número do cartão</span>
-                                <input type="text" id="checkoutCardNumber" inputmode="numeric" autocomplete="off" placeholder="0000 0000 0000 0000">
+                                <input type="text" id="checkoutCardNumberInput" inputmode="numeric" autocomplete="off" placeholder="0000 0000 0000 0000">
+                                <div class="checkout-mercado-pago-field" id="checkoutCardNumber" hidden></div>
                             </label>
                             <label class="checkout-field">
                                 <span>Nome no cartão</span>
@@ -357,13 +354,18 @@
                             </label>
                             <label class="checkout-field">
                                 <span>Validade</span>
-                                <input type="text" id="checkoutCardExpiry" inputmode="numeric" autocomplete="off" placeholder="MM/AA">
+                                <input type="text" id="checkoutCardExpiryInput" inputmode="numeric" autocomplete="off" placeholder="MM/AA">
+                                <div class="checkout-mercado-pago-field" id="checkoutCardExpiry" hidden></div>
                             </label>
                             <label class="checkout-field">
                                 <span>CVV</span>
-                                <input type="text" id="checkoutCardCvv" inputmode="numeric" autocomplete="off" placeholder="123">
+                                <input type="text" id="checkoutCardCvvInput" inputmode="numeric" autocomplete="off" placeholder="123">
+                                <div class="checkout-mercado-pago-field" id="checkoutCardCvv" hidden></div>
                             </label>
                         </div>
+                        <select id="checkoutCardIssuer" hidden aria-hidden="true"></select>
+                        <select id="checkoutCardInstallments" hidden aria-hidden="true"></select>
+                        <select id="checkoutCardIdentificationType" hidden aria-hidden="true"></select>
                     </div>
                 </article>
             </form>

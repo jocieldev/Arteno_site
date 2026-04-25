@@ -27,8 +27,6 @@ function buildPaymentMessage(payment = {}) {
 
 function extractPaymentDetails(payment = {}) {
     const transactionData = payment.point_of_interaction?.transaction_data || {};
-    const barcode = payment.barcode || {};
-
     return {
         mercadoPagoPaymentId: payment.id || "",
         paymentMethodId: payment.payment_method_id || "",
@@ -36,7 +34,6 @@ function extractPaymentDetails(payment = {}) {
         ticketUrl: payment.transaction_details?.external_resource_url || "",
         qrCode: transactionData.qr_code || "",
         qrCodeBase64: transactionData.qr_code_base64 || "",
-        boletoLine: barcode.content || transactionData.barcode_content || "",
         expiresAt: payment.date_of_expiration || "",
         paidAt: payment.date_approved || ""
     };

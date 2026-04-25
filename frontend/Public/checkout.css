@@ -299,6 +299,23 @@ textarea {
     box-sizing: border-box;
 }
 
+.checkout-mercado-pago-field {
+    width: 100%;
+    min-height: 54px;
+    padding: 0 16px;
+    border-radius: 16px;
+    border: 1px solid rgba(28, 23, 19, 0.1);
+    background: #fffdfa;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+}
+
+.checkout-mercado-pago-field iframe {
+    width: 100% !important;
+    min-height: 22px;
+}
+
 .checkout-field select {
     appearance: none;
     background-image:

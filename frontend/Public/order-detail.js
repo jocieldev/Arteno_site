@@ -322,10 +322,6 @@ function getPaymentMethodLabel(method = "") {
         return "Pix";
     }
 
-    if (value === "boleto") {
-        return "Boleto";
-    }
-
     if (value === "card") {
         return "Cartão";
     }
@@ -419,25 +415,6 @@ function buildPaymentInstructionsMarkup(order = {}) {
                         <button type="button" class="account-payment-copy-button" data-copy-payment-target="orderPixCode">Copiar chave Pix</button>
                     </div>
                 ` : ""}
-            </div>
-        `;
-    }
-
-    if (paymentMethod === "boleto") {
-        const boletoLine = String(details.boletoLine || details.ticketUrl || "").trim();
-
-        if (!boletoLine) {
-            return "";
-        }
-
-        return `
-            <div class="account-payment-instructions ${isExpired ? "is-expired" : ""}">
-                <p class="account-payment-instructions-title">Instrucoes do boleto</p>
-                ${expiresAt ? `<p class="account-payment-instructions-note">Validade: ${escapeHtml(formatDateTime(expiresAt))}${isExpired ? " (expirado)" : ""}</p>` : ""}
-                <div class="account-payment-copy-box">
-                    <textarea id="orderBoletoLine" readonly>${escapeHtml(boletoLine)}</textarea>
-                    <button type="button" class="account-payment-copy-button" data-copy-payment-target="orderBoletoLine">Copiar linha digitavel</button>
-                </div>
             </div>
         `;
     }

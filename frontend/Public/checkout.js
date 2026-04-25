@@ -42,6 +42,15 @@ const checkoutCouponCodeInput = document.getElementById("checkoutCouponCode");
 const checkoutCouponApplyButton = document.getElementById("checkoutCouponApplyButton");
 const checkoutCouponFeedback = document.getElementById("checkoutCouponFeedback");
 const checkoutCouponApplied = document.getElementById("checkoutCouponApplied");
+const checkoutCardNumberInput = document.getElementById("checkoutCardNumberInput");
+const checkoutCardExpiryInput = document.getElementById("checkoutCardExpiryInput");
+const checkoutCardCvvInput = document.getElementById("checkoutCardCvvInput");
+const checkoutCardNumberField = document.getElementById("checkoutCardNumber");
+const checkoutCardExpiryField = document.getElementById("checkoutCardExpiry");
+const checkoutCardCvvField = document.getElementById("checkoutCardCvv");
+const checkoutCardIssuer = document.getElementById("checkoutCardIssuer");
+const checkoutCardInstallments = document.getElementById("checkoutCardInstallments");
+const checkoutCardIdentificationType = document.getElementById("checkoutCardIdentificationType");
 const SHIPPING_ZIP_STORAGE_KEY = "arteno-shipping-zip-code";
 const PERSONALIZATION_IMAGE_DB_NAME = "arteno-personalization-images";
 const PERSONALIZATION_IMAGE_STORE_NAME = "uploads";
@@ -59,8 +68,9 @@ let checkoutSubmitRequestInFlight = false;
 let appliedCoupon = null;
 let checkoutConfig = null;
 let mercadoPagoInstance = null;
-let mercadoPagoBrickController = null;
-let mercadoPagoBrickReady = false;
+let mercadoPagoSecureFieldsReady = false;
+let mercadoPagoCardPaymentMethodId = "";
+let mercadoPagoCardBin = "";
 const checkoutPersonalizationPreviewObjectUrls = new Map();
 
 if (menuIcon && sideMenu && overlay) {
@@ -502,9 +512,7 @@ function renderCheckoutSummary() {
     `).join("");
     void hydrateCheckoutPersonalizationThumbs();
 
-    if (isMercadoPagoCheckoutActive()) {
-        void renderMercadoPagoBrick();
-    }
+    void ensureMercadoPagoSecureFields();
 }
 
 function fillCheckoutAddressFromZipCode(address = {}) {
@@ -830,20 +838,11 @@ function setCheckoutSubmitAvailability() {
         return;
     }
 
-    if (isMercadoPagoCheckoutActive()) {
-        checkoutSubmitButton.disabled = true;
-        return;
-    }
-
     checkoutSubmitButton.disabled = false;
 }
 
 function legacySetMercadoPagoCheckoutVisibility() {
     const enabled = Boolean(checkoutConfig?.isConfigured);
-
-    if (checkoutMercadoPagoPanel) {
-        checkoutMercadoPagoPanel.hidden = true;
-    }
 
     if (checkoutLegacyPaymentOptions) {
         checkoutLegacyPaymentOptions.hidden = false;
@@ -953,7 +952,6 @@ async function legacyRenderMercadoPagoBrick() {
                 creditCard: "all",
                 debitCard: "all",
                 prepaidCard: "all",
-                bankTransfer: "all"
             }
         },
         callbacks: {
@@ -962,7 +960,7 @@ async function legacyRenderMercadoPagoBrick() {
             },
             onSubmit: ({ selectedPaymentMethod, formData }, additionalData) => {
                 return submitCheckoutOrder({
-                    paymentMethod: selectedPaymentMethod === "bankTransfer" ? "pix" : "card",
+                    paymentMethod: "card",
                     mercadoPagoPayment: {
                         selectedPaymentMethod,
                         formData,
@@ -982,14 +980,8 @@ async function legacyRenderMercadoPagoBrick() {
 }
 
 function setPaymentMethodUI() {
-    if (isMercadoPagoCheckoutActive()) {
-        if (checkoutCardFields) {
-            checkoutCardFields.hidden = true;
-        }
-        return;
-    }
-
     const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || "pix";
+    const shouldUseSecureFields = selectedMethod === "card" && isMercadoPagoCheckoutActive();
 
     document.querySelectorAll(".checkout-payment-option").forEach((option) => {
         const input = option.querySelector("input");
@@ -997,6 +989,26 @@ function setPaymentMethodUI() {
     });
 
     checkoutCardFields.hidden = selectedMethod !== "card";
+    if (checkoutCardNumberInput) {
+        checkoutCardNumberInput.hidden = shouldUseSecureFields;
+    }
+    if (checkoutCardExpiryInput) {
+        checkoutCardExpiryInput.hidden = shouldUseSecureFields;
+    }
+    if (checkoutCardCvvInput) {
+        checkoutCardCvvInput.hidden = shouldUseSecureFields;
+    }
+    if (checkoutCardNumberField) {
+        checkoutCardNumberField.hidden = !shouldUseSecureFields;
+    }
+    if (checkoutCardExpiryField) {
+        checkoutCardExpiryField.hidden = !shouldUseSecureFields;
+    }
+    if (checkoutCardCvvField) {
+        checkoutCardCvvField.hidden = !shouldUseSecureFields;
+    }
+
+    void ensureMercadoPagoSecureFields();
 }
 
 function setCardTypeUI() {
@@ -1004,6 +1016,12 @@ function setCardTypeUI() {
         const input = option.querySelector("input");
         option.classList.toggle("active", Boolean(input?.checked));
     });
+
+    if (mercadoPagoCardBin.length >= 8) {
+        void updateMercadoPagoPaymentMethod(mercadoPagoCardBin).catch(() => {
+            mercadoPagoCardPaymentMethodId = "";
+        });
+    }
 }
 
 async function loadCheckoutConfig() {
@@ -1021,7 +1039,6 @@ async function loadCheckoutConfig() {
                 ? "Mercado Pago produção"
                 : "Mercado Pago sandbox";
         setMercadoPagoCheckoutVisibility();
-        await renderMercadoPagoBrick();
     } catch (_error) {
         checkoutModeBadge.textContent = "Modo desenvolvimento";
         setMercadoPagoCheckoutVisibility();
@@ -1182,25 +1199,25 @@ function legacyRenderPixResultOriginal(result) {
     `;
 }
 
-function renderBoletoResult(result) {
-    const boletoLine = result.payment?.details?.boletoLine || result.payment?.details?.ticketUrl || "";
+function renderLegacyPendingResult(result) {
+    const legacyLine = result.payment?.details?.ticketUrl || "";
     const expiresAt = result.payment?.details?.expiresAt || "";
 
-    checkoutResultTitle.textContent = "Boleto gerado com sucesso";
-    checkoutResultSubtitle.textContent = "Seu pedido foi criado e está aguardando o pagamento do boleto.";
+    checkoutResultTitle.textContent = "Pagamento pendente";
+    checkoutResultSubtitle.textContent = "Seu pedido foi criado e esta aguardando confirmacao.";
 
     checkoutResultShell.innerHTML = `
         <article class="checkout-result-card pending">
-            <h3>Boleto pendente</h3>
-            <p>${escapeHtml(result.payment?.details?.instructions || "Use a linha digitável abaixo para pagar o boleto.")}</p>
+            <h3>Pagamento pendente</h3>
+            <p>${escapeHtml(result.payment?.details?.instructions || "Aguardando a confirmacao do pagamento.")}</p>
             <div class="checkout-result-meta">
                 <div><span>Pedido</span><strong>${escapeHtml(result.order?.orderNumber || "-")}</strong></div>
                 <div><span>Total</span><strong>${formatCurrency(result.order?.totals?.total || 0)}</strong></div>
                 <div><span>Vencimento</span><strong>${escapeHtml(formatDate(expiresAt))}</strong></div>
             </div>
             <div class="checkout-copy-box">
-                <textarea id="boletoLineCode" readonly>${escapeHtml(boletoLine)}</textarea>
-            <button type="button" class="checkout-copy-button" data-copy-target="boletoLineCode">Copiar linha digitável</button>
+                <textarea id="legacyPaymentCode" readonly>${escapeHtml(legacyLine)}</textarea>
+            <button type="button" class="checkout-copy-button" data-copy-target="legacyPaymentCode">Copiar codigo</button>
             </div>
             ${buildResultActions()}
         </article>
@@ -1236,8 +1253,6 @@ function renderCheckoutResult(result) {
         renderApprovedResult(result);
     } else if (result.payment?.method === "pix") {
         renderPixResult(result);
-    } else if (result.payment?.method === "boleto") {
-        renderBoletoResult(result);
     } else {
         renderCardResult(result);
     }
@@ -1620,17 +1635,23 @@ function bindCheckoutInteractions() {
         event.target.value = applyCpfMask(event.target.value);
     });
 
-    document.getElementById("checkoutCardNumber").addEventListener("input", (event) => {
-        event.target.value = applyCardNumberMask(event.target.value);
-    });
+    if (checkoutCardNumberInput) {
+        checkoutCardNumberInput.addEventListener("input", (event) => {
+            event.target.value = applyCardNumberMask(event.target.value);
+        });
+    }
 
-    document.getElementById("checkoutCardExpiry").addEventListener("input", (event) => {
-        event.target.value = applyCardExpiryMask(event.target.value);
-    });
+    if (checkoutCardExpiryInput) {
+        checkoutCardExpiryInput.addEventListener("input", (event) => {
+            event.target.value = applyCardExpiryMask(event.target.value);
+        });
+    }
 
-    document.getElementById("checkoutCardCvv").addEventListener("input", (event) => {
-        event.target.value = String(event.target.value).replace(/\D/g, "").slice(0, 4);
-    });
+    if (checkoutCardCvvInput) {
+        checkoutCardCvvInput.addEventListener("input", (event) => {
+            event.target.value = String(event.target.value).replace(/\D/g, "").slice(0, 4);
+        });
+    }
 
     if (checkoutCouponCodeInput) {
         checkoutCouponCodeInput.addEventListener("input", (event) => {
@@ -1693,31 +1714,21 @@ function setMercadoPagoCheckoutVisibility() {
     const cardPaymentOption = cardPaymentInput ? cardPaymentInput.closest(".checkout-payment-option") : null;
 
     if (checkoutMercadoPagoPanel) {
-        checkoutMercadoPagoPanel.hidden = !enabled;
+        checkoutMercadoPagoPanel.hidden = true;
     }
 
     if (checkoutLegacyPaymentOptions) {
-        checkoutLegacyPaymentOptions.hidden = enabled;
+        checkoutLegacyPaymentOptions.hidden = false;
     }
 
     if (cardPaymentOption) {
         cardPaymentOption.hidden = false;
     }
 
-    if (cardPaymentInput && enabled) {
-        cardPaymentInput.checked = true;
-    }
-
     if (checkoutSubmitNote) {
         checkoutSubmitNote.textContent = enabled
-            ? "Finalize pelo formulario seguro do Mercado Pago. Pix e boleto continuam disponiveis no mesmo checkout."
+            ? "Seu layout continua o mesmo, com Pix e cartao processados pelo Mercado Pago no backend."
             : "Modo teste ativo: ao finalizar, o pedido sera criado com pagamento confirmado automaticamente.";
-    }
-
-    if (checkoutMercadoPagoHint) {
-        checkoutMercadoPagoHint.textContent = enabled
-            ? "Pagamento por cartao, Pix e boleto processados com seguranca pelo Mercado Pago."
-            : "O formulario incorporado do Mercado Pago esta desativado neste checkout.";
     }
 
     setPaymentMethodUI();
@@ -1725,11 +1736,143 @@ function setMercadoPagoCheckoutVisibility() {
 }
 
 async function renderMercadoPagoBrick() {
-    if (!isMercadoPagoCheckoutActive()) {
+    return;
+}
+
+function getCheckoutAmount() {
+    return Number((getCartSubtotal(checkoutItems) - getCouponDiscountAmount() + Number(selectedShippingOption?.price || 0)).toFixed(2));
+}
+
+function getSelectedCardType() {
+    return document.querySelector('input[name="checkoutCardType"]:checked')?.value || "credit";
+}
+
+function pickMercadoPagoPaymentMethod(methods = []) {
+    const selectedCardType = getSelectedCardType();
+    const normalizedMethods = Array.isArray(methods) ? methods : [];
+
+    if (selectedCardType === "debit") {
+        return normalizedMethods.find((method = {}) => String(method.payment_type_id || "").toLowerCase() === "debit_card")
+            || normalizedMethods[0]
+            || null;
+    }
+
+    return normalizedMethods.find((method = {}) => String(method.payment_type_id || "").toLowerCase() === "credit_card")
+        || normalizedMethods[0]
+        || null;
+}
+
+async function updateMercadoPagoPaymentMethod(bin = "") {
+    mercadoPagoCardBin = String(bin || "").trim();
+    mercadoPagoCardPaymentMethodId = "";
+
+    if (!mercadoPagoInstance || mercadoPagoCardBin.length < 8) {
         return;
     }
 
-    await legacyRenderMercadoPagoBrick();
+    const response = await mercadoPagoInstance.getPaymentMethods({ bin: mercadoPagoCardBin });
+    const selectedMethod = pickMercadoPagoPaymentMethod(response?.results || []);
+
+    if (!selectedMethod?.id) {
+        throw new Error("Nao foi possivel identificar a bandeira do cartao informado.");
+    }
+
+    mercadoPagoCardPaymentMethodId = String(selectedMethod.id).trim();
+}
+
+async function ensureMercadoPagoSecureFields() {
+    if (mercadoPagoSecureFieldsReady || !isMercadoPagoCheckoutActive()) {
+        return;
+    }
+
+    if (!checkoutCardNumberField || !checkoutCardExpiryField || !checkoutCardCvvField) {
+        return;
+    }
+
+    if (!mercadoPagoInstance) {
+        mercadoPagoInstance = new window.MercadoPago(checkoutConfig.publicKey, {
+            locale: "pt-BR"
+        });
+    }
+
+    const mountedCardNumberField = mercadoPagoInstance.fields.create("cardNumber", {
+        placeholder: "0000 0000 0000 0000"
+    }).mount("checkoutCardNumber");
+    mercadoPagoInstance.fields.create("expirationDate", {
+        placeholder: "MM/AA"
+    }).mount("checkoutCardExpiry");
+    mercadoPagoInstance.fields.create("securityCode", {
+        placeholder: "123"
+    }).mount("checkoutCardCvv");
+
+    if (mountedCardNumberField?.on) {
+        mountedCardNumberField.on("binChange", ({ bin }) => {
+            if (!bin || String(bin).trim().length < 8) {
+                mercadoPagoCardBin = "";
+                mercadoPagoCardPaymentMethodId = "";
+                return;
+            }
+
+            updateMercadoPagoPaymentMethod(bin).catch(() => {
+                mercadoPagoCardPaymentMethodId = "";
+            });
+        });
+    }
+
+    if (checkoutCardIdentificationType) {
+        checkoutCardIdentificationType.innerHTML = '<option value="CPF">CPF</option>';
+        checkoutCardIdentificationType.value = "CPF";
+    }
+
+    if (checkoutCardInstallments) {
+        checkoutCardInstallments.innerHTML = '<option value="1">1</option>';
+        checkoutCardInstallments.value = "1";
+    }
+
+    mercadoPagoSecureFieldsReady = true;
+}
+
+async function buildMercadoPagoCardPayment() {
+    await ensureMercadoPagoSecureFields();
+
+    if (!mercadoPagoSecureFieldsReady || !mercadoPagoInstance?.fields) {
+        throw new Error("Os campos seguros do cartao ainda nao ficaram prontos. Tente novamente em alguns segundos.");
+    }
+
+    const identificationNumber = normalizeDocumentNumber(document.getElementById("checkoutCustomerDocument").value);
+    const cardholderName = document.getElementById("checkoutCardHolder").value.trim();
+
+    if (!cardholderName || identificationNumber.length !== 11) {
+        throw new Error("Preencha o nome no cartao e o CPF do comprador para continuar.");
+    }
+
+    if (!mercadoPagoCardPaymentMethodId) {
+        throw new Error("Nao foi possivel identificar o cartao. Confira os dados digitados e tente novamente.");
+    }
+
+    const token = await mercadoPagoInstance.fields.createCardToken({
+        cardholderName,
+        identificationType: "CPF",
+        identificationNumber
+    });
+
+    if (!token?.id) {
+        throw new Error("Nao foi possivel tokenizar o cartao com seguranca.");
+    }
+
+    return {
+        token: token.id,
+        payment_method_id: mercadoPagoCardPaymentMethodId,
+        issuer_id: checkoutCardIssuer?.value || "",
+        installments: Number(checkoutCardInstallments?.value || 1),
+        payer: {
+            email: document.getElementById("checkoutCustomerEmail").value.trim(),
+            identification: {
+                type: "CPF",
+                number: identificationNumber
+            }
+        }
+    };
 }
 
 function renderPixResult(result) {
@@ -1797,10 +1940,10 @@ async function buildCheckoutPayload() {
         items,
         card: paymentMethod === "card" ? {
             type: cardType,
-            number: document.getElementById("checkoutCardNumber").value.trim(),
+            number: checkoutCardNumberInput?.value.trim() || "",
             holderName: document.getElementById("checkoutCardHolder").value.trim(),
-            expiry: document.getElementById("checkoutCardExpiry").value.trim(),
-            cvv: document.getElementById("checkoutCardCvv").value.trim()
+            expiry: checkoutCardExpiryInput?.value.trim() || "",
+            cvv: checkoutCardCvvInput?.value.trim() || ""
         } : {}
     };
 }
@@ -1810,9 +1953,17 @@ async function handleCheckoutSubmitReal(event) {
 
     try {
         clearCheckoutFeedback();
+        const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || "pix";
 
-        if (isMercadoPagoCheckoutActive()) {
-            showCheckoutFeedback("Use o formulario seguro do Mercado Pago para concluir o pagamento.", "info");
+        if (selectedMethod === "card" && isMercadoPagoCheckoutActive()) {
+            const mercadoPagoPayment = await buildMercadoPagoCardPayment();
+            await submitCheckoutOrder({
+                paymentMethod: "card",
+                mercadoPagoPayment: {
+                    selectedPaymentMethod: "card",
+                    formData: mercadoPagoPayment
+                }
+            });
             return;
         }
 

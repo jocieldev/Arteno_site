@@ -402,7 +402,6 @@ async function resolveCheckoutItemsFromCatalog(items = []) {
 
 function extractMercadoPagoResultDetails(paymentResponse = {}) {
     const transactionData = paymentResponse.point_of_interaction?.transaction_data || {};
-    const barcode = paymentResponse.barcode || {};
 
     return {
         mercadoPagoPaymentId: paymentResponse.id || "",
@@ -410,7 +409,6 @@ function extractMercadoPagoResultDetails(paymentResponse = {}) {
         ticketUrl: paymentResponse.transaction_details?.external_resource_url || "",
         qrCode: transactionData.qr_code || "",
         qrCodeBase64: transactionData.qr_code_base64 || "",
-        boletoLine: barcode.content || transactionData.barcode_content || "",
         expiresAt: paymentResponse.date_of_expiration || "",
         paidAt: paymentResponse.date_approved || "",
         statusDetail: paymentResponse.status_detail || "",
@@ -430,10 +428,6 @@ function mapMercadoPagoPaymentMethod(paymentResponse = {}, fallbackMethod = "") 
         return "pix";
     }
 
-    if (paymentMethodId.startsWith("bol") || paymentTypeId === "ticket") {
-        return "boleto";
-    }
-
     return "card";
 }
 
@@ -447,11 +441,6 @@ function buildPixCode(orderNumber, total) {
         orderNumber,
         `520400005303986540${cents}5802BR5907ARTENO6009SAOPAULO62070503***6304`
     ].join("");
-}
-
-function buildBoletoLine(orderNumber) {
-    const seed = orderNumber.replace(/\D/g, "").slice(-10).padStart(10, "0");
-    return `23791.11125 ${seed.slice(0, 5)}.444440 55000.123456 7 999900000${seed}`;
 }
 
 function buildCardSimulation(card = {}) {
@@ -549,7 +538,7 @@ async function createCheckoutOrder(req, res) {
         if (!supportedPaymentMethods.includes(paymentMethod)) {
             if (hasMercadoPagoIntegration) {
                 return res.status(400).json({
-                    message: "No checkout atual, use Pix ou Boleto para concluir o pagamento."
+                    message: "No checkout atual, use Pix ou cartao para concluir o pagamento."
                 });
             }
 
