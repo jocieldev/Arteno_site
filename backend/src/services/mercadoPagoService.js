@@ -257,6 +257,18 @@ async function getMercadoPagoPayment(paymentId) {
     return requestMercadoPago(`/v1/payments/${encodeURIComponent(normalizedPaymentId)}`);
 }
 
+async function getMercadoPagoPaymentMethod(paymentMethodId = "") {
+    const normalizedPaymentMethodId = normalizeText(paymentMethodId);
+
+    if (!normalizedPaymentMethodId) {
+        const error = new Error("Meio de pagamento do Mercado Pago invalido.");
+        error.status = 400;
+        throw error;
+    }
+
+    return requestMercadoPago(`/v1/payment_methods/${encodeURIComponent(normalizedPaymentMethodId)}`);
+}
+
 async function getMercadoPagoInstallments({ amount, bin = "", paymentMethodId = "" } = {}) {
     const normalizedAmount = normalizePrice(amount);
     const normalizedBin = normalizeText(bin);
@@ -379,6 +391,7 @@ module.exports = {
     getMercadoPagoConfig,
     getMercadoPagoInstallments,
     getMercadoPagoPayment,
+    getMercadoPagoPaymentMethod,
     isMercadoPagoReady,
     mapMercadoPagoStatusToOrderStatus,
     verifyMercadoPagoWebhookSignature

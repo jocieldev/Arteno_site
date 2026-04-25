@@ -72,8 +72,10 @@ let mercadoPagoInstance = null;
 let mercadoPagoSecureFieldsReady = false;
 let mercadoPagoCardPaymentMethodId = "";
 let mercadoPagoCardBin = "";
+let mercadoPagoDetectedCardType = "";
 let mercadoPagoInstallmentsCacheKey = "";
 let mercadoPagoInstallmentsRequestId = 0;
+let installmentsLoadWarningShown = false;
 const checkoutPersonalizationPreviewObjectUrls = new Map();
 
 if (menuIcon && sideMenu && overlay) {
@@ -1017,13 +1019,15 @@ function setPaymentMethodUI() {
     void refreshCheckoutInstallments();
 }
 
-function setCardTypeUI() {
+function setCardTypeUI(options = {}) {
+    const shouldRefreshPaymentMethod = options?.shouldRefreshPaymentMethod !== false;
+
     document.querySelectorAll(".checkout-card-type-option").forEach((option) => {
         const input = option.querySelector("input");
         option.classList.toggle("active", Boolean(input?.checked));
     });
 
-    if (mercadoPagoCardBin.length >= 8) {
+    if (shouldRefreshPaymentMethod && mercadoPagoCardBin.length >= 8) {
         void updateMercadoPagoPaymentMethod(mercadoPagoCardBin).catch(() => {
             mercadoPagoCardPaymentMethodId = "";
             resetCheckoutInstallments();
@@ -1757,17 +1761,49 @@ function getSelectedCardType() {
     return document.querySelector('input[name="checkoutCardType"]:checked')?.value || "credit";
 }
 
-function pickMercadoPagoPaymentMethod(methods = []) {
-    const selectedCardType = getSelectedCardType();
-    const normalizedMethods = Array.isArray(methods) ? methods : [];
+function setSelectedCardType(cardType) {
+    const normalizedCardType = cardType === "debit" ? "debit" : "credit";
+    const radio = document.querySelector(`input[name="checkoutCardType"][value="${normalizedCardType}"]`);
 
-    if (selectedCardType === "debit") {
-        return normalizedMethods.find((method = {}) => String(method.payment_type_id || "").toLowerCase() === "debit_card")
-            || normalizedMethods[0]
-            || null;
+    if (!radio) {
+        return false;
     }
 
-    return normalizedMethods.find((method = {}) => String(method.payment_type_id || "").toLowerCase() === "credit_card")
+    const changed = !radio.checked;
+    radio.checked = true;
+    return changed;
+}
+
+function resolvePreferredCardType(methods = []) {
+    const normalizedMethods = Array.isArray(methods) ? methods : [];
+    const hasCredit = normalizedMethods.some((method = {}) => String(method.payment_type_id || "").toLowerCase() === "credit_card");
+    const hasDebit = normalizedMethods.some((method = {}) => String(method.payment_type_id || "").toLowerCase() === "debit_card");
+    const selectedType = getSelectedCardType();
+
+    if (selectedType === "credit" && hasCredit) {
+        return "credit";
+    }
+
+    if (selectedType === "debit" && hasDebit) {
+        return "debit";
+    }
+
+    if (hasCredit) {
+        return "credit";
+    }
+
+    if (hasDebit) {
+        return "debit";
+    }
+
+    return selectedType;
+}
+
+function pickMercadoPagoPaymentMethod(methods = [], preferredType = getSelectedCardType()) {
+    const normalizedMethods = Array.isArray(methods) ? methods : [];
+    const paymentTypeId = preferredType === "debit" ? "debit_card" : "credit_card";
+
+    return normalizedMethods.find((method = {}) => String(method.payment_type_id || "").toLowerCase() === paymentTypeId)
         || normalizedMethods[0]
         || null;
 }
@@ -1906,8 +1942,13 @@ async function refreshCheckoutInstallments({ force = false } = {}) {
             checkoutCardIssuer.innerHTML = `<option value="${escapeHtml(resolvedIssuerId)}">${escapeHtml(resolvedIssuerId || "default")}</option>`;
             checkoutCardIssuer.value = resolvedIssuerId;
         }
+        installmentsLoadWarningShown = false;
     } catch (_error) {
         resetCheckoutInstallments();
+        if (!installmentsLoadWarningShown) {
+            showCheckoutFeedback("Nao foi possivel carregar o parcelamento agora. Tente novamente em alguns segundos ou finalize em 1x.", "warning");
+            installmentsLoadWarningShown = true;
+        }
     }
 }
 
@@ -1917,12 +1958,28 @@ async function updateMercadoPagoPaymentMethod(bin = "") {
     mercadoPagoInstallmentsCacheKey = "";
 
     if (!mercadoPagoInstance || mercadoPagoCardBin.length < 8) {
+        mercadoPagoDetectedCardType = "";
         resetCheckoutInstallments();
         return;
     }
 
     const response = await mercadoPagoInstance.getPaymentMethods({ bin: mercadoPagoCardBin });
-    const selectedMethod = pickMercadoPagoPaymentMethod(response?.results || []);
+    const availableMethods = Array.isArray(response?.results) ? response.results : [];
+    const preferredType = resolvePreferredCardType(availableMethods);
+    mercadoPagoDetectedCardType = preferredType;
+    const cardTypeChanged = setSelectedCardType(preferredType);
+
+    if (cardTypeChanged) {
+        showCheckoutFeedback(
+            preferredType === "debit"
+                ? "Cartao detectado como debito. Pagamento sera a vista."
+                : "Cartao detectado como credito. Parcelamento habilitado conforme a operadora.",
+            "info"
+        );
+        setCardTypeUI({ shouldRefreshPaymentMethod: false });
+    }
+
+    const selectedMethod = pickMercadoPagoPaymentMethod(availableMethods, preferredType);
 
     if (!selectedMethod?.id) {
         throw new Error("Nao foi possivel identificar a bandeira do cartao informado.");
@@ -1962,6 +2019,7 @@ async function ensureMercadoPagoSecureFields() {
             if (!bin || String(bin).trim().length < 8) {
                 mercadoPagoCardBin = "";
                 mercadoPagoCardPaymentMethodId = "";
+                mercadoPagoDetectedCardType = "";
                 resetCheckoutInstallments();
                 return;
             }
@@ -2118,12 +2176,17 @@ async function handleCheckoutSubmitReal(event) {
         const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || "pix";
 
         if (selectedMethod === "card" && isMercadoPagoCheckoutActive()) {
+            const selectedCardType = getSelectedCardType();
             const mercadoPagoPayment = await buildMercadoPagoCardPayment();
             await submitCheckoutOrder({
                 paymentMethod: "card",
                 mercadoPagoPayment: {
                     selectedPaymentMethod: "card",
-                    formData: mercadoPagoPayment
+                    formData: mercadoPagoPayment,
+                    additionalData: {
+                        cardType: selectedCardType,
+                        detectedCardType: mercadoPagoDetectedCardType || selectedCardType
+                    }
                 }
             });
             return;

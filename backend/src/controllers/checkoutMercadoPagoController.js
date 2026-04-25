@@ -6,6 +6,7 @@ const {
     buildMercadoPagoPublicConfig,
     createMercadoPagoPayment,
     getMercadoPagoInstallments,
+    getMercadoPagoPaymentMethod,
     isMercadoPagoReady,
     mapMercadoPagoStatusToOrderStatus
 } = require("../services/mercadoPagoService");
@@ -628,16 +629,43 @@ async function createCheckoutOrder(req, res) {
         };
 
         const directMercadoPagoFormData = buildDirectMercadoPagoFormData(paymentMethod, customer);
-        const mercadoPagoFormData = mercadoPagoPaymentInput?.formData || directMercadoPagoFormData;
+        let mercadoPagoFormData = mercadoPagoPaymentInput?.formData || directMercadoPagoFormData;
 
         if (hasMercadoPagoIntegration && paymentMethod === "card") {
             const token = normalizeText(mercadoPagoFormData?.token);
             const paymentMethodId = normalizeText(mercadoPagoFormData?.payment_method_id || mercadoPagoFormData?.paymentMethodId);
+            const parsedInstallments = Number.parseInt(mercadoPagoFormData?.installments, 10);
+            const installments = Number.isInteger(parsedInstallments) && parsedInstallments > 0 ? parsedInstallments : 1;
+            const cardTypeHint = normalizeText(
+                mercadoPagoPaymentInput?.additionalData?.cardType
+                || req.body.card?.type
+            ).toLowerCase();
 
             if (!token || !paymentMethodId) {
                 return res.status(400).json({
                     message: "Nao foi possivel validar o pagamento com cartao. Recarregue a pagina e tente novamente."
                 });
+            }
+
+            const paymentMethodInfo = await getMercadoPagoPaymentMethod(paymentMethodId);
+            const paymentTypeId = normalizeText(paymentMethodInfo?.payment_type_id).toLowerCase();
+
+            if (paymentTypeId === "debit_card" && installments !== 1) {
+                return res.status(400).json({
+                    message: "Cartao de debito deve ser pago a vista."
+                });
+            }
+
+            if (paymentTypeId === "debit_card" || cardTypeHint === "debit") {
+                mercadoPagoFormData = {
+                    ...(mercadoPagoFormData || {}),
+                    installments: 1
+                };
+            } else {
+                mercadoPagoFormData = {
+                    ...(mercadoPagoFormData || {}),
+                    installments
+                };
             }
         }
 
