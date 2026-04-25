@@ -49,6 +49,7 @@ const checkoutCardNumberField = document.getElementById("checkoutCardNumber");
 const checkoutCardExpiryField = document.getElementById("checkoutCardExpiry");
 const checkoutCardCvvField = document.getElementById("checkoutCardCvv");
 const checkoutCardIssuer = document.getElementById("checkoutCardIssuer");
+const checkoutCardInstallmentsField = document.getElementById("checkoutCardInstallmentsField");
 const checkoutCardInstallments = document.getElementById("checkoutCardInstallments");
 const checkoutCardIdentificationType = document.getElementById("checkoutCardIdentificationType");
 const SHIPPING_ZIP_STORAGE_KEY = "arteno-shipping-zip-code";
@@ -71,6 +72,8 @@ let mercadoPagoInstance = null;
 let mercadoPagoSecureFieldsReady = false;
 let mercadoPagoCardPaymentMethodId = "";
 let mercadoPagoCardBin = "";
+let mercadoPagoInstallmentsCacheKey = "";
+let mercadoPagoInstallmentsRequestId = 0;
 const checkoutPersonalizationPreviewObjectUrls = new Map();
 
 if (menuIcon && sideMenu && overlay) {
@@ -513,6 +516,7 @@ function renderCheckoutSummary() {
     void hydrateCheckoutPersonalizationThumbs();
 
     void ensureMercadoPagoSecureFields();
+    void refreshCheckoutInstallments();
 }
 
 function fillCheckoutAddressFromZipCode(address = {}) {
@@ -1008,7 +1012,9 @@ function setPaymentMethodUI() {
         checkoutCardCvvField.hidden = !shouldUseSecureFields;
     }
 
+    setCheckoutInstallmentsFieldVisibility();
     void ensureMercadoPagoSecureFields();
+    void refreshCheckoutInstallments();
 }
 
 function setCardTypeUI() {
@@ -1020,8 +1026,12 @@ function setCardTypeUI() {
     if (mercadoPagoCardBin.length >= 8) {
         void updateMercadoPagoPaymentMethod(mercadoPagoCardBin).catch(() => {
             mercadoPagoCardPaymentMethodId = "";
+            resetCheckoutInstallments();
         });
+        return;
     }
+
+    void refreshCheckoutInstallments({ force: true });
 }
 
 async function loadCheckoutConfig() {
@@ -1762,11 +1772,152 @@ function pickMercadoPagoPaymentMethod(methods = []) {
         || null;
 }
 
+function setCheckoutInstallmentsFieldVisibility() {
+    if (!checkoutCardInstallmentsField) {
+        return;
+    }
+
+    const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || "pix";
+    const cardType = getSelectedCardType();
+    checkoutCardInstallmentsField.hidden = !(selectedMethod === "card" && cardType === "credit");
+}
+
+function setCheckoutInstallmentsOptions(options = [], selectedInstallments = 1) {
+    if (!checkoutCardInstallments) {
+        return;
+    }
+
+    const normalizedOptions = Array.isArray(options) && options.length
+        ? options
+        : [{ value: 1, label: "1x sem juros" }];
+
+    checkoutCardInstallments.innerHTML = normalizedOptions
+        .map((option) => `<option value="${String(option.value)}">${escapeHtml(option.label)}</option>`)
+        .join("");
+    checkoutCardInstallments.value = String(selectedInstallments);
+
+    if (checkoutCardInstallments.value !== String(selectedInstallments)) {
+        checkoutCardInstallments.value = String(normalizedOptions[0]?.value || 1);
+    }
+}
+
+function resetCheckoutInstallments() {
+    mercadoPagoInstallmentsCacheKey = "";
+    setCheckoutInstallmentsOptions([{ value: 1, label: "1x sem juros" }], 1);
+    if (checkoutCardIssuer) {
+        checkoutCardIssuer.innerHTML = '<option value=""></option>';
+        checkoutCardIssuer.value = "";
+    }
+}
+
+async function fetchCheckoutCardInstallments({ amount, bin, paymentMethodId }) {
+    const query = new URLSearchParams({
+        amount: String(Number(amount || 0)),
+        bin: String(bin || "")
+    });
+
+    if (paymentMethodId) {
+        query.set("paymentMethodId", String(paymentMethodId));
+    }
+
+    const response = await fetch(`/api/checkout/card-installments?${query.toString()}`, {
+        credentials: "same-origin"
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.message || "Nao foi possivel carregar as opcoes de parcelamento.");
+    }
+
+    return {
+        payerCosts: Array.isArray(result.payerCosts) ? result.payerCosts : [],
+        issuerId: String(result.issuerId || "").trim()
+    };
+}
+
+async function refreshCheckoutInstallments({ force = false } = {}) {
+    setCheckoutInstallmentsFieldVisibility();
+
+    if (!checkoutCardInstallments) {
+        return;
+    }
+
+    const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || "pix";
+    const cardType = getSelectedCardType();
+
+    if (selectedMethod !== "card" || cardType !== "credit" || !isMercadoPagoCheckoutActive()) {
+        resetCheckoutInstallments();
+        return;
+    }
+
+    const amount = getCheckoutAmount();
+    if (!amount || amount <= 0) {
+        resetCheckoutInstallments();
+        return;
+    }
+
+    if (mercadoPagoCardBin.length < 8 || !mercadoPagoCardPaymentMethodId) {
+        setCheckoutInstallmentsOptions([{ value: 1, label: "1x sem juros" }], 1);
+        return;
+    }
+
+    const requestKey = `${mercadoPagoCardPaymentMethodId}|${mercadoPagoCardBin}|${amount.toFixed(2)}`;
+    if (!force && mercadoPagoInstallmentsCacheKey === requestKey) {
+        return;
+    }
+
+    mercadoPagoInstallmentsCacheKey = requestKey;
+    const requestId = ++mercadoPagoInstallmentsRequestId;
+
+    try {
+        const { payerCosts, issuerId } = await fetchCheckoutCardInstallments({
+            amount,
+            bin: mercadoPagoCardBin,
+            paymentMethodId: mercadoPagoCardPaymentMethodId
+        });
+
+        if (requestId !== mercadoPagoInstallmentsRequestId) {
+            return;
+        }
+
+        const options = payerCosts
+            .map((cost = {}) => {
+                const installments = Number(cost.installments || 0);
+                if (!Number.isInteger(installments) || installments < 1) {
+                    return null;
+                }
+
+                const label = String(cost.recommended_message || "").trim()
+                    || `${installments}x de ${formatCurrency(cost.installment_amount || 0)} (total ${formatCurrency(cost.total_amount || 0)})`;
+                return {
+                    value: installments,
+                    label
+                };
+            })
+            .filter(Boolean);
+
+        const uniqueOptions = options.filter((option, index, list) => (
+            list.findIndex((item) => Number(item.value) === Number(option.value)) === index
+        ));
+
+        setCheckoutInstallmentsOptions(uniqueOptions, 1);
+        if (checkoutCardIssuer) {
+            const resolvedIssuerId = issuerId || String(payerCosts[0]?.issuer?.id || "").trim();
+            checkoutCardIssuer.innerHTML = `<option value="${escapeHtml(resolvedIssuerId)}">${escapeHtml(resolvedIssuerId || "default")}</option>`;
+            checkoutCardIssuer.value = resolvedIssuerId;
+        }
+    } catch (_error) {
+        resetCheckoutInstallments();
+    }
+}
+
 async function updateMercadoPagoPaymentMethod(bin = "") {
     mercadoPagoCardBin = String(bin || "").trim();
     mercadoPagoCardPaymentMethodId = "";
+    mercadoPagoInstallmentsCacheKey = "";
 
     if (!mercadoPagoInstance || mercadoPagoCardBin.length < 8) {
+        resetCheckoutInstallments();
         return;
     }
 
@@ -1778,6 +1929,7 @@ async function updateMercadoPagoPaymentMethod(bin = "") {
     }
 
     mercadoPagoCardPaymentMethodId = String(selectedMethod.id).trim();
+    await refreshCheckoutInstallments({ force: true });
 }
 
 async function ensureMercadoPagoSecureFields() {
@@ -1810,11 +1962,13 @@ async function ensureMercadoPagoSecureFields() {
             if (!bin || String(bin).trim().length < 8) {
                 mercadoPagoCardBin = "";
                 mercadoPagoCardPaymentMethodId = "";
+                resetCheckoutInstallments();
                 return;
             }
 
             updateMercadoPagoPaymentMethod(bin).catch(() => {
                 mercadoPagoCardPaymentMethodId = "";
+                resetCheckoutInstallments();
             });
         });
     }
@@ -1825,8 +1979,7 @@ async function ensureMercadoPagoSecureFields() {
     }
 
     if (checkoutCardInstallments) {
-        checkoutCardInstallments.innerHTML = '<option value="1">1</option>';
-        checkoutCardInstallments.value = "1";
+        resetCheckoutInstallments();
     }
 
     mercadoPagoSecureFieldsReady = true;
@@ -1850,6 +2003,15 @@ async function buildMercadoPagoCardPayment() {
         throw new Error("Nao foi possivel identificar o cartao. Confira os dados digitados e tente novamente.");
     }
 
+    const selectedCardType = getSelectedCardType();
+    const installments = selectedCardType === "credit"
+        ? Number(checkoutCardInstallments?.value || 1)
+        : 1;
+
+    if (!Number.isInteger(installments) || installments < 1) {
+        throw new Error("Nao foi possivel validar o parcelamento escolhido.");
+    }
+
     const token = await mercadoPagoInstance.fields.createCardToken({
         cardholderName,
         identificationType: "CPF",
@@ -1864,7 +2026,7 @@ async function buildMercadoPagoCardPayment() {
         token: token.id,
         payment_method_id: mercadoPagoCardPaymentMethodId,
         issuer_id: checkoutCardIssuer?.value || "",
-        installments: Number(checkoutCardInstallments?.value || 1),
+        installments,
         payer: {
             email: document.getElementById("checkoutCustomerEmail").value.trim(),
             identification: {

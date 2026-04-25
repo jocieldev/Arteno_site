@@ -5,6 +5,7 @@ const { sendPixPaymentInstructionsEmail } = require("../services/emailService");
 const {
     buildMercadoPagoPublicConfig,
     createMercadoPagoPayment,
+    getMercadoPagoInstallments,
     isMercadoPagoReady,
     mapMercadoPagoStatusToOrderStatus
 } = require("../services/mercadoPagoService");
@@ -852,9 +853,43 @@ function getCheckoutPublicConfig(_req, res) {
     return res.json(buildMercadoPagoPublicConfig());
 }
 
+async function getCheckoutCardInstallments(req, res) {
+    try {
+        if (!isMercadoPagoReady()) {
+            return res.status(503).json({
+                message: "Parcelamento indisponivel no momento. Configure o Mercado Pago para ativar essa opcao."
+            });
+        }
+
+        const amount = Number(req.query.amount);
+        const bin = normalizeDocumentNumber(req.query.bin).slice(0, 8);
+        const paymentMethodId = normalizeText(req.query.paymentMethodId || req.query.payment_method_id);
+        const results = await getMercadoPagoInstallments({
+            amount,
+            bin,
+            paymentMethodId
+        });
+
+        const firstResult = Array.isArray(results) ? results[0] : null;
+        const payerCosts = Array.isArray(firstResult?.payer_costs) ? firstResult.payer_costs : [];
+        const issuerId = normalizeText(firstResult?.issuer?.id);
+
+        return res.json({
+            ok: true,
+            payerCosts,
+            issuerId
+        });
+    } catch (error) {
+        return res.status(error.status || 500).json({
+            message: error.message || "Nao foi possivel carregar as opcoes de parcelamento."
+        });
+    }
+}
+
 module.exports = {
     createCheckoutOrder,
     getCheckoutPublicConfig,
+    getCheckoutCardInstallments,
     previewCheckoutCoupon,
     uploadCheckoutPersonalizationImage: uploadCheckoutPersonalizationImageLegacy
 };

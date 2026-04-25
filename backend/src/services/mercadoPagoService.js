@@ -257,6 +257,35 @@ async function getMercadoPagoPayment(paymentId) {
     return requestMercadoPago(`/v1/payments/${encodeURIComponent(normalizedPaymentId)}`);
 }
 
+async function getMercadoPagoInstallments({ amount, bin = "", paymentMethodId = "" } = {}) {
+    const normalizedAmount = normalizePrice(amount);
+    const normalizedBin = normalizeText(bin);
+    const normalizedPaymentMethodId = normalizeText(paymentMethodId);
+
+    if (!normalizedAmount || normalizedAmount <= 0) {
+        const error = new Error("Informe um valor valido para calcular as parcelas.");
+        error.status = 400;
+        throw error;
+    }
+
+    if (normalizedBin.length < 6) {
+        const error = new Error("Informe os primeiros digitos do cartao para calcular as parcelas.");
+        error.status = 400;
+        throw error;
+    }
+
+    const query = new URLSearchParams({
+        amount: normalizedAmount.toFixed(2),
+        bin: normalizedBin
+    });
+
+    if (normalizedPaymentMethodId) {
+        query.set("payment_method_id", normalizedPaymentMethodId);
+    }
+
+    return requestMercadoPago(`/v1/payment_methods/installments?${query.toString()}`);
+}
+
 function parseMercadoPagoSignature(signature = "") {
     return String(signature || "")
         .split(",")
@@ -348,6 +377,7 @@ module.exports = {
     buildMercadoPagoPublicConfig,
     createMercadoPagoPayment,
     getMercadoPagoConfig,
+    getMercadoPagoInstallments,
     getMercadoPagoPayment,
     isMercadoPagoReady,
     mapMercadoPagoStatusToOrderStatus,
