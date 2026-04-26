@@ -358,17 +358,17 @@ function renderProductVariationSelectors(product = currentProduct) {
             </div>
             <div class="product-page-variation-options">
                 ${variation.items.map((item) => {
-                    const isSelected = selectedProductVariationItems[variation.id] === item.id;
-                    const shouldShowLabelBelow = variation.type === "color" || Boolean(item.imageUrl);
-                    const visualContent = variation.type === "color"
-                        ? `<span class="product-page-variation-option-color" style="background:${escapeHtml(item.colorHex || "#d1d5db")}"></span>`
-                        : (
-                            item.imageUrl
-                                ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.label)}">`
-                                : `<span class="product-page-variation-option-fallback">${escapeHtml(item.label)}</span>`
-                        );
+        const isSelected = selectedProductVariationItems[variation.id] === item.id;
+        const shouldShowLabelBelow = variation.type === "color" || Boolean(item.imageUrl);
+        const visualContent = variation.type === "color"
+            ? `<span class="product-page-variation-option-color" style="background:${escapeHtml(item.colorHex || "#d1d5db")}"></span>`
+            : (
+                item.imageUrl
+                    ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.label)}">`
+                    : `<span class="product-page-variation-option-fallback">${escapeHtml(item.label)}</span>`
+            );
 
-                    return `
+        return `
                         <button
                             type="button"
                             class="product-page-variation-option ${isSelected ? "is-selected" : ""}"
@@ -381,7 +381,7 @@ function renderProductVariationSelectors(product = currentProduct) {
                             ${shouldShowLabelBelow ? `<span class="product-page-variation-option-name">${escapeHtml(item.label)}${item.price !== null && item.price !== undefined ? ` (${escapeHtml(formatCurrency(item.price))})` : ""}</span>` : ""}
                         </button>
                     `;
-                }).join("")}
+    }).join("")}
             </div>
         </section>
     `).join("");
@@ -970,7 +970,8 @@ function updatePersonalizationPreview(product = currentProduct) {
     }
 
     const previewImageUrl = getSelectedVariationPreviewImage(product) || previewConfig.imageUrl || "";
-    const personalizationName = getSelectedPersonalizationName() || previewConfig.sampleText || "Maria";
+    const userInput = getSelectedPersonalizationName();
+    const personalizationName = userInput || (previewConfig.showSampleTextInPreview !== false ? (previewConfig.sampleText || "Maria") : "");
     const shouldShowPreviewText = Boolean(previewConfig.enabled && personalizationName);
 
     if (!previewImageUrl) {
@@ -1772,7 +1773,7 @@ function addCurrentProductToCart({ redirectToCheckout = false } = {}) {
         return {
             name: preview.name,
             imageUrl: preview.imageUrl || "",
-            textValue: personalizationName || preview.sampleText || "",
+            textValue: personalizationName || (preview.showSampleTextInPreview !== false ? (preview.sampleText || "") : ""),
             textBaseXPercent: preview.positionXPercent,
             textBaseYPercent: preview.positionYPercent,
             textWidthPercent: preview.widthPercent,

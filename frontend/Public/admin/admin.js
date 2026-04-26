@@ -871,6 +871,7 @@ function createDefaultPersonalizationPreviewItem(overrides = {}) {
         name: "Prévia",
         enabled: Boolean(productForm?.elements.personalizationPreviewEnabled?.checked),
         allowCustomerAdjust: false,
+        showSampleTextInPreview: true,
         imageUrl: "",
         imagePublicId: "",
         sampleText: "Maria",
@@ -904,6 +905,7 @@ function getNormalizedPersonalizationPreviewItems(product = {}) {
         name: String(preview.name || preview.label || `Prévia ${index + 1}`).trim() || `Prévia ${index + 1}`,
         enabled: Boolean(preview.enabled),
         allowCustomerAdjust: Boolean(preview.allowCustomerAdjust),
+        showSampleTextInPreview: preview.showSampleTextInPreview !== false,
         imageUrl: String(preview.imageUrl || ""),
         imagePublicId: String(preview.imagePublicId || ""),
         sampleText: String(preview.sampleText || "Maria"),
@@ -968,6 +970,7 @@ function applyActivePreviewItemToForm() {
     }
 
     productForm.elements.personalizationPreviewAllowCustomerAdjust.checked = Boolean(item.allowCustomerAdjust);
+    productForm.elements.personalizationPreviewShowSampleText.checked = item.showSampleTextInPreview !== false;
     productForm.elements.personalizationPreviewSampleText.value = item.sampleText || "Maria";
     productForm.elements.personalizationPreviewPositionXPercent.value = item.positionXPercent ?? 50;
     productForm.elements.personalizationPreviewPositionYPercent.value = item.positionYPercent ?? 50;
@@ -1001,6 +1004,7 @@ function syncActivePreviewItemFromForm() {
         name: String(personalizationPreviewNameInput?.value || currentItem.name || "Prévia").trim() || "Prévia",
         enabled: Boolean(productForm.elements.personalizationPreviewEnabled?.checked),
         allowCustomerAdjust: Boolean(productForm.elements.personalizationPreviewAllowCustomerAdjust?.checked),
+        showSampleTextInPreview: Boolean(productForm.elements.personalizationPreviewShowSampleText?.checked),
         imageUrl: existingPreviewImage?.imageUrl || "",
         imagePublicId: existingPreviewImage?.imagePublicId || "",
         sampleText: productForm.elements.personalizationPreviewSampleText?.value || "Maria",
@@ -1065,6 +1069,7 @@ function serializeProductFormState() {
             name: item.name,
             enabled: item.enabled,
             allowCustomerAdjust: item.allowCustomerAdjust,
+            showSampleTextInPreview: item.showSampleTextInPreview,
             imageUrl: item.imageUrl,
             imagePublicId: item.imagePublicId,
             sampleText: item.sampleText,

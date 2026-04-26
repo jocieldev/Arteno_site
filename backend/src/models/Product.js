@@ -295,6 +295,10 @@ const productSchema = new mongoose.Schema(
                     type: String,
                     default: "0 2px 10px rgba(0, 0, 0, 0.35)",
                     trim: true
+                },
+                showSampleTextInPreview: {
+                    type: Boolean,
+                    default: true
                 }
             },
             previews: [
@@ -390,6 +394,10 @@ const productSchema = new mongoose.Schema(
                         type: String,
                         default: "0 2px 10px rgba(0, 0, 0, 0.35)",
                         trim: true
+                    },
+                    showSampleTextInPreview: {
+                        type: Boolean,
+                        default: true
                     }
                 }
             ]
