@@ -1255,7 +1255,8 @@ function getPersonalizationPreviewConfig(product = null) {
         letterSpacingEm: Number(preview.letterSpacingEm ?? 0.04),
         rotationDeg: Number(preview.rotationDeg ?? 0),
         textTransform: preview.textTransform === "none" ? "none" : "uppercase",
-        textShadow: String(preview.textShadow || "0 2px 10px rgba(0, 0, 0, 0.35)")
+        textShadow: String(preview.textShadow || "0 2px 10px rgba(0, 0, 0, 0.35)"),
+        showSampleTextInPreview: preview.showSampleTextInPreview !== false
     };
 }
 

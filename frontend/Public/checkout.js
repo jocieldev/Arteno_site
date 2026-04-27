@@ -77,6 +77,10 @@ let mercadoPagoDetectedCardType = "";
 let mercadoPagoInstallmentsCacheKey = "";
 let mercadoPagoInstallmentsRequestId = 0;
 let installmentsLoadWarningShown = false;
+let mercadoPagoCardTypeAvailability = {
+    hasCredit: true,
+    hasDebit: true
+};
 const checkoutPersonalizationPreviewObjectUrls = new Map();
 
 if (menuIcon && sideMenu && overlay) {
@@ -1025,8 +1029,10 @@ function setCardTypeUI(options = {}) {
 
     document.querySelectorAll(".checkout-card-type-option").forEach((option) => {
         const input = option.querySelector("input");
+        const isSupported = input?.dataset?.supported !== "false";
         option.classList.toggle("active", Boolean(input?.checked));
-        option.classList.toggle("disabled", Boolean(input?.disabled));
+        option.classList.toggle("disabled", !isSupported);
+        option.setAttribute("aria-disabled", isSupported ? "false" : "true");
     });
 
     if (shouldRefreshPaymentMethod && mercadoPagoCardBin.length >= MERCADO_PAGO_MIN_BIN_LENGTH) {
@@ -1606,6 +1612,19 @@ function bindCheckoutInteractions() {
         input.addEventListener("change", setCardTypeUI);
     });
 
+    document.querySelectorAll(".checkout-card-type-option").forEach((option) => {
+        option.addEventListener("click", () => {
+            const input = option.querySelector('input[name="checkoutCardType"]');
+
+            if (!(input instanceof HTMLInputElement) || input.checked) {
+                return;
+            }
+
+            input.checked = true;
+            input.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+    });
+
     checkoutForm.addEventListener("submit", handleCheckoutSubmitReal);
 
     document.getElementById("checkoutZipCode").addEventListener("input", (event) => {
@@ -1777,18 +1796,29 @@ function setSelectedCardType(cardType) {
 }
 
 function setCardTypeAvailability({ hasCredit = true, hasDebit = true } = {}) {
+    const normalizedAvailability = {
+        hasCredit: Boolean(hasCredit),
+        hasDebit: Boolean(hasDebit)
+    };
+    const shouldKeepBothEnabled = !normalizedAvailability.hasCredit && !normalizedAvailability.hasDebit;
+    mercadoPagoCardTypeAvailability = shouldKeepBothEnabled
+        ? { hasCredit: true, hasDebit: true }
+        : normalizedAvailability;
+
     document.querySelectorAll('input[name="checkoutCardType"]').forEach((input) => {
         if (!(input instanceof HTMLInputElement)) {
             return;
         }
 
         if (input.value === "credit") {
-            input.disabled = !hasCredit;
+            input.dataset.supported = mercadoPagoCardTypeAvailability.hasCredit ? "true" : "false";
+            input.setAttribute("aria-disabled", mercadoPagoCardTypeAvailability.hasCredit ? "false" : "true");
             return;
         }
 
         if (input.value === "debit") {
-            input.disabled = !hasDebit;
+            input.dataset.supported = mercadoPagoCardTypeAvailability.hasDebit ? "true" : "false";
+            input.setAttribute("aria-disabled", mercadoPagoCardTypeAvailability.hasDebit ? "false" : "true");
         }
     });
 }
