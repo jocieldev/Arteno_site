@@ -413,6 +413,15 @@ function getSelectedPersonalizationName() {
     return String(input?.value || "").trim();
 }
 
+function productSupportsPersonalizationName(product = currentProduct) {
+    const personalization = product?.personalization || {};
+    return Boolean(
+        personalization.requireName
+        || personalization.enabled
+        || getPersonalizationPreviewConfigs(product).length
+    );
+}
+
 function getPersonalizationPreviewElements() {
     return {
         wrap: document.getElementById("productPersonalizationPreview"),
@@ -432,7 +441,7 @@ function productHasPersonalizationContent(product = currentProduct) {
     const previewConfigs = getPersonalizationPreviewConfigs(product);
 
     return Boolean(
-        productRequiresPersonalizationName(product) ||
+        productSupportsPersonalizationName(product) ||
         previewConfigs.length ||
         personalization.preview?.enabled ||
         personalization.imageOverlay?.enabled
@@ -739,7 +748,7 @@ function updatePersonalizationControlVisibility(product = currentProduct) {
     const previewConfig = getPersonalizationPreviewConfig(product);
     const overlayConfig = getPersonalizationImageOverlayConfig(product);
     const hasPreviewImage = Boolean(previewConfig.enabled && previewConfig.imageUrl);
-    const showTextControls = Boolean(hasPreviewImage && previewConfig.allowCustomerAdjust && productRequiresPersonalizationName(product));
+    const showTextControls = Boolean(hasPreviewImage && previewConfig.allowCustomerAdjust && productSupportsPersonalizationName(product));
     const showImageControls = Boolean(hasPreviewImage && overlayConfig.enabled && overlayConfig.allowCustomerAdjust && getSelectedPersonalizationOverlayImage()?.imageUrl);
     const availablePanels = [];
 
@@ -1409,7 +1418,7 @@ function validatePersonalizationName() {
     const personalizationName = getSelectedPersonalizationName();
 
     if (!productRequiresPersonalizationName()) {
-        return "";
+        return personalizationName;
     }
 
     if (!personalizationName) {
@@ -1689,6 +1698,7 @@ function renderProduct(product) {
     const personalizationNameField = document.getElementById("productPersonalizationNameField");
     const personalizationInput = getPersonalizationInput();
     const personalizationLabel = document.getElementById("productPersonalizationLabel");
+    const personalizationNote = personalizationLabel?.querySelector(".product-page-personalization-note");
     const { uploadInput: overlayUploadInput } = getPersonalizationImageOverlayElements();
 
     if (personalizationWrap) {
@@ -1700,15 +1710,25 @@ function renderProduct(product) {
     }
 
     if (personalizationNameField) {
-        personalizationNameField.hidden = !productRequiresPersonalizationName(product);
+        personalizationNameField.hidden = !productSupportsPersonalizationName(product);
     } else {
         if (personalizationInput) {
-            personalizationInput.hidden = !productRequiresPersonalizationName(product);
+            personalizationInput.hidden = !productSupportsPersonalizationName(product);
         }
 
         if (personalizationLabel) {
-            personalizationLabel.hidden = !productRequiresPersonalizationName(product);
+            personalizationLabel.hidden = !productSupportsPersonalizationName(product);
         }
+    }
+
+    if (personalizationInput) {
+        personalizationInput.required = productRequiresPersonalizationName(product);
+    }
+
+    if (personalizationNote) {
+        personalizationNote.textContent = productRequiresPersonalizationName(product)
+            ? "Informe o nome que será gravado antes de continuar"
+            : "Preencha se quiser personalizar. Se ficar vazio, a compra continua normalmente.";
     }
 
     if (overlayUploadInput) {
@@ -1773,7 +1793,7 @@ function addCurrentProductToCart({ redirectToCheckout = false } = {}) {
         return {
             name: preview.name,
             imageUrl: preview.imageUrl || "",
-            textValue: personalizationName || (preview.showSampleTextInPreview !== false ? (preview.sampleText || "") : ""),
+            textValue: personalizationName,
             textBaseXPercent: preview.positionXPercent,
             textBaseYPercent: preview.positionYPercent,
             textWidthPercent: preview.widthPercent,
