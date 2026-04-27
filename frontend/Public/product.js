@@ -415,6 +415,11 @@ function getSelectedPersonalizationName() {
 
 function productSupportsPersonalizationName(product = currentProduct) {
     const personalization = product?.personalization || {};
+
+    if (personalization.showNameInput !== undefined) {
+        return Boolean(personalization.showNameInput || personalization.requireName);
+    }
+
     return Boolean(
         personalization.requireName
         || personalization.enabled
@@ -433,7 +438,13 @@ function getPersonalizationPreviewElements() {
 }
 
 function productRequiresPersonalizationName(product = currentProduct) {
-    return Boolean(product?.personalization?.requireName ?? product?.personalization?.enabled);
+    const personalization = product?.personalization || {};
+
+    if (personalization.requireName !== undefined) {
+        return Boolean(personalization.requireName);
+    }
+
+    return Boolean(personalization.enabled);
 }
 
 function productHasPersonalizationContent(product = currentProduct) {

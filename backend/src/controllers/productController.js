@@ -168,7 +168,8 @@ function normalizePersonalizationPreviewEntry(data = {}) {
         letterSpacingEm: normalizeClampedNumber(data.letterSpacingEm ?? data.personalizationPreviewLetterSpacingEm, { fallback: 0.04, min: -0.2, max: 1 }),
         rotationDeg: normalizeClampedNumber(data.rotationDeg ?? data.personalizationPreviewRotationDeg, { fallback: 0, min: -180, max: 180 }),
         textTransform: (data.textTransform ?? data.personalizationPreviewTextTransform) === "none" ? "none" : "uppercase",
-        textShadow: String((data.textShadow ?? data.personalizationPreviewTextShadow) || "0 2px 10px rgba(0, 0, 0, 0.35)").trim() || "0 2px 10px rgba(0, 0, 0, 0.35)"
+        textShadow: String((data.textShadow ?? data.personalizationPreviewTextShadow) || "0 2px 10px rgba(0, 0, 0, 0.35)").trim() || "0 2px 10px rgba(0, 0, 0, 0.35)",
+        showSampleTextInPreview: normalizeBoolean(data.showSampleTextInPreview ?? data.personalizationPreviewShowSampleText)
     };
 }
 
@@ -222,8 +223,20 @@ function normalizePersonalizationImageOverlay(data) {
     };
 }
 
+function normalizePersonalizationShowNameInput(data = {}) {
+    if (data.personalizationShowNameInput !== undefined) {
+        return normalizeBoolean(data.personalizationShowNameInput);
+    }
+
+    if (data.personalizationRequireName !== undefined) {
+        return normalizeBoolean(data.personalizationRequireName);
+    }
+
+    return normalizeBoolean(data.personalizationEnabled);
+}
+
 function normalizePersonalizationRequireName(data = {}) {
-    return normalizeBoolean(data.personalizationRequireName ?? data.personalizationEnabled);
+    return normalizeBoolean(data.personalizationRequireName);
 }
 
 function getProductStatus(product = {}) {
@@ -308,6 +321,7 @@ async function buildProductPayload(data) {
         },
         personalization: {
             enabled: false,
+            showNameInput: normalizePersonalizationShowNameInput(data),
             requireName: normalizePersonalizationRequireName(data),
             imageOverlay: normalizePersonalizationImageOverlay(data),
             preview: normalizePersonalizationPreview(data),
@@ -337,7 +351,12 @@ async function buildProductPayload(data) {
         payload.personalization.preview = payload.personalization.previews[0];
     }
 
+    if (payload.personalization.requireName) {
+        payload.personalization.showNameInput = true;
+    }
+
     payload.personalization.enabled = Boolean(
+        payload.personalization.showNameInput ||
         payload.personalization.requireName ||
         payload.personalization.previews.some((preview) => preview.enabled) ||
         payload.personalization.preview.enabled ||
@@ -737,6 +756,7 @@ function buildProductListingQueryOptions(query = {}, { categorySlug = "" } = {})
         andFilters.push({
             $or: [
                 { "personalization.enabled": true },
+                { "personalization.showNameInput": true },
                 { "personalization.requireName": true },
                 { "personalization.preview.enabled": true },
                 { "personalization.imageOverlay.enabled": true }

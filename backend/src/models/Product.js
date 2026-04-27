@@ -136,6 +136,10 @@ const productSchema = new mongoose.Schema(
                 type: Boolean,
                 default: false
             },
+            showNameInput: {
+                type: Boolean,
+                default: false
+            },
             requireName: {
                 type: Boolean,
                 default: false

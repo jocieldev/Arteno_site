@@ -1063,6 +1063,7 @@ function serializeProductFormState() {
         description: descriptionInput?.value || "",
         isFeatured: Boolean(productForm.elements.isFeatured.checked),
         showInMoreOptions: Boolean(productForm.elements.showInMoreOptions.checked),
+        personalizationShowNameInput: Boolean(productForm.elements.personalizationShowNameInput?.checked),
         personalizationRequireName: Boolean(productForm.elements.personalizationRequireName?.checked),
         personalizationPreviewEnabled: Boolean(productForm.elements.personalizationPreviewEnabled?.checked),
         personalizationPreviews: personalizationPreviewItemsState.map((item) => ({
@@ -1316,6 +1317,10 @@ function updatePersonalizationPreviewVisibility() {
         return;
     }
 
+    if (productForm.elements.personalizationRequireName?.checked && productForm.elements.personalizationShowNameInput) {
+        productForm.elements.personalizationShowNameInput.checked = true;
+    }
+
     const previewEnabled = Boolean(productForm.elements.personalizationPreviewEnabled?.checked);
     const overlayEnabled = Boolean(
         productForm.elements.personalizationImageOverlayAllowOptionImages?.checked ||
@@ -1425,6 +1430,7 @@ function resetProductForm() {
     productForm.elements.status.value = "active";
     productForm.elements.isFeatured.checked = false;
     productForm.elements.showInMoreOptions.checked = false;
+    productForm.elements.personalizationShowNameInput.checked = false;
     productForm.elements.personalizationRequireName.checked = false;
     productForm.elements.personalizationPreviewEnabled.checked = false;
     productForm.elements.personalizationPreviewAllowCustomerAdjust.checked = false;
@@ -1541,7 +1547,12 @@ function populateProductForm(product) {
     setDescriptionContent(product.description || "");
     productForm.elements.isFeatured.checked = Boolean(product.isFeatured);
     productForm.elements.showInMoreOptions.checked = Boolean(product.showInMoreOptions);
-    productForm.elements.personalizationRequireName.checked = Boolean(product.personalization?.requireName ?? product.personalization?.enabled);
+    productForm.elements.personalizationShowNameInput.checked = Boolean(
+        product.personalization?.showNameInput
+        ?? product.personalization?.requireName
+        ?? product.personalization?.enabled
+    );
+    productForm.elements.personalizationRequireName.checked = Boolean(product.personalization?.requireName);
     productForm.elements.personalizationPreviewEnabled.checked = previewConfig.enabled;
     productForm.elements.personalizationImageOverlayAllowOptionImages.checked = overlayConfig.allowOptionImages;
     productForm.elements.personalizationImageOverlayRequireSelection.checked = overlayConfig.requireSelection;
@@ -1744,6 +1755,7 @@ function getFormPayload(form) {
     formData.append("description", descriptionInput?.value || "");
     formData.append("isFeatured", String(form.elements.isFeatured.checked));
     formData.append("showInMoreOptions", String(form.elements.showInMoreOptions.checked));
+    formData.append("personalizationShowNameInput", String(form.elements.personalizationShowNameInput.checked));
     formData.append("personalizationRequireName", String(form.elements.personalizationRequireName.checked));
     formData.append("personalizationPreviewEnabled", String(form.elements.personalizationPreviewEnabled.checked));
     formData.append("personalizationImageOverlayAllowOptionImages", String(form.elements.personalizationImageOverlayAllowOptionImages.checked));
@@ -2356,7 +2368,11 @@ if (productForm) {
     }
 
     productForm.addEventListener("input", (event) => {
-        if (event.target.closest("#personalizationPreviewCard") || event.target.name === "personalizationRequireName") {
+        if (
+            event.target.closest("#personalizationPreviewCard")
+            || event.target.name === "personalizationRequireName"
+            || event.target.name === "personalizationShowNameInput"
+        ) {
             syncActivePreviewItemFromForm();
             updatePersonalizationPreviewVisibility();
             updateAdminPersonalizationPreview();
@@ -2364,7 +2380,11 @@ if (productForm) {
     });
 
     productForm.addEventListener("change", (event) => {
-        if (event.target.closest("#personalizationPreviewCard") || event.target.name === "personalizationRequireName") {
+        if (
+            event.target.closest("#personalizationPreviewCard")
+            || event.target.name === "personalizationRequireName"
+            || event.target.name === "personalizationShowNameInput"
+        ) {
             syncActivePreviewItemFromForm();
             updatePersonalizationPreviewVisibility();
             updateAdminPersonalizationPreview();
