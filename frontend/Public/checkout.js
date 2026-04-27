@@ -81,6 +81,9 @@ let mercadoPagoCardTypeAvailability = {
     hasCredit: true,
     hasDebit: true
 };
+let pixPaymentStatusPollIntervalId = null;
+let pixPaymentStatusPollInFlight = false;
+let pixPaymentConfirmedModalShown = false;
 const checkoutPersonalizationPreviewObjectUrls = new Map();
 
 if (menuIcon && sideMenu && overlay) {
@@ -106,6 +109,10 @@ if (closeMenu) {
 if (overlay) {
     overlay.addEventListener("click", closeSideMenu);
 }
+
+window.addEventListener("beforeunload", () => {
+    stopPixPaymentStatusPolling();
+});
 
 if (produtos) {
     produtos.addEventListener("click", () => {
@@ -1271,6 +1278,10 @@ function renderCardResult(result) {
 function renderCheckoutResult(result) {
     checkoutResult.hidden = false;
 
+    if (result.payment?.method !== "pix") {
+        stopPixPaymentStatusPolling();
+    }
+
     if (result.payment?.status === "approved") {
         renderApprovedResult(result);
     } else if (result.payment?.method === "pix") {
@@ -2205,6 +2216,149 @@ function renderPixResult(result) {
             ${buildResultActions()}
         </article>
     `;
+
+    startPixPaymentStatusPolling(result);
+}
+
+function stopPixPaymentStatusPolling() {
+    if (pixPaymentStatusPollIntervalId) {
+        window.clearInterval(pixPaymentStatusPollIntervalId);
+        pixPaymentStatusPollIntervalId = null;
+    }
+
+    pixPaymentStatusPollInFlight = false;
+}
+
+function closePixPaymentConfirmedModal() {
+    const modal = document.getElementById("checkoutPixConfirmedModal");
+
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function showPixPaymentConfirmedModal(result = {}) {
+    if (pixPaymentConfirmedModalShown) {
+        return;
+    }
+
+    pixPaymentConfirmedModalShown = true;
+    closePixPaymentConfirmedModal();
+
+    const orderNumber = escapeHtml(result.order?.orderNumber || "-");
+    const total = formatCurrency(result.order?.totals?.total || 0);
+    const modal = document.createElement("div");
+    modal.id = "checkoutPixConfirmedModal";
+    modal.className = "checkout-payment-modal";
+    modal.innerHTML = `
+        <div class="checkout-payment-modal-backdrop" data-modal-close="true"></div>
+        <div class="checkout-payment-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="checkoutPixConfirmedModalTitle">
+            <h3 id="checkoutPixConfirmedModalTitle">Pagamento confirmado</h3>
+            <p>Recebemos seu Pix e o pedido foi confirmado com sucesso.</p>
+            <div class="checkout-payment-modal-meta">
+                <div><span>Pedido</span><strong>${orderNumber}</strong></div>
+                <div><span>Total</span><strong>${escapeHtml(total)}</strong></div>
+            </div>
+            <div class="checkout-payment-modal-actions">
+                <button type="button" class="checkout-copy-button" id="checkoutPixConfirmedModalClose">Fechar</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const closeButton = document.getElementById("checkoutPixConfirmedModalClose");
+    if (closeButton) {
+        closeButton.addEventListener("click", closePixPaymentConfirmedModal);
+    }
+
+    modal.addEventListener("click", (event) => {
+        if (event.target instanceof HTMLElement && event.target.dataset.modalClose === "true") {
+            closePixPaymentConfirmedModal();
+        }
+    });
+}
+
+async function pollPixPaymentStatus({ orderNumber = "", email = "", result = null } = {}) {
+    if (pixPaymentStatusPollInFlight || !orderNumber || !email) {
+        return;
+    }
+
+    pixPaymentStatusPollInFlight = true;
+
+    try {
+        const query = new URLSearchParams({
+            orderNumber: String(orderNumber || "").trim(),
+            email: String(email || "").trim()
+        });
+        const response = await fetch(`/api/checkout/orders/status?${query.toString()}`, {
+            credentials: "same-origin"
+        });
+
+        if (!response.ok) {
+            return;
+        }
+
+        const statusResult = await response.json();
+        const paymentStatus = String(statusResult.order?.payment?.status || "").trim().toLowerCase();
+        const orderStatus = String(statusResult.order?.orderStatus || "").trim().toLowerCase();
+
+        if (paymentStatus === "approved" || orderStatus === "payment_confirmed") {
+            stopPixPaymentStatusPolling();
+
+            const approvedResult = {
+                ...(result || {}),
+                payment: {
+                    ...(result?.payment || {}),
+                    ...(statusResult.order?.payment || {}),
+                    status: "approved",
+                    details: {
+                        ...(result?.payment?.details || {}),
+                        ...(statusResult.order?.payment?.details || {})
+                    }
+                },
+                order: {
+                    ...(result?.order || {}),
+                    ...(statusResult.order || {}),
+                    status: "payment_confirmed"
+                }
+            };
+
+            renderApprovedResult(approvedResult);
+            showPixPaymentConfirmedModal(approvedResult);
+            checkoutResult.scrollIntoView({ behavior: "smooth", block: "start" });
+            return;
+        }
+
+        if (["cancelled", "rejected", "refunded", "charged_back", "expired"].includes(paymentStatus)) {
+            stopPixPaymentStatusPolling();
+        }
+    } catch (_error) {
+        // Mantem o polling ativo para tentar novamente.
+    } finally {
+        pixPaymentStatusPollInFlight = false;
+    }
+}
+
+function startPixPaymentStatusPolling(result = {}) {
+    stopPixPaymentStatusPolling();
+    pixPaymentConfirmedModalShown = false;
+
+    const orderNumber = String(result.order?.orderNumber || "").trim();
+    const email = String(
+        result.order?.customer?.email
+        || document.getElementById("checkoutCustomerEmail")?.value
+        || ""
+    ).trim();
+
+    if (!orderNumber || !email) {
+        return;
+    }
+
+    void pollPixPaymentStatus({ orderNumber, email, result });
+    pixPaymentStatusPollIntervalId = window.setInterval(() => {
+        void pollPixPaymentStatus({ orderNumber, email, result });
+    }, 5000);
 }
 
 async function buildCheckoutPayload() {

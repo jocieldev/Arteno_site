@@ -74,6 +74,22 @@ function normalizeZipCode(value = "") {
     return String(value || "").replace(/\D/g, "").slice(0, 8);
 }
 
+function serializePublicCheckoutOrderStatus(order) {
+    return {
+        orderNumber: normalizeText(order?.orderNumber),
+        orderStatus: normalizeText(order?.orderStatus) || "payment_pending",
+        payment: {
+            method: normalizeText(order?.payment?.method),
+            status: normalizeText(order?.payment?.status) || "pending",
+            details: {
+                paidAt: normalizeText(order?.payment?.details?.paidAt),
+                expiresAt: normalizeText(order?.payment?.details?.expiresAt),
+                message: normalizeText(order?.payment?.details?.message || order?.payment?.details?.statusDetail)
+            }
+        }
+    };
+}
+
 function buildDirectMercadoPagoFormData(paymentMethod, customer = {}) {
     if (paymentMethod === "pix") {
         return {
@@ -628,6 +644,39 @@ function getSupportedPaymentMethods({ hasMercadoPagoIntegration = false, isDevel
     return [];
 }
 
+async function getCheckoutOrderStatus(req, res) {
+    try {
+        const orderNumber = normalizeText(req.query.orderNumber);
+        const customerEmail = normalizeEmail(req.query.email);
+
+        if (!orderNumber || !customerEmail) {
+            return res.status(400).json({
+                message: "Informe o numero do pedido e o email usado na compra."
+            });
+        }
+
+        const order = await Order.findOne({
+            orderNumber,
+            "customer.email": customerEmail
+        });
+
+        if (!order) {
+            return res.status(404).json({
+                message: "Pedido nao encontrado."
+            });
+        }
+
+        return res.json({
+            ok: true,
+            order: serializePublicCheckoutOrderStatus(order)
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message || "Nao foi possivel consultar o status do pedido."
+        });
+    }
+}
+
 async function createCheckoutOrder(req, res) {
     try {
         const items = Array.isArray(req.body.items) ? req.body.items : [];
@@ -1034,6 +1083,7 @@ async function getCheckoutCardInstallments(req, res) {
 
 module.exports = {
     createCheckoutOrder,
+    getCheckoutOrderStatus,
     getCheckoutPublicConfig,
     getCheckoutCardInstallments,
     previewCheckoutCoupon,

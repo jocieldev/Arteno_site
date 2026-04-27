@@ -1,6 +1,7 @@
 const express = require("express");
 const {
     createCheckoutOrder,
+    getCheckoutOrderStatus,
     getCheckoutPublicConfig,
     getCheckoutCardInstallments,
     previewCheckoutCoupon,
@@ -13,6 +14,7 @@ const router = express.Router();
 
 router.get("/config", getCheckoutPublicConfig);
 router.get("/card-installments", getCheckoutCardInstallments);
+router.get("/orders/status", getCheckoutOrderStatus);
 router.post("/coupon-preview", attachCurrentUser, previewCheckoutCoupon);
 router.post("/personalization-image", attachCurrentUser, uploadPersonalizationImage, uploadCheckoutPersonalizationImage);
 router.post("/orders", attachCurrentUser, createCheckoutOrder);
