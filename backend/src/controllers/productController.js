@@ -896,19 +896,18 @@ async function updateProduct(req, res) {
         const retainedImages = parseRetainedImages(req.body.retainedImages);
         const retainedOverlayOptionImages = parseRetainedImages(req.body.retainedOverlayOptionImages);
 
-        if (!uploadedFiles.length) {
-            const nextImages = retainedImages ?? existingImages;
-            const removedPublicIds = existingImages
-                .filter((image) => !nextImages.some((nextImage) => nextImage.imagePublicId === image.imagePublicId))
-                .map((image) => image.imagePublicId);
+        const baseImages = retainedImages ?? existingImages;
+        const removedPublicIds = existingImages
+            .filter((image) => !baseImages.some((nextImage) => nextImage.imagePublicId === image.imagePublicId))
+            .map((image) => image.imagePublicId);
 
-            await destroyCloudinaryImages(removedPublicIds);
-            applyProductImages(payload, nextImages);
+        await destroyCloudinaryImages(removedPublicIds);
+
+        if (!uploadedFiles.length) {
+            applyProductImages(payload, baseImages);
         } else {
             const uploadedImages = await uploadImagesToCloudinary(uploadedFiles);
-
-            await destroyCloudinaryImages(existingImages.map((image) => image.imagePublicId));
-            applyProductImages(payload, uploadedImages);
+            applyProductImages(payload, [...baseImages, ...uploadedImages]);
         }
 
         const existingPersonalizationPreviews = getExistingPersonalizationPreviews(existingProduct);

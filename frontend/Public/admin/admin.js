@@ -1182,11 +1182,18 @@ function renderProductMediaPreview() {
         return;
     }
 
-    const previewImages = selectedProductImageFiles.length
-        ? selectedProductImageFiles.map((file) => ({
-            imageUrl: URL.createObjectURL(file)
+    const previewImages = [
+        ...existingProductImages.map((image, index) => ({
+            imageUrl: image.imageUrl,
+            source: "existing",
+            index
+        })),
+        ...selectedProductImageFiles.map((file, index) => ({
+            imageUrl: URL.createObjectURL(file),
+            source: "selected",
+            index
         }))
-        : existingProductImages;
+    ];
 
     if (!previewImages.length) {
         productMediaPreview.innerHTML = "";
@@ -1201,7 +1208,8 @@ function renderProductMediaPreview() {
             <button
                 type="button"
                 class="admin-media-remove"
-                data-image-index="${index}"
+                data-image-index="${image.index}"
+                data-image-source="${image.source}"
                 aria-label="Remover imagem ${index + 1}"
             >
                 x
@@ -1214,6 +1222,23 @@ function renderProductMediaPreview() {
     renderPreviewImageUploadState();
     renderOverlayOptionImages();
     updateAdminPersonalizationPreview();
+}
+
+function mergeSelectedProductImageFiles(nextFiles = []) {
+    const existingFileKeys = new Set(
+        selectedProductImageFiles.map((file) => `${file.name}|${file.size}|${file.lastModified}`)
+    );
+
+    nextFiles.forEach((file) => {
+        const fileKey = `${file.name}|${file.size}|${file.lastModified}`;
+
+        if (existingFileKeys.has(fileKey)) {
+            return;
+        }
+
+        existingFileKeys.add(fileKey);
+        selectedProductImageFiles.push(file);
+    });
 }
 
 function renderPreviewImageUploadState() {
@@ -1579,7 +1604,7 @@ function populateProductForm(product) {
 
     if (productImageHelp) {
         productImageHelp.textContent = existingProductImages.length
-            ? "As imagens atuais estao sendo exibidas. Se selecionar novas imagens, elas substituem a galeria atual."
+            ? "As imagens atuais estao sendo exibidas. Novas imagens serao adicionadas a galeria atual."
             : "Este produto ainda não tem imagens. Adicione uma ou mais imagens para criar a galeria.";
     }
     if (productPreviewImageHelp) {
@@ -2215,8 +2240,10 @@ if (productForm) {
 
     if (productImageInput) {
         productImageInput.addEventListener("change", () => {
-            selectedProductImageFiles = Array.from(productImageInput.files || []);
+            mergeSelectedProductImageFiles(Array.from(productImageInput.files || []));
+            productImageInput.value = "";
             renderProductMediaPreview();
+            updateSubmitButtonState();
         });
     }
 
@@ -2326,14 +2353,15 @@ if (productForm) {
             }
 
             const imageIndex = Number(removeButton.dataset.imageIndex);
+            const imageSource = removeButton.dataset.imageSource;
 
             if (Number.isNaN(imageIndex)) {
                 return;
             }
 
-            if (selectedProductImageFiles.length) {
+            if (imageSource === "selected") {
                 selectedProductImageFiles = selectedProductImageFiles.filter((_, index) => index !== imageIndex);
-            } else {
+            } else if (imageSource === "existing") {
                 existingProductImages = existingProductImages.filter((_, index) => index !== imageIndex);
             }
 
