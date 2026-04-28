@@ -247,6 +247,72 @@ function getProductStatus(product = {}) {
     return product.isActive ? "active" : "draft";
 }
 
+function parseCategoryIdsInput(data = {}) {
+    const parsedIds = [];
+    const rawCategoryIds = data.categoryIds;
+
+    if (Array.isArray(rawCategoryIds)) {
+        parsedIds.push(...rawCategoryIds);
+    } else if (typeof rawCategoryIds === "string" && rawCategoryIds.trim()) {
+        try {
+            const parsedValue = JSON.parse(rawCategoryIds);
+
+            if (Array.isArray(parsedValue)) {
+                parsedIds.push(...parsedValue);
+            }
+        } catch (_error) {
+            parsedIds.push(rawCategoryIds);
+        }
+    }
+
+    const rawCategoryId = String(data.categoryId || "").trim();
+    if (rawCategoryId) {
+        parsedIds.unshift(rawCategoryId);
+    }
+
+    return [...new Set(parsedIds.map((value) => String(value || "").trim()).filter(Boolean))];
+}
+
+async function resolveProductCategories(data) {
+    const requestedCategoryIds = parseCategoryIdsInput(data);
+    const rawCategory = String(data.category || "").trim();
+    let categories = [];
+
+    if (requestedCategoryIds.length) {
+        categories = await Category.find({
+            _id: { $in: requestedCategoryIds }
+        });
+
+        if (categories.length !== requestedCategoryIds.length) {
+            throw new Error("Uma ou mais categorias selecionadas nao foram encontradas.");
+        }
+
+        const categoriesById = new Map(categories.map((category) => [String(category._id), category]));
+        categories = requestedCategoryIds.map((categoryId) => categoriesById.get(categoryId)).filter(Boolean);
+    } else if (rawCategory) {
+        const normalizedSlug = slugify(rawCategory);
+        const category = await Category.findOne({
+            $or: [
+                { slug: normalizedSlug },
+                { name: rawCategory }
+            ]
+        });
+
+        if (category) {
+            categories = [category];
+        }
+    }
+
+    if (!categories.length) {
+        throw new Error("Selecione pelo menos uma categoria disponivel.");
+    }
+
+    return {
+        primaryCategory: categories[0],
+        categories
+    };
+}
+
 async function resolveProductCategory(data) {
     const rawCategoryId = String(data.categoryId || "").trim();
     const rawCategory = String(data.category || "").trim();
@@ -287,7 +353,7 @@ async function resolveProductCategory(data) {
 }
 
 async function buildProductPayload(data) {
-    const resolvedCategory = await resolveProductCategory(data);
+    const resolvedCategories = await resolveProductCategories(data);
     const name = String(data.name || "").trim();
     const generatedSlug = slugify(data.slug || name);
     const installmentQuantity = normalizeCurrencyNumber(data.installmentQuantity, 1);
@@ -306,9 +372,12 @@ async function buildProductPayload(data) {
         name,
         slug: generatedSlug,
         description: String(data.description || "").trim(),
-        category: resolvedCategory.category,
-        categorySlug: resolvedCategory.categorySlug,
-        categoryId: resolvedCategory.categoryId,
+        category: resolvedCategories.primaryCategory.name,
+        categorySlug: resolvedCategories.primaryCategory.slug,
+        categoryId: resolvedCategories.primaryCategory._id,
+        categories: resolvedCategories.categories.map((category) => category.name),
+        categorySlugs: resolvedCategories.categories.map((category) => category.slug),
+        categoryIds: resolvedCategories.categories.map((category) => category._id),
         imageUrl: String(data.imageUrl || "").trim(),
         imagePublicId: String(data.imagePublicId || "").trim(),
         images: [],
@@ -367,10 +436,16 @@ async function buildProductPayload(data) {
 }
 
 async function syncProductCategoryAssignment(productId, categoryId) {
+    const normalizedCategoryIds = [...new Set(
+        (Array.isArray(categoryId) ? categoryId : [categoryId])
+            .map((value) => String(value || "").trim())
+            .filter(Boolean)
+    )];
+
     await Category.updateMany(
         {
             products: productId,
-            ...(categoryId ? { _id: { $ne: categoryId } } : {})
+            ...(normalizedCategoryIds.length ? { _id: { $nin: normalizedCategoryIds } } : {})
         },
         {
             $pull: {
@@ -379,12 +454,17 @@ async function syncProductCategoryAssignment(productId, categoryId) {
         }
     );
 
-    if (categoryId) {
-        await Category.findByIdAndUpdate(categoryId, {
-            $addToSet: {
-                products: productId
+    if (normalizedCategoryIds.length) {
+        await Category.updateMany(
+            {
+                _id: { $in: normalizedCategoryIds }
+            },
+            {
+                $addToSet: {
+                    products: productId
+                }
             }
-        });
+        );
     }
 }
 
@@ -654,6 +734,15 @@ function serializeProduct(product) {
         ...plainProduct,
         status: getProductStatus(plainProduct),
         isActive: getProductStatus(plainProduct) === "active",
+        categories: Array.isArray(plainProduct.categories) && plainProduct.categories.length
+            ? plainProduct.categories
+            : (plainProduct.category ? [plainProduct.category] : []),
+        categorySlugs: Array.isArray(plainProduct.categorySlugs) && plainProduct.categorySlugs.length
+            ? plainProduct.categorySlugs
+            : (plainProduct.categorySlug ? [plainProduct.categorySlug] : []),
+        categoryIds: Array.isArray(plainProduct.categoryIds) && plainProduct.categoryIds.length
+            ? plainProduct.categoryIds
+            : (plainProduct.categoryId ? [plainProduct.categoryId] : []),
         images,
         imageUrl: images[0]?.imageUrl || plainProduct.imageUrl || "",
         imagePublicId: images[0]?.imagePublicId || plainProduct.imagePublicId || ""
@@ -724,7 +813,9 @@ function buildProductListingQueryOptions(query = {}, { categorySlug = "" } = {})
         andFilters.push({
             $or: [
                 { categorySlug: selectedCategory },
-                { category: new RegExp(`^${escapeRegex(selectedCategory)}$`, "i") }
+                { categorySlugs: selectedCategory },
+                { category: new RegExp(`^${escapeRegex(selectedCategory)}$`, "i") },
+                { categories: new RegExp(`^${escapeRegex(selectedCategory)}$`, "i") }
             ]
         });
     }
@@ -865,7 +956,7 @@ async function createProduct(req, res) {
         payload.variations = await applyVariationItemPreviewUploads(payload.variations, variationItemPreviewFiles, variationItemPreviewUploadMap);
 
         const product = await Product.create(payload);
-        await syncProductCategoryAssignment(product._id, product.categoryId);
+        await syncProductCategoryAssignment(product._id, product.categoryIds);
 
         res.status(201).json(serializeProduct(product));
     } catch (error) {
@@ -964,7 +1055,7 @@ async function updateProduct(req, res) {
             returnDocument: "after",
             runValidators: true
         });
-        await syncProductCategoryAssignment(product._id, product.categoryId);
+        await syncProductCategoryAssignment(product._id, product.categoryIds);
 
         return res.json(serializeProduct(product));
     } catch (error) {

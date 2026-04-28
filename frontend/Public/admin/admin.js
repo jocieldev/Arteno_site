@@ -810,29 +810,58 @@ function getPublicProductUrl(product) {
     return `${window.location.origin}/produto/${encodeURIComponent(slug)}`;
 }
 
-function findMatchingCategoryId(product) {
-    if (!product) {
-        return "";
+function getSelectedCategoryIds() {
+    if (!productCategorySelect) {
+        return [];
     }
 
-    const directCategoryId = String(product.categoryId || "").trim();
-
-    if (directCategoryId && categoriesState.some((category) => String(category._id) === directCategoryId)) {
-        return directCategoryId;
-    }
-
-    const categorySlug = String(product.categorySlug || "").trim();
-    const categoryName = String(product.category || "").trim().toLowerCase();
-
-    const matchedCategory = categoriesState.find((category) => {
-        return String(category.slug || "").trim() === categorySlug
-            || String(category.name || "").trim().toLowerCase() === categoryName;
-    });
-
-    return matchedCategory ? String(matchedCategory._id) : "";
+    return Array.from(productCategorySelect.selectedOptions || [])
+        .map((option) => String(option.value || "").trim())
+        .filter(Boolean);
 }
 
-function renderCategoryOptions(selectedCategoryId = "") {
+function findMatchingCategoryIds(product) {
+    if (!product) {
+        return [];
+    }
+
+    const directCategoryIds = Array.isArray(product.categoryIds) && product.categoryIds.length
+        ? product.categoryIds.map((categoryId) => String(categoryId || "").trim()).filter(Boolean)
+        : [];
+
+    if (directCategoryIds.length) {
+        return directCategoryIds.filter((categoryId) => {
+            return categoriesState.some((category) => String(category._id) === categoryId);
+        });
+    }
+
+    const fallbackCategoryIds = [];
+    const legacyCategoryId = String(product.categoryId || "").trim();
+    const categorySlugs = Array.isArray(product.categorySlugs) && product.categorySlugs.length
+        ? product.categorySlugs.map((slug) => String(slug || "").trim()).filter(Boolean)
+        : [String(product.categorySlug || "").trim()].filter(Boolean);
+    const categoryNames = Array.isArray(product.categories) && product.categories.length
+        ? product.categories.map((name) => String(name || "").trim().toLowerCase()).filter(Boolean)
+        : [String(product.category || "").trim().toLowerCase()].filter(Boolean);
+
+    if (legacyCategoryId && categoriesState.some((category) => String(category._id) === legacyCategoryId)) {
+        fallbackCategoryIds.push(legacyCategoryId);
+    }
+
+    categoriesState.forEach((category) => {
+        const categoryId = String(category._id || "").trim();
+        const matchesSlug = categorySlugs.includes(String(category.slug || "").trim());
+        const matchesName = categoryNames.includes(String(category.name || "").trim().toLowerCase());
+
+        if ((matchesSlug || matchesName) && !fallbackCategoryIds.includes(categoryId)) {
+            fallbackCategoryIds.push(categoryId);
+        }
+    });
+
+    return fallbackCategoryIds;
+}
+
+function renderCategoryOptions(selectedCategoryIds = []) {
     if (!productCategorySelect) {
         return;
     }
@@ -846,16 +875,21 @@ function renderCategoryOptions(selectedCategoryId = "") {
     }
 
     productCategorySelect.disabled = false;
-    productCategorySelect.innerHTML = [
-        '<option value="">Selecione uma categoria</option>',
-        ...categoriesState.map((category) => `
+    productCategorySelect.innerHTML = categoriesState.map((category) => `
             <option value="${escapeHtml(String(category._id || ""))}">
                 ${escapeHtml(category.name || "")}
             </option>
-        `)
-    ].join("");
+        `).join("");
 
-    productCategorySelect.value = selectedCategoryId || "";
+    const normalizedSelectedIds = new Set(
+        (Array.isArray(selectedCategoryIds) ? selectedCategoryIds : [selectedCategoryIds])
+            .map((categoryId) => String(categoryId || "").trim())
+            .filter(Boolean)
+    );
+
+    Array.from(productCategorySelect.options).forEach((option) => {
+        option.selected = normalizedSelectedIds.has(String(option.value || "").trim());
+    });
 }
 
 function syncDescriptionInput() {
@@ -1045,7 +1079,7 @@ function serializeProductFormState() {
 
     return JSON.stringify({
         name: productForm.elements.name.value.trim(),
-        categoryId: productForm.elements.categoryId.value,
+        categoryIds: getSelectedCategoryIds(),
         price: productForm.elements.price.value,
         compareAtPrice: productForm.elements.compareAtPrice.value,
         installmentQuantity: productForm.elements.installmentQuantity.value,
@@ -1556,7 +1590,7 @@ function populateProductForm(product) {
         : [];
 
     productForm.elements.name.value = product.name || "";
-    renderCategoryOptions(findMatchingCategoryId(product));
+    renderCategoryOptions(findMatchingCategoryIds(product));
     productForm.elements.price.value = product.price ?? "";
     productForm.elements.compareAtPrice.value = product.compareAtPrice ?? "";
     productForm.elements.installmentQuantity.value = product.installments?.quantity ?? 1;
@@ -1652,7 +1686,11 @@ function renderProducts(products) {
     tableBody.innerHTML = filteredProducts.map((product) => {
         const imageUrl = escapeHtml(getProductImages(product)[0]?.imageUrl || "/img/tabua-produto01.webp");
         const name = escapeHtml(product.name || "");
-        const category = escapeHtml(product.category || "");
+        const category = escapeHtml(
+            (Array.isArray(product.categories) && product.categories.length
+                ? product.categories.join(", ")
+                : (product.category || ""))
+        );
         const stockInfo = getProductStockInfo(product);
         const variationCount = Array.isArray(product.variations) ? product.variations.length : 0;
         const stockText = variationCount
@@ -1735,11 +1773,11 @@ async function loadCategories() {
     const categories = await fetchAdminCategories();
     categoriesState = Array.isArray(categories) ? categories : [];
 
-    const selectedCategoryId = editingProductId
-        ? findMatchingCategoryId(productsState.find((product) => product._id === editingProductId))
-        : "";
+    const selectedCategoryIds = editingProductId
+        ? findMatchingCategoryIds(productsState.find((product) => product._id === editingProductId))
+        : [];
 
-    renderCategoryOptions(selectedCategoryId);
+    renderCategoryOptions(selectedCategoryIds);
 }
 
 async function loadProducts() {
@@ -1762,7 +1800,9 @@ function getFormPayload(form) {
     const variationItemPreviewUploadMap = [];
 
     formData.append("name", form.elements.name.value.trim());
-    formData.append("categoryId", form.elements.categoryId.value);
+    const selectedCategoryIds = getSelectedCategoryIds();
+    formData.append("categoryIds", JSON.stringify(selectedCategoryIds));
+    formData.append("categoryId", selectedCategoryIds[0] || "");
     formData.append("price", form.elements.price.value);
     formData.append("compareAtPrice", form.elements.compareAtPrice.value);
     formData.append("installmentQuantity", form.elements.installmentQuantity.value);
