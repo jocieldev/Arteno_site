@@ -173,7 +173,11 @@ function renderProductsPicker(selectedIds = []) {
             <img src="${escapeHtml(getProductImageUrl(product))}" alt="${escapeHtml(product.name || "Produto")}">
             <div>
                 <strong>${escapeHtml(product.name || "Produto sem nome")}</strong>
-                <span>${escapeHtml(product.category || "Sem categoria")}</span>
+                <span>${escapeHtml(
+                    (Array.isArray(product.categories) && product.categories.length
+                        ? product.categories.join(", ")
+                        : (product.category || "Sem categoria"))
+                )}</span>
             </div>
         </label>
     `).join("");

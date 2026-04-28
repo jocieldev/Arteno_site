@@ -60,37 +60,97 @@ function serializeCategory(category) {
     };
 }
 
-async function syncCategoryProducts({ categoryId, name, slug, productIds }) {
-    await Category.updateMany(
-        { _id: { $ne: categoryId } },
-        { $pull: { products: { $in: productIds } } }
-    );
+function getProductCategoryEntries(product = {}) {
+    const categoryIds = Array.isArray(product.categoryIds) && product.categoryIds.length
+        ? product.categoryIds.map((item) => String(item || "").trim())
+        : [];
+    const categoryNames = Array.isArray(product.categories) && product.categories.length
+        ? product.categories.map((item) => String(item || "").trim())
+        : [];
+    const categorySlugs = Array.isArray(product.categorySlugs) && product.categorySlugs.length
+        ? product.categorySlugs.map((item) => String(item || "").trim())
+        : [];
 
-    await Product.updateMany(
-        {
-            categoryId,
-            _id: { $nin: productIds }
-        },
-        {
-            $set: {
-                category: "",
-                categorySlug: "",
-                categoryId: null
-            }
+    const entries = categoryIds.map((categoryEntryId, index) => ({
+        id: categoryEntryId,
+        name: categoryNames[index] || "",
+        slug: categorySlugs[index] || ""
+    })).filter((entry) => entry.id);
+
+    if (!entries.length && product.categoryId) {
+        entries.push({
+            id: String(product.categoryId || "").trim(),
+            name: String(product.category || "").trim(),
+            slug: String(product.categorySlug || "").trim()
+        });
+    }
+
+    return entries.filter((entry, index, array) => {
+        return array.findIndex((candidate) => candidate.id === entry.id) === index;
+    });
+}
+
+async function persistProductCategoryEntries(product, entries = []) {
+    const normalizedEntries = entries.filter((entry) => entry?.id);
+    const primaryEntry = normalizedEntries[0] || null;
+
+    await Product.findByIdAndUpdate(product._id, {
+        $set: {
+            category: primaryEntry?.name || "",
+            categorySlug: primaryEntry?.slug || "",
+            categoryId: primaryEntry?.id || null,
+            categories: normalizedEntries.map((entry) => entry.name || ""),
+            categorySlugs: normalizedEntries.map((entry) => entry.slug || ""),
+            categoryIds: normalizedEntries.map((entry) => entry.id)
         }
-    );
+    });
+}
 
-    if (productIds.length) {
-        await Product.updateMany(
-            { _id: { $in: productIds } },
-            {
-                $set: {
-                    category: name,
-                    categorySlug: slug,
-                    categoryId
+async function syncCategoryProducts({ categoryId, name, slug, productIds }) {
+    const normalizedCategoryId = String(categoryId || "").trim();
+    const selectedProductIds = new Set(productIds.map((productId) => String(productId || "").trim()));
+    const relatedProducts = await Product.find({
+        $or: [
+            { categoryIds: normalizedCategoryId },
+            { categoryId: normalizedCategoryId },
+            { _id: { $in: [...selectedProductIds] } }
+        ]
+    }).select({
+        category: 1,
+        categorySlug: 1,
+        categoryId: 1,
+        categories: 1,
+        categorySlugs: 1,
+        categoryIds: 1
+    });
+
+    for (const product of relatedProducts) {
+        const productId = String(product._id || "").trim();
+        const currentEntries = getProductCategoryEntries(product);
+        const shouldIncludeCategory = selectedProductIds.has(productId);
+        const nextEntries = currentEntries
+            .filter((entry) => shouldIncludeCategory || entry.id !== normalizedCategoryId)
+            .map((entry) => {
+                if (entry.id !== normalizedCategoryId) {
+                    return entry;
                 }
-            }
-        );
+
+                return {
+                    id: normalizedCategoryId,
+                    name,
+                    slug
+                };
+            });
+
+        if (shouldIncludeCategory && !nextEntries.some((entry) => entry.id === normalizedCategoryId)) {
+            nextEntries.push({
+                id: normalizedCategoryId,
+                name,
+                slug
+            });
+        }
+
+        await persistProductCategoryEntries(product, nextEntries);
     }
 }
 
@@ -240,16 +300,27 @@ async function deleteCategory(req, res) {
             return res.status(404).json({ message: "Categoria não encontrada" });
         }
 
-        await Product.updateMany(
-            { categoryId: category._id },
-            {
-                $set: {
-                    category: "",
-                    categorySlug: "",
-                    categoryId: null
-                }
-            }
-        );
+        const relatedProducts = await Product.find({
+            $or: [
+                { categoryIds: String(category._id || "").trim() },
+                { categoryId: category._id }
+            ]
+        }).select({
+            category: 1,
+            categorySlug: 1,
+            categoryId: 1,
+            categories: 1,
+            categorySlugs: 1,
+            categoryIds: 1
+        });
+
+        for (const product of relatedProducts) {
+            const nextEntries = getProductCategoryEntries(product).filter((entry) => {
+                return entry.id !== String(category._id || "").trim();
+            });
+
+            await persistProductCategoryEntries(product, nextEntries);
+        }
 
         await destroyCloudinaryImage(category.imagePublicId);
 

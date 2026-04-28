@@ -2465,6 +2465,15 @@ textarea {
     padding-right: 4px;
 }
 
+.admin-category-picker {
+    display: grid;
+    gap: 12px;
+    max-height: 320px;
+    overflow: auto;
+    padding-right: 4px;
+    margin-top: 10px;
+}
+
 .admin-picker-item {
     display: grid;
     grid-template-columns: 18px 64px minmax(0, 1fr);
@@ -2498,6 +2507,22 @@ textarea {
     margin-top: 4px;
     color: var(--admin-muted);
     font-size: 13px;
+}
+
+.admin-picker-item-compact {
+    grid-template-columns: 18px 40px minmax(0, 1fr);
+}
+
+.admin-picker-item-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid rgba(18, 18, 18, 0.08);
+    background: rgba(248, 245, 240, 0.82);
+    color: #8f5d2c;
+    display: grid;
+    place-items: center;
+    font-size: 14px;
 }
 
 .admin-picker-empty {

@@ -39,7 +39,8 @@ const productStatusTrigger = document.getElementById("productStatusTrigger");
 const productStatusTriggerLabel = document.getElementById("productStatusTriggerLabel");
 const productStatusHintList = document.getElementById("productStatusHintList");
 const adminProductTabs = document.querySelectorAll(".admin-products-tab[data-filter]");
-const productCategorySelect = document.getElementById("productCategorySelect");
+const productCategoryPicker = document.getElementById("productCategoryPicker");
+const productCategorySearch = document.getElementById("productCategorySearch");
 const personalizationPreviewEnabledInput = document.getElementById("personalizationPreviewEnabled");
 const personalizationPreviewFields = document.getElementById("personalizationPreviewFields");
 const personalizationPreviewNameInput = document.getElementById("personalizationPreviewName");
@@ -67,6 +68,8 @@ let selectedProductImageFiles = [];
 let existingProductImages = [];
 let selectedPreviewImageFile = null;
 let existingPreviewImage = null;
+let selectedProductCategoryIds = [];
+let productCategorySearchTerm = "";
 let personalizationPreviewItemsState = [];
 let activeAdminPersonalizationPreviewIndex = 0;
 let selectedOverlayOptionImageFiles = [];
@@ -811,13 +814,7 @@ function getPublicProductUrl(product) {
 }
 
 function getSelectedCategoryIds() {
-    if (!productCategorySelect) {
-        return [];
-    }
-
-    return Array.from(productCategorySelect.selectedOptions || [])
-        .map((option) => String(option.value || "").trim())
-        .filter(Boolean);
+    return selectedProductCategoryIds.slice();
 }
 
 function findMatchingCategoryIds(product) {
@@ -862,34 +859,55 @@ function findMatchingCategoryIds(product) {
 }
 
 function renderCategoryOptions(selectedCategoryIds = []) {
-    if (!productCategorySelect) {
+    if (!productCategoryPicker) {
         return;
     }
 
-    if (!categoriesState.length) {
-        productCategorySelect.innerHTML = `
-            <option value="">Nenhuma categoria cadastrada</option>
-        `;
-        productCategorySelect.disabled = true;
-        return;
-    }
-
-    productCategorySelect.disabled = false;
-    productCategorySelect.innerHTML = categoriesState.map((category) => `
-            <option value="${escapeHtml(String(category._id || ""))}">
-                ${escapeHtml(category.name || "")}
-            </option>
-        `).join("");
-
-    const normalizedSelectedIds = new Set(
+    selectedProductCategoryIds = [...new Set(
         (Array.isArray(selectedCategoryIds) ? selectedCategoryIds : [selectedCategoryIds])
             .map((categoryId) => String(categoryId || "").trim())
             .filter(Boolean)
-    );
+    )];
 
-    Array.from(productCategorySelect.options).forEach((option) => {
-        option.selected = normalizedSelectedIds.has(String(option.value || "").trim());
+    if (!categoriesState.length) {
+        productCategoryPicker.innerHTML = `<p class="admin-picker-empty">Nenhuma categoria cadastrada.</p>`;
+        return;
+    }
+
+    const normalizedSearchTerm = String(productCategorySearchTerm || "").trim().toLowerCase();
+    const visibleCategories = categoriesState.filter((category) => {
+        if (!normalizedSearchTerm) {
+            return true;
+        }
+
+        return String(category.name || "").trim().toLowerCase().includes(normalizedSearchTerm);
     });
+
+    if (!visibleCategories.length) {
+        productCategoryPicker.innerHTML = `<p class="admin-picker-empty">Nenhuma categoria encontrada para essa busca.</p>`;
+        return;
+    }
+
+    const selectedSet = new Set(selectedProductCategoryIds);
+    productCategoryPicker.innerHTML = visibleCategories.map((category) => {
+        const categoryId = String(category._id || "").trim();
+        const isChecked = selectedSet.has(categoryId);
+        const isPrimary = selectedProductCategoryIds[0] === categoryId;
+        const productCount = Number(category.productsCount || category.products?.length || 0);
+
+        return `
+            <label class="admin-picker-item admin-picker-item-compact">
+                <input type="checkbox" name="productCategoryIds" value="${escapeHtml(categoryId)}" ${isChecked ? "checked" : ""}>
+                <div class="admin-picker-item-icon" aria-hidden="true">
+                    <i class="fa-solid fa-tag"></i>
+                </div>
+                <div>
+                    <strong>${escapeHtml(category.name || "Categoria")}</strong>
+                    <span>${productCount} produto(s)${isPrimary ? " • Principal" : ""}</span>
+                </div>
+            </label>
+        `;
+    }).join("");
 }
 
 function syncDescriptionInput() {
@@ -1476,7 +1494,12 @@ function resetProductForm() {
     }
 
     productForm.reset();
-    renderCategoryOptions("");
+    selectedProductCategoryIds = [];
+    productCategorySearchTerm = "";
+    if (productCategorySearch) {
+        productCategorySearch.value = "";
+    }
+    renderCategoryOptions([]);
     productForm.elements.installmentQuantity.value = 1;
     productForm.elements.installmentValue.value = 0;
     productForm.elements.shippingAllowMotoboy.value = "true";
@@ -1590,6 +1613,10 @@ function populateProductForm(product) {
         : [];
 
     productForm.elements.name.value = product.name || "";
+    productCategorySearchTerm = "";
+    if (productCategorySearch) {
+        productCategorySearch.value = "";
+    }
     renderCategoryOptions(findMatchingCategoryIds(product));
     productForm.elements.price.value = product.price ?? "";
     productForm.elements.compareAtPrice.value = product.compareAtPrice ?? "";
@@ -2283,6 +2310,40 @@ if (productForm) {
             mergeSelectedProductImageFiles(Array.from(productImageInput.files || []));
             productImageInput.value = "";
             renderProductMediaPreview();
+            updateSubmitButtonState();
+        });
+    }
+
+    if (productCategorySearch) {
+        productCategorySearch.addEventListener("input", () => {
+            productCategorySearchTerm = productCategorySearch.value || "";
+            renderCategoryOptions(selectedProductCategoryIds);
+        });
+    }
+
+    if (productCategoryPicker) {
+        productCategoryPicker.addEventListener("change", (event) => {
+            const input = event.target.closest('input[name="productCategoryIds"]');
+
+            if (!input) {
+                return;
+            }
+
+            const categoryId = String(input.value || "").trim();
+
+            if (!categoryId) {
+                return;
+            }
+
+            if (input.checked) {
+                if (!selectedProductCategoryIds.includes(categoryId)) {
+                    selectedProductCategoryIds.push(categoryId);
+                }
+            } else {
+                selectedProductCategoryIds = selectedProductCategoryIds.filter((selectedId) => selectedId !== categoryId);
+            }
+
+            renderCategoryOptions(selectedProductCategoryIds);
             updateSubmitButtonState();
         });
     }
