@@ -1,8 +1,28 @@
 ﻿<!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Meta Pixel Code -->
+    <script>
+        !function (f, b, e, v, n, t, s) {
+            if (f.fbq) return; n = f.fbq = function () {
+                n.callMethod ?
+                n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+            };
+            if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+            n.queue = []; t = b.createElement(e); t.async = !0;
+            t.src = v; s = b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t, s)
+        }(window, document, 'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '2290882914775015');
+        fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+            src="https://www.facebook.com/tr?id=2290882914775015&ev=PageView&noscript=1" /></noscript>
+    <!-- End Meta Pixel Code -->
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="apple-touch-icon" href="/favicon.png">
     <title>Entrar | Arteno</title>
@@ -14,6 +34,7 @@
     <link rel="stylesheet" href="/cart-drawer.css">
     <link rel="stylesheet" href="/auth.css">
 </head>
+
 <body class="auth-page-body">
     <div class="top-bar">
         <div class="top-container-bar container">
@@ -49,7 +70,8 @@
 
             <div class="search-container">
                 <input type="text" placeholder="Buscar produtos">
-                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="7"></circle>
                     <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
                 </svg>
@@ -58,13 +80,14 @@
             <div class="header-right">
                 <div class="account">
                     <i class="fa-regular fa-circle-user"></i>
-<span><a href="/entrar">Cadastre-se</a></span>
-<span style="cursor: default;">|</span>
-<span><a href="/entrar">Fazer Login</a></span>
+                    <span><a href="/entrar">Cadastre-se</a></span>
+                    <span style="cursor: default;">|</span>
+                    <span><a href="/entrar">Fazer Login</a></span>
                 </div>
 
                 <div class="cart" id="cart">
-                    <svg class="cart-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="cart-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="9" cy="21" r="1"></circle>
                         <circle cx="20" cy="21" r="1"></circle>
                         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6"></path>
@@ -100,9 +123,11 @@
         <div class="menu-top">
             <a class="menu-enter" href="/entrar">
                 <svg class="login-icon" viewBox="0 0 24 24" fill="none">
-                    <path d="M14 4h4v16h-4" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M14 4h4v16h-4" stroke="white" stroke-width="2.8" stroke-linecap="round"
+                        stroke-linejoin="round" />
                     <path d="M4 12h9" stroke="white" stroke-width="2.8" stroke-linecap="round" />
-                    <path d="M10 8l4 4-4 4" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M10 8l4 4-4 4" stroke="white" stroke-width="2.8" stroke-linecap="round"
+                        stroke-linejoin="round" />
                 </svg>
                 <span>Entrar</span>
             </a>
@@ -146,12 +171,14 @@
             </div>
             <div class="auth-feedback" id="authFeedback" hidden></div>
             <form id="loginForm" class="auth-form">
-                <label class="auth-field"><span>Email</span><input type="email" name="email" placeholder="seu@email.com" required></label>
+                <label class="auth-field"><span>Email</span><input type="email" name="email" placeholder="seu@email.com"
+                        required></label>
                 <label class="auth-field">
                     <span>Senha</span>
                     <div class="auth-password-field">
                         <input type="password" name="password" placeholder="Digite sua senha" required>
-                        <button type="button" class="auth-password-toggle" data-password-toggle aria-label="Mostrar senha" aria-pressed="false">
+                        <button type="button" class="auth-password-toggle" data-password-toggle
+                            aria-label="Mostrar senha" aria-pressed="false">
                             <i class="fa-regular fa-eye"></i>
                         </button>
                     </div>
@@ -161,27 +188,34 @@
             </form>
             <form id="forgotPasswordForm" class="auth-form" hidden>
                 <p class="auth-form-intro">Digite o email da sua conta para receber o código de recuperação.</p>
-                <label class="auth-field"><span>Email</span><input type="email" name="email" placeholder="seu@email.com" required></label>
+                <label class="auth-field"><span>Email</span><input type="email" name="email" placeholder="seu@email.com"
+                        required></label>
                 <button type="submit" class="auth-submit-button">Enviar código</button>
                 <button type="button" class="auth-text-button" id="backToLoginFromForgot">Voltar para o login</button>
             </form>
             <form id="verifyCodeForm" class="auth-form" hidden>
-                <p class="auth-form-intro">Informe o código enviado para o seu email para liberar a criação da nova senha.</p>
-                <label class="auth-field"><span>Email</span><input type="email" name="email" placeholder="seu@email.com" required readonly></label>
-                <label class="auth-field"><span>Código</span><input type="text" name="code" inputmode="numeric" maxlength="6" placeholder="Digite o código recebido" required></label>
+                <p class="auth-form-intro">Informe o código enviado para o seu email para liberar a criação da nova
+                    senha.</p>
+                <label class="auth-field"><span>Email</span><input type="email" name="email" placeholder="seu@email.com"
+                        required readonly></label>
+                <label class="auth-field"><span>Código</span><input type="text" name="code" inputmode="numeric"
+                        maxlength="6" placeholder="Digite o código recebido" required></label>
                 <button type="submit" class="auth-submit-button">Confirmar código</button>
                 <button type="button" class="auth-text-button" id="resendCodeButton">Enviar código novamente</button>
                 <button type="button" class="auth-text-button" id="backToForgotFromVerify">Alterar email</button>
             </form>
             <form id="resetPasswordForm" class="auth-form" hidden>
                 <p class="auth-form-intro">Agora defina sua nova senha para concluir a recuperação da conta.</p>
-                <label class="auth-field"><span>Email</span><input type="email" name="email" placeholder="seu@email.com" required readonly></label>
-                <label class="auth-field"><span>Código</span><input type="text" name="code" inputmode="numeric" maxlength="6" placeholder="Digite o código recebido" required readonly></label>
+                <label class="auth-field"><span>Email</span><input type="email" name="email" placeholder="seu@email.com"
+                        required readonly></label>
+                <label class="auth-field"><span>Código</span><input type="text" name="code" inputmode="numeric"
+                        maxlength="6" placeholder="Digite o código recebido" required readonly></label>
                 <label class="auth-field">
                     <span>Nova senha</span>
                     <div class="auth-password-field">
                         <input type="password" name="password" placeholder="Crie sua nova senha" required>
-                        <button type="button" class="auth-password-toggle" data-password-toggle aria-label="Mostrar senha" aria-pressed="false">
+                        <button type="button" class="auth-password-toggle" data-password-toggle
+                            aria-label="Mostrar senha" aria-pressed="false">
                             <i class="fa-regular fa-eye"></i>
                         </button>
                     </div>
@@ -190,7 +224,8 @@
                     <span>Confirmar nova senha</span>
                     <div class="auth-password-field">
                         <input type="password" name="confirmPassword" placeholder="Repita a nova senha" required>
-                        <button type="button" class="auth-password-toggle" data-password-toggle aria-label="Mostrar senha" aria-pressed="false">
+                        <button type="button" class="auth-password-toggle" data-password-toggle
+                            aria-label="Mostrar senha" aria-pressed="false">
                             <i class="fa-regular fa-eye"></i>
                         </button>
                     </div>
@@ -199,14 +234,18 @@
                 <button type="button" class="auth-text-button" id="backToLoginFromReset">Voltar para o login</button>
             </form>
             <form id="registerForm" class="auth-form" hidden>
-                <label class="auth-field"><span>Nome</span><input type="text" name="name" placeholder="Seu nome completo" required></label>
-                <label class="auth-field"><span>Email</span><input type="email" name="email" placeholder="seu@email.com" required></label>
-                <label class="auth-field"><span>Telefone</span><input type="tel" name="phone" placeholder="Seu telefone"></label>
+                <label class="auth-field"><span>Nome</span><input type="text" name="name"
+                        placeholder="Seu nome completo" required></label>
+                <label class="auth-field"><span>Email</span><input type="email" name="email" placeholder="seu@email.com"
+                        required></label>
+                <label class="auth-field"><span>Telefone</span><input type="tel" name="phone"
+                        placeholder="Seu telefone"></label>
                 <label class="auth-field">
                     <span>Senha</span>
                     <div class="auth-password-field">
                         <input type="password" name="password" placeholder="Crie uma senha" required>
-                        <button type="button" class="auth-password-toggle" data-password-toggle aria-label="Mostrar senha" aria-pressed="false">
+                        <button type="button" class="auth-password-toggle" data-password-toggle
+                            aria-label="Mostrar senha" aria-pressed="false">
                             <i class="fa-regular fa-eye"></i>
                         </button>
                     </div>
@@ -215,7 +254,8 @@
                     <span>Confirmar senha</span>
                     <div class="auth-password-field">
                         <input type="password" name="confirmPassword" placeholder="Repita a senha" required>
-                        <button type="button" class="auth-password-toggle" data-password-toggle aria-label="Mostrar senha" aria-pressed="false">
+                        <button type="button" class="auth-password-toggle" data-password-toggle
+                            aria-label="Mostrar senha" aria-pressed="false">
                             <i class="fa-regular fa-eye"></i>
                         </button>
                     </div>
@@ -225,7 +265,7 @@
         </section>
     </main>
 
-        <footer class="simple-footer">
+    <footer class="simple-footer">
         <div class="container simple-footer-grid">
             <div class="simple-footer-brand">
                 <img src="/img/logo.png" alt="Logo V Santos" class="simple-footer-logo">
@@ -278,4 +318,5 @@
     <script src="/auth-nav.js"></script>
     <script src="/auth.js"></script>
 </body>
+
 </html>

@@ -1,8 +1,28 @@
 ﻿<!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Meta Pixel Code -->
+    <script>
+        !function (f, b, e, v, n, t, s) {
+            if (f.fbq) return; n = f.fbq = function () {
+                n.callMethod ?
+                n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+            };
+            if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+            n.queue = []; t = b.createElement(e); t.async = !0;
+            t.src = v; s = b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t, s)
+        }(window, document, 'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '2290882914775015');
+        fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+            src="https://www.facebook.com/tr?id=2290882914775015&ev=PageView&noscript=1" /></noscript>
+    <!-- End Meta Pixel Code -->
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="apple-touch-icon" href="/favicon.png">
     <title>Checkout | Arteno</title>
@@ -14,6 +34,7 @@
     <link rel="stylesheet" href="/cart-drawer.css">
     <link rel="stylesheet" href="/checkout.css">
 </head>
+
 <body class="checkout-page-body">
     <div class="top-bar">
         <div class="top-container-bar container">
@@ -49,7 +70,8 @@
 
             <div class="search-container">
                 <input type="text" placeholder="Buscar">
-                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="7"></circle>
                     <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
                 </svg>
@@ -58,13 +80,14 @@
             <div class="header-right">
                 <div class="account">
                     <i class="fa-regular fa-circle-user"></i>
-<span><a href="/entrar">Cadastre-se</a></span>
-<span style="cursor: default;">|</span>
-<span><a href="/entrar">Fazer Login</a></span>
+                    <span><a href="/entrar">Cadastre-se</a></span>
+                    <span style="cursor: default;">|</span>
+                    <span><a href="/entrar">Fazer Login</a></span>
                 </div>
 
                 <div class="cart" id="cart">
-                    <svg class="cart-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="cart-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="9" cy="21" r="1"></circle>
                         <circle cx="20" cy="21" r="1"></circle>
                         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6"></path>
@@ -100,9 +123,11 @@
         <div class="menu-top">
             <a class="menu-enter" href="/entrar">
                 <svg class="login-icon" viewBox="0 0 24 24" fill="none">
-                    <path d="M14 4h4v16h-4" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M14 4h4v16h-4" stroke="white" stroke-width="2.8" stroke-linecap="round"
+                        stroke-linejoin="round" />
                     <path d="M4 12h9" stroke="white" stroke-width="2.8" stroke-linecap="round" />
-                    <path d="M10 8l4 4-4 4" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M10 8l4 4-4 4" stroke="white" stroke-width="2.8" stroke-linecap="round"
+                        stroke-linejoin="round" />
                 </svg>
                 <span>Entrar</span>
             </a>
@@ -135,7 +160,8 @@
             <div>
                 <p class="checkout-page-kicker">Finalizar compra</p>
                 <h1>Checkout da sua compra</h1>
-                <p class="checkout-page-subtitle">Revise seus dados, escolha o frete e finalize seu pedido com praticidade.</p>
+                <p class="checkout-page-subtitle">Revise seus dados, escolha o frete e finalize seu pedido com
+                    praticidade.</p>
             </div>
             <div class="checkout-mode-badge" id="checkoutModeBadge" hidden></div>
         </section>
@@ -217,7 +243,8 @@
                         </label>
                         <label class="checkout-field">
                             <span>CPF</span>
-                            <input type="text" id="checkoutCustomerDocument" inputmode="numeric" autocomplete="off" required>
+                            <input type="text" id="checkoutCustomerDocument" inputmode="numeric" autocomplete="off"
+                                required>
                         </label>
                         <label class="checkout-field">
                             <span>Telefone</span>
@@ -253,7 +280,8 @@
                         </label>
                         <label class="checkout-field">
                             <span>Número</span>
-                            <input type="text" id="checkoutStreetNumber" autocomplete="off" inputmode="numeric" required>
+                            <input type="text" id="checkoutStreetNumber" autocomplete="off" inputmode="numeric"
+                                required>
                         </label>
                         <label class="checkout-field">
                             <span>Bairro</span>
@@ -345,21 +373,25 @@
                         <div class="checkout-grid checkout-grid-two">
                             <label class="checkout-field checkout-field-full">
                                 <span>Número do cartão</span>
-                                <input type="text" id="checkoutCardNumberInput" inputmode="numeric" autocomplete="off" placeholder="0000 0000 0000 0000">
+                                <input type="text" id="checkoutCardNumberInput" inputmode="numeric" autocomplete="off"
+                                    placeholder="0000 0000 0000 0000">
                                 <div class="checkout-mercado-pago-field" id="checkoutCardNumber" hidden></div>
                             </label>
                             <label class="checkout-field">
                                 <span>Nome no cartão</span>
-                                <input type="text" id="checkoutCardHolder" autocomplete="off" placeholder="Nome impresso no cartão">
+                                <input type="text" id="checkoutCardHolder" autocomplete="off"
+                                    placeholder="Nome impresso no cartão">
                             </label>
                             <label class="checkout-field">
                                 <span>Validade</span>
-                                <input type="text" id="checkoutCardExpiryInput" inputmode="numeric" autocomplete="off" placeholder="MM/AA">
+                                <input type="text" id="checkoutCardExpiryInput" inputmode="numeric" autocomplete="off"
+                                    placeholder="MM/AA">
                                 <div class="checkout-mercado-pago-field" id="checkoutCardExpiry" hidden></div>
                             </label>
                             <label class="checkout-field">
                                 <span>CVV</span>
-                                <input type="text" id="checkoutCardCvvInput" inputmode="numeric" autocomplete="off" placeholder="123">
+                                <input type="text" id="checkoutCardCvvInput" inputmode="numeric" autocomplete="off"
+                                    placeholder="123">
                                 <div class="checkout-mercado-pago-field" id="checkoutCardCvv" hidden></div>
                             </label>
                         </div>
@@ -400,7 +432,8 @@
                         <span>Total do pedido</span>
                         <strong id="checkoutTotal">R$ 0,00</strong>
                     </div>
-                    <button type="submit" form="checkoutForm" class="checkout-submit-button" id="checkoutSubmitButton">Finalizar compra</button>
+                    <button type="submit" form="checkoutForm" class="checkout-submit-button"
+                        id="checkoutSubmitButton">Finalizar compra</button>
                     <p class="checkout-submit-note" id="checkoutSubmitNote" hidden></p>
                 </div>
             </aside>
@@ -416,7 +449,7 @@
         </section>
     </main>
 
-        <footer class="simple-footer">
+    <footer class="simple-footer">
         <div class="container simple-footer-grid">
             <div class="simple-footer-brand">
                 <img src="/img/logo.png" alt="Logo V Santos" class="simple-footer-logo">
@@ -471,4 +504,5 @@
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <script src="/checkout.js"></script>
 </body>
+
 </html>

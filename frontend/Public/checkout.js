@@ -1192,6 +1192,41 @@ function renderApprovedResult(result) {
             ${buildResultActions()}
         </article>
     `;
+
+    trackCheckoutPurchase(result);
+}
+
+function trackCheckoutPurchase(result) {
+    if (typeof fbq !== "function") {
+        return;
+    }
+
+    const value = Number(result.order?.totals?.total || 0);
+    const currency = String(result.order?.totals?.currency || "BRL").toUpperCase();
+    const items = Array.isArray(result.order?.items) ? result.order.items : [];
+    const contents = items.map((item) => ({
+        id: item.sku || item.productId || item.id || null,
+        quantity: Number(item.quantity || 1),
+        item_price: Number(item.price || item.unitPrice || 0)
+    })).filter((item) => item.id);
+    const contentIds = contents.map((item) => item.id).filter(Boolean);
+
+    const payload = {
+        value,
+        currency
+    };
+
+    if (contents.length) {
+        payload.contents = contents;
+        payload.content_ids = contentIds;
+        payload.content_type = "product";
+    }
+
+    try {
+        fbq("track", "Purchase", payload);
+    } catch (_error) {
+        // O Pixel pode estar bloqueado, mas não queremos quebrar o checkout.
+    }
 }
 
 function legacyRenderPixResultOriginal(result) {

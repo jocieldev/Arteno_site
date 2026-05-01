@@ -1,8 +1,27 @@
 ﻿<!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Meta Pixel Code -->
+    <script>
+        !function (f, b, e, v, n, t, s) {
+            if (f.fbq) return; n = f.fbq = function () {
+                n.callMethod ?
+                n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+            };
+            if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+            n.queue = []; t = b.createElement(e); t.async = !0;
+            t.src = v; s = b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t, s)
+        }(window, document, 'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '2290882914775015');
+        fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+            src="https://www.facebook.com/tr?id=2290882914775015&ev=PageView&noscript=1" /></noscript>
+    <!-- End Meta Pixel Code -->
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="apple-touch-icon" href="/favicon.png">
     <title>Produto | Arteno</title>
@@ -14,6 +33,7 @@
     <link rel="stylesheet" href="/cart-drawer.css">
     <link rel="stylesheet" href="/product.css">
 </head>
+
 <body class="product-page-body">
     <div class="top-bar">
         <div class="top-container-bar container">
@@ -49,7 +69,8 @@
 
             <div class="search-container">
                 <input type="text" placeholder="Buscar">
-                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="7"></circle>
                     <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
                 </svg>
@@ -58,13 +79,14 @@
             <div class="header-right">
                 <div class="account">
                     <i class="fa-regular fa-circle-user"></i>
-<span><a href="/entrar">Cadastre-se</a></span>
-<span style="cursor: default;">|</span>
-<span><a href="/entrar">Fazer Login</a></span>
+                    <span><a href="/entrar">Cadastre-se</a></span>
+                    <span style="cursor: default;">|</span>
+                    <span><a href="/entrar">Fazer Login</a></span>
                 </div>
 
                 <div class="cart" id="cart">
-                    <svg class="cart-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="cart-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="9" cy="21" r="1"></circle>
                         <circle cx="20" cy="21" r="1"></circle>
                         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6"></path>
@@ -100,9 +122,11 @@
         <div class="menu-top">
             <a class="menu-enter" href="/entrar">
                 <svg class="login-icon" viewBox="0 0 24 24" fill="none">
-                    <path d="M14 4h4v16h-4" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M14 4h4v16h-4" stroke="white" stroke-width="2.8" stroke-linecap="round"
+                        stroke-linejoin="round" />
                     <path d="M4 12h9" stroke="white" stroke-width="2.8" stroke-linecap="round" />
-                    <path d="M10 8l4 4-4 4" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M10 8l4 4-4 4" stroke="white" stroke-width="2.8" stroke-linecap="round"
+                        stroke-linejoin="round" />
                 </svg>
                 <span>Entrar</span>
             </a>
@@ -172,10 +196,12 @@
                     <div class="product-gallery">
                         <div class="product-gallery-main-frame">
                             <div class="product-gallery-arrows product-gallery-arrows-overlay">
-                                <button type="button" class="product-gallery-arrow" id="productGalleryPrev" aria-label="Imagem anterior">
+                                <button type="button" class="product-gallery-arrow" id="productGalleryPrev"
+                                    aria-label="Imagem anterior">
                                     <i class="fa-solid fa-chevron-left"></i>
                                 </button>
-                                <button type="button" class="product-gallery-arrow" id="productGalleryNext" aria-label="Próxima imagem">
+                                <button type="button" class="product-gallery-arrow" id="productGalleryNext"
+                                    aria-label="Próxima imagem">
                                     <i class="fa-solid fa-chevron-right"></i>
                                 </button>
                             </div>
@@ -218,17 +244,21 @@
 
                         <div class="product-page-personalization-wrap" id="productPersonalizationWrap" hidden>
                             <div class="product-page-personalization-name-field" id="productPersonalizationNameField">
-                                <label class="product-page-personalization-label" for="productPersonalizationInput" id="productPersonalizationLabel">
+                                <label class="product-page-personalization-label" for="productPersonalizationInput"
+                                    id="productPersonalizationLabel">
                                     <span class="product-page-field-label">Nome para gravar</span>
-                                    <span class="product-page-personalization-note">Informe o nome que será gravado antes de continuar</span>
+                                    <span class="product-page-personalization-note">Informe o nome que será gravado
+                                        antes de continuar</span>
                                 </label>
-                                <input type="text" id="productPersonalizationInput" class="product-page-personalization-input" placeholder="Digite o nome da gravação">
+                                <input type="text" id="productPersonalizationInput"
+                                    class="product-page-personalization-input" placeholder="Digite o nome da gravação">
                             </div>
 
                             <div class="product-page-image-overlay-wrap" id="productImageOverlayWrap" hidden>
                                 <div class="product-page-personalization-preview-header">
                                     <span class="product-page-field-label">Imagem para aplicar</span>
-                                    <span class="product-page-personalization-note">Escolha uma imagem pronta ou envie a sua para visualizar sobre o produto.</span>
+                                    <span class="product-page-personalization-note">Escolha uma imagem pronta ou envie a
+                                        sua para visualizar sobre o produto.</span>
                                 </div>
                                 <div class="product-page-image-overlay-options" id="productImageOverlayOptions"></div>
                                 <input type="file" id="productImageOverlayUploadInput" accept="image/*" hidden>
@@ -237,52 +267,85 @@
                             <div class="product-page-personalization-preview" id="productPersonalizationPreview" hidden>
                                 <div class="product-page-personalization-preview-header">
                                     <span class="product-page-field-label">Prévia da gravação</span>
-                                    <span class="product-page-personalization-note">Veja uma simulação de como o nome pode aparecer no produto.</span>
+                                    <span class="product-page-personalization-note">Veja uma simulação de como o nome
+                                        pode aparecer no produto.</span>
                                 </div>
-                                <div class="product-page-preview-tabs" id="productPersonalizationPreviewTabs" hidden></div>
+                                <div class="product-page-preview-tabs" id="productPersonalizationPreviewTabs" hidden>
+                                </div>
                                 <div class="product-page-personalization-preview-canvas">
-                                    <img src="" alt="Prévia do produto personalizado" id="productPersonalizationPreviewImage">
-                                    <img src="" alt="" id="productPersonalizationOverlayImage" class="product-page-personalization-overlay-image" hidden>
-                                    <div class="product-page-personalization-preview-text" id="productPersonalizationPreviewText"></div>
+                                    <img src="" alt="Prévia do produto personalizado"
+                                        id="productPersonalizationPreviewImage">
+                                    <img src="" alt="" id="productPersonalizationOverlayImage"
+                                        class="product-page-personalization-overlay-image" hidden>
+                                    <div class="product-page-personalization-preview-text"
+                                        id="productPersonalizationPreviewText"></div>
                                 </div>
-                                <div class="product-page-personalization-controls" id="productPersonalizationControls" hidden>
+                                <div class="product-page-personalization-controls" id="productPersonalizationControls"
+                                    hidden>
                                     <div class="product-page-adjust-tabs" id="productPersonalizationTabs">
-                                        <button type="button" class="product-page-adjust-tab is-active" data-adjust-panel-tab="text" aria-pressed="true">Texto</button>
-                                        <button type="button" class="product-page-adjust-tab" data-adjust-panel-tab="image" aria-pressed="false">Imagem</button>
+                                        <button type="button" class="product-page-adjust-tab is-active"
+                                            data-adjust-panel-tab="text" aria-pressed="true">Texto</button>
+                                        <button type="button" class="product-page-adjust-tab"
+                                            data-adjust-panel-tab="image" aria-pressed="false">Imagem</button>
                                     </div>
                                     <div class="product-page-adjust-control" id="productTextAdjustControls" hidden>
                                         <div class="product-page-personalization-preview-header">
                                             <span class="product-page-field-label">Ajustar nome</span>
-                                            <span class="product-page-personalization-note">Use as setas para mover e os botões para aumentar ou diminuir.</span>
+                                            <span class="product-page-personalization-note">Use as setas para mover e os
+                                                botões para aumentar ou diminuir.</span>
                                         </div>
                                         <div class="product-page-adjust-actions">
                                             <div class="product-page-adjust-pad">
-                                                <button type="button" class="product-page-adjust-button" data-adjust-target="text" data-adjust-action="up" aria-label="Mover nome para cima">&uarr;</button>
-                                                <button type="button" class="product-page-adjust-button" data-adjust-target="text" data-adjust-action="left" aria-label="Mover nome para a esquerda">&larr;</button>
-                                                <button type="button" class="product-page-adjust-button" data-adjust-target="text" data-adjust-action="down" aria-label="Mover nome para baixo">&darr;</button>
-                                                <button type="button" class="product-page-adjust-button" data-adjust-target="text" data-adjust-action="right" aria-label="Mover nome para a direita">&rarr;</button>
+                                                <button type="button" class="product-page-adjust-button"
+                                                    data-adjust-target="text" data-adjust-action="up"
+                                                    aria-label="Mover nome para cima">&uarr;</button>
+                                                <button type="button" class="product-page-adjust-button"
+                                                    data-adjust-target="text" data-adjust-action="left"
+                                                    aria-label="Mover nome para a esquerda">&larr;</button>
+                                                <button type="button" class="product-page-adjust-button"
+                                                    data-adjust-target="text" data-adjust-action="down"
+                                                    aria-label="Mover nome para baixo">&darr;</button>
+                                                <button type="button" class="product-page-adjust-button"
+                                                    data-adjust-target="text" data-adjust-action="right"
+                                                    aria-label="Mover nome para a direita">&rarr;</button>
                                             </div>
                                             <div class="product-page-adjust-scale">
-                                                <button type="button" class="product-page-adjust-button" data-adjust-target="text" data-adjust-action="smaller">Menor</button>
-                                                <button type="button" class="product-page-adjust-button" data-adjust-target="text" data-adjust-action="bigger">Maior</button>
+                                                <button type="button" class="product-page-adjust-button"
+                                                    data-adjust-target="text"
+                                                    data-adjust-action="smaller">Menor</button>
+                                                <button type="button" class="product-page-adjust-button"
+                                                    data-adjust-target="text" data-adjust-action="bigger">Maior</button>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="product-page-adjust-control" id="productImageAdjustControls" hidden>
                                         <div class="product-page-personalization-preview-header">
                                             <span class="product-page-field-label">Ajustar imagem</span>
-                                            <span class="product-page-personalization-note">Use as setas para mover e os botões para aumentar ou diminuir.</span>
+                                            <span class="product-page-personalization-note">Use as setas para mover e os
+                                                botões para aumentar ou diminuir.</span>
                                         </div>
                                         <div class="product-page-adjust-actions">
                                             <div class="product-page-adjust-pad">
-                                                <button type="button" class="product-page-adjust-button" data-adjust-target="image" data-adjust-action="up" aria-label="Mover imagem para cima">&uarr;</button>
-                                                <button type="button" class="product-page-adjust-button" data-adjust-target="image" data-adjust-action="left" aria-label="Mover imagem para a esquerda">&larr;</button>
-                                                <button type="button" class="product-page-adjust-button" data-adjust-target="image" data-adjust-action="down" aria-label="Mover imagem para baixo">&darr;</button>
-                                                <button type="button" class="product-page-adjust-button" data-adjust-target="image" data-adjust-action="right" aria-label="Mover imagem para a direita">&rarr;</button>
+                                                <button type="button" class="product-page-adjust-button"
+                                                    data-adjust-target="image" data-adjust-action="up"
+                                                    aria-label="Mover imagem para cima">&uarr;</button>
+                                                <button type="button" class="product-page-adjust-button"
+                                                    data-adjust-target="image" data-adjust-action="left"
+                                                    aria-label="Mover imagem para a esquerda">&larr;</button>
+                                                <button type="button" class="product-page-adjust-button"
+                                                    data-adjust-target="image" data-adjust-action="down"
+                                                    aria-label="Mover imagem para baixo">&darr;</button>
+                                                <button type="button" class="product-page-adjust-button"
+                                                    data-adjust-target="image" data-adjust-action="right"
+                                                    aria-label="Mover imagem para a direita">&rarr;</button>
                                             </div>
                                             <div class="product-page-adjust-scale">
-                                                <button type="button" class="product-page-adjust-button" data-adjust-target="image" data-adjust-action="smaller">Menor</button>
-                                                <button type="button" class="product-page-adjust-button" data-adjust-target="image" data-adjust-action="bigger">Maior</button>
+                                                <button type="button" class="product-page-adjust-button"
+                                                    data-adjust-target="image"
+                                                    data-adjust-action="smaller">Menor</button>
+                                                <button type="button" class="product-page-adjust-button"
+                                                    data-adjust-target="image"
+                                                    data-adjust-action="bigger">Maior</button>
                                             </div>
                                         </div>
                                     </div>
@@ -293,14 +356,17 @@
                         <div class="product-page-quantity-wrap">
                             <span class="product-page-field-label">Quantidade</span>
                             <div class="product-quantity-selector">
-                                <button type="button" class="product-quantity-button" id="decreaseQuantityButton" aria-label="Diminuir quantidade">-</button>
+                                <button type="button" class="product-quantity-button" id="decreaseQuantityButton"
+                                    aria-label="Diminuir quantidade">-</button>
                                 <input type="number" id="productQuantityInput" min="1" step="1" value="1">
-                                <button type="button" class="product-quantity-button" id="increaseQuantityButton" aria-label="Aumentar quantidade">+</button>
+                                <button type="button" class="product-quantity-button" id="increaseQuantityButton"
+                                    aria-label="Aumentar quantidade">+</button>
                             </div>
                         </div>
 
                         <div class="product-page-actions">
-                            <button type="button" class="product-page-buy-button" id="buyNowButton">Comprar agora</button>
+                            <button type="button" class="product-page-buy-button" id="buyNowButton">Comprar
+                                agora</button>
                             <button type="button" class="product-page-cart-button" id="addToCartButton">
                                 <i class="fa-solid fa-bag-shopping product-page-cart-button-icon"></i>
                                 <span class="product-page-cart-button-label">Adicionar ao carrinho</span>
@@ -317,9 +383,11 @@
                             </div>
                             <div class="product-page-shipping-form">
                                 <input type="text" id="shippingZipCodeInput" placeholder="Digite seu CEP">
-                                <button type="button" class="product-page-shipping-button" id="shippingQuoteButton">Calcular</button>
+                                <button type="button" class="product-page-shipping-button"
+                                    id="shippingQuoteButton">Calcular</button>
                             </div>
-                            <p class="product-page-shipping-help" id="shippingHelpText">Consulte frete com PAC e SEDEX informando seu CEP.</p>
+                            <p class="product-page-shipping-help" id="shippingHelpText">Consulte frete com PAC e SEDEX
+                                informando seu CEP.</p>
                             <p class="product-page-shipping-feedback" id="shippingQuoteFeedback" hidden></p>
                             <div class="product-page-shipping-results" id="shippingQuoteResults" hidden></div>
                         </div>
@@ -341,7 +409,7 @@
         </div>
     </main>
 
-        <footer class="simple-footer">
+    <footer class="simple-footer">
         <div class="container simple-footer-grid">
             <div class="simple-footer-brand">
                 <img src="/img/logo.png" alt="Logo V Santos" class="simple-footer-logo">
@@ -395,5 +463,5 @@
     <script src="/personalization-image-store.js"></script>
     <script src="/product.js"></script>
 </body>
-</html>
 
+</html>

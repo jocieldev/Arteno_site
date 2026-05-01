@@ -1,8 +1,27 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Meta Pixel Code -->
+    <script>
+        !function (f, b, e, v, n, t, s) {
+            if (f.fbq) return; n = f.fbq = function () {
+                n.callMethod ?
+                n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+            };
+            if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+            n.queue = []; t = b.createElement(e); t.async = !0;
+            t.src = v; s = b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t, s)
+        }(window, document, 'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '2290882914775015');
+        fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+            src="https://www.facebook.com/tr?id=2290882914775015&ev=PageView&noscript=1" /></noscript>
+    <!-- End Meta Pixel Code -->
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="apple-touch-icon" href="/favicon.png">
     <title>Meus Pedidos | Arteno</title>
@@ -14,6 +33,7 @@
     <link rel="stylesheet" href="/cart-drawer.css">
     <link rel="stylesheet" href="/account.css">
 </head>
+
 <body class="account-page-body">
     <div class="top-bar">
         <div class="top-container-bar container">
@@ -49,7 +69,8 @@
 
             <div class="search-container">
                 <input type="text" placeholder="Buscar produtos">
-                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="7"></circle>
                     <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
                 </svg>
@@ -62,7 +83,8 @@
                 </div>
 
                 <div class="cart" id="cart">
-                    <svg class="cart-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="cart-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="9" cy="21" r="1"></circle>
                         <circle cx="20" cy="21" r="1"></circle>
                         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6"></path>
@@ -98,9 +120,11 @@
         <div class="menu-top">
             <a class="menu-enter" href="/minha-conta">
                 <svg class="login-icon" viewBox="0 0 24 24" fill="none">
-                    <path d="M14 4h4v16h-4" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M14 4h4v16h-4" stroke="white" stroke-width="2.8" stroke-linecap="round"
+                        stroke-linejoin="round" />
                     <path d="M4 12h9" stroke="white" stroke-width="2.8" stroke-linecap="round" />
-                    <path d="M10 8l4 4-4 4" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M10 8l4 4-4 4" stroke="white" stroke-width="2.8" stroke-linecap="round"
+                        stroke-linejoin="round" />
                 </svg>
                 <span>Minha conta</span>
             </a>
@@ -132,7 +156,8 @@
         <section class="account-hero">
             <p class="account-kicker">Acompanhamento</p>
             <h1>Meus pedidos</h1>
-            <p>Acompanhe o andamento das suas compras, visualize os itens de cada pedido e confira as atualiza&ccedil;&otilde;es mais recentes.</p>
+            <p>Acompanhe o andamento das suas compras, visualize os itens de cada pedido e confira as
+                atualiza&ccedil;&otilde;es mais recentes.</p>
         </section>
 
         <section class="account-orders-section">
@@ -147,14 +172,17 @@
             <div class="account-order-filters" id="accountOrderFilters">
                 <button type="button" class="account-order-filter active" data-order-filter="all">Tudo</button>
                 <button type="button" class="account-order-filter" data-order-filter="payment_pending">A pagar</button>
-                <button type="button" class="account-order-filter" data-order-filter="payment_confirmed">Confirmados</button>
-                <button type="button" class="account-order-filter" data-order-filter="preparing">Em produ&ccedil;&atilde;o</button>
+                <button type="button" class="account-order-filter"
+                    data-order-filter="payment_confirmed">Confirmados</button>
+                <button type="button" class="account-order-filter" data-order-filter="preparing">Em
+                    produ&ccedil;&atilde;o</button>
                 <button type="button" class="account-order-filter" data-order-filter="shipped">Enviados</button>
                 <button type="button" class="account-order-filter" data-order-filter="delivered">Finalizados</button>
                 <button type="button" class="account-order-filter" data-order-filter="cancelled">Cancelados</button>
             </div>
 
-            <div class="account-orders-empty" id="accountOrdersEmpty" hidden>Voc&ecirc; ainda n&atilde;o tem pedidos vinculados a esta conta.</div>
+            <div class="account-orders-empty" id="accountOrdersEmpty" hidden>Voc&ecirc; ainda n&atilde;o tem pedidos
+                vinculados a esta conta.</div>
             <div class="account-orders-list" id="accountOrdersList"></div>
         </section>
     </main>
@@ -212,4 +240,5 @@
     <script src="/auth-nav.js"></script>
     <script src="/orders.js"></script>
 </body>
+
 </html>

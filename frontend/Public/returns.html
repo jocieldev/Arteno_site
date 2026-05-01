@@ -1,8 +1,28 @@
 ﻿<!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Meta Pixel Code -->
+    <script>
+        !function (f, b, e, v, n, t, s) {
+            if (f.fbq) return; n = f.fbq = function () {
+                n.callMethod ?
+                n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+            };
+            if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+            n.queue = []; t = b.createElement(e); t.async = !0;
+            t.src = v; s = b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t, s)
+        }(window, document, 'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '2290882914775015');
+        fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+            src="https://www.facebook.com/tr?id=2290882914775015&ev=PageView&noscript=1" /></noscript>
+    <!-- End Meta Pixel Code -->
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="apple-touch-icon" href="/favicon.png">
     <title>Trocas e Devoluções | Arteno</title>
@@ -14,6 +34,7 @@
     <link rel="stylesheet" href="/cart-drawer.css">
     <link rel="stylesheet" href="/returns.css">
 </head>
+
 <body class="returns-page-body">
     <div class="top-bar">
         <div class="top-container-bar container">
@@ -49,7 +70,8 @@
 
             <div class="search-container">
                 <input type="text" placeholder="Buscar">
-                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="7"></circle>
                     <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
                 </svg>
@@ -58,13 +80,14 @@
             <div class="header-right">
                 <div class="account">
                     <i class="fa-regular fa-circle-user"></i>
-<span><a href="/entrar">Cadastre-se</a></span>
-<span style="cursor: default;">|</span>
-<span><a href="/entrar">Fazer Login</a></span>
+                    <span><a href="/entrar">Cadastre-se</a></span>
+                    <span style="cursor: default;">|</span>
+                    <span><a href="/entrar">Fazer Login</a></span>
                 </div>
 
                 <div class="cart" id="cart">
-                    <svg class="cart-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="cart-icon" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="9" cy="21" r="1"></circle>
                         <circle cx="20" cy="21" r="1"></circle>
                         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6"></path>
@@ -100,9 +123,11 @@
         <div class="menu-top">
             <a class="menu-enter" href="/entrar">
                 <svg class="login-icon" viewBox="0 0 24 24" fill="none">
-                    <path d="M14 4h4v16h-4" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M14 4h4v16h-4" stroke="white" stroke-width="2.8" stroke-linecap="round"
+                        stroke-linejoin="round" />
                     <path d="M4 12h9" stroke="white" stroke-width="2.8" stroke-linecap="round" />
-                    <path d="M10 8l4 4-4 4" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M10 8l4 4-4 4" stroke="white" stroke-width="2.8" stroke-linecap="round"
+                        stroke-linejoin="round" />
                 </svg>
                 <span>Entrar</span>
             </a>
@@ -139,7 +164,8 @@
             </div>
             <div class="returns-copy returns-copy-intro">
                 <p>
-                    Queremos que sua experiência com a Arteno seja tranquila do início ao fim. Nesta página você encontra
+                    Queremos que sua experiência com a Arteno seja tranquila do início ao fim. Nesta página você
+                    encontra
                     as orientações principais sobre prazos, condições e a melhor forma de falar com a loja caso precise
                     de ajuda com seu pedido.
                 </p>
@@ -162,7 +188,8 @@
             <div class="returns-copy">
                 <p>
                     Para análise de troca ou devolução, o item deve ser enviado com o máximo de cuidado possível,
-                    acompanhado das informações do pedido e, quando necessário, fotos que ajudem a identificar o ocorrido.
+                    acompanhado das informações do pedido e, quando necessário, fotos que ajudem a identificar o
+                    ocorrido.
                 </p>
             </div>
         </section>
@@ -170,10 +197,14 @@
         <section class="returns-text-section">
             <h2 class="returns-section-subtitle">Como funciona</h2>
             <div class="returns-copy returns-steps">
-                <p><span class="returns-step-number">1.</span><span>Entre em contato informando nome, número do pedido e o motivo da solicitação.</span></p>
-                <p><span class="returns-step-number">2.</span><span>Quando necessário, envie fotos ou vídeos para facilitar a análise do caso.</span></p>
-                <p><span class="returns-step-number">3.</span><span>Aguarde a orientação da nossa equipe com os próximos passos.</span></p>
-                <p><span class="returns-step-number">4.</span><span>Depois da confirmação, seguimos com a solução combinada da forma mais clara e segura possível.</span></p>
+                <p><span class="returns-step-number">1.</span><span>Entre em contato informando nome, número do pedido e
+                        o motivo da solicitação.</span></p>
+                <p><span class="returns-step-number">2.</span><span>Quando necessário, envie fotos ou vídeos para
+                        facilitar a análise do caso.</span></p>
+                <p><span class="returns-step-number">3.</span><span>Aguarde a orientação da nossa equipe com os próximos
+                        passos.</span></p>
+                <p><span class="returns-step-number">4.</span><span>Depois da confirmação, seguimos com a solução
+                        combinada da forma mais clara e segura possível.</span></p>
             </div>
         </section>
 
@@ -187,7 +218,8 @@
                         <i class="fa-solid fa-chevron-down"></i>
                     </button>
                     <div class="faq-answer">
-                        <p>Caso exista erro de produção, defeito ou divergência em relação ao combinado, entre em contato para avaliarmos o caso.</p>
+                        <p>Caso exista erro de produção, defeito ou divergência em relação ao combinado, entre em
+                            contato para avaliarmos o caso.</p>
                     </div>
                 </div>
 
@@ -197,7 +229,8 @@
                         <i class="fa-solid fa-chevron-down"></i>
                     </button>
                     <div class="faq-answer">
-                        <p>O canal mais rápido é o WhatsApp. Ele ajuda a enviar detalhes, fotos e agilizar a orientação.</p>
+                        <p>O canal mais rápido é o WhatsApp. Ele ajuda a enviar detalhes, fotos e agilizar a orientação.
+                        </p>
                     </div>
                 </div>
 
@@ -214,7 +247,7 @@
         </section>
     </main>
 
-        <footer class="simple-footer">
+    <footer class="simple-footer">
         <div class="container simple-footer-grid">
             <div class="simple-footer-brand">
                 <img src="/img/logo.png" alt="Logo V Santos" class="simple-footer-logo">
@@ -267,4 +300,5 @@
     <script src="/auth-nav.js"></script>
     <script src="/returns.js"></script>
 </body>
+
 </html>
