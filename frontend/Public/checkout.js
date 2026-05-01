@@ -1058,7 +1058,7 @@ async function loadCheckoutConfig() {
         const response = await fetch("/api/checkout/config");
 
         if (!response.ok) {
-        throw new Error("Não foi possível carregar a configuração do checkout.");
+            throw new Error("Não foi possível carregar a configuração do checkout.");
         }
 
         checkoutConfig = await response.json();
