@@ -188,6 +188,14 @@ if (contactForm) {
                 throw new Error(result.message || "Não foi possível enviar sua mensagem.");
             }
 
+            // Track Contact event
+            if (typeof window.trackMetaPixelEvent === "function") {
+                window.trackMetaPixelEvent("Contact", {
+                    value: 0,
+                    currency: "BRL"
+                });
+            }
+
             contactForm.reset();
             showContactFeedback(result.message || "Mensagem enviada com sucesso.", "success");
         } catch (error) {

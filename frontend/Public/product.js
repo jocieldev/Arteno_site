@@ -1757,6 +1757,25 @@ function renderProduct(product) {
         productPageContent.hidden = false;
     }
     productPageShell.hidden = false;
+
+    // Track ViewContent event
+    if (typeof window.trackMetaPixelEvent === "function") {
+        window.trackMetaPixelEvent("ViewContent", {
+            content_ids: [String(product._id || product.slug || "")],
+            content_name: String(product.name || product.slug || ""),
+            content_type: "product",
+            currency: "BRL",
+            value: Number(getCurrentProductDisplayPrice(product)),
+            contents: [
+                {
+                    id: String(product._id || product.slug || ""),
+                    quantity: 1,
+                    item_price: Number(getCurrentProductDisplayPrice(product))
+                }
+            ]
+        });
+    }
+
     if (productDescriptionSection) {
         productDescriptionSection.hidden = false;
     }
@@ -1894,6 +1913,21 @@ function addCurrentProductToCart({ redirectToCheckout = false } = {}) {
             ? `${quantity} item(ns) adicionado(s) ao carrinho com a gravação "${personalizationName}".`
             : `${quantity} item(ns) adicionado(s) ao carrinho.`
     );
+
+    trackMetaPixelEvent("AddToCart", {
+        content_ids: [String(currentProduct._id || currentProduct.slug || "")],
+        content_name: String(currentProduct.name || currentProduct.slug || ""),
+        content_type: "product",
+        currency: "BRL",
+        value: Number(getCurrentProductDisplayPrice(currentProduct)) * Number(quantity || 1),
+        contents: [
+            {
+                id: String(currentProduct._id || currentProduct.slug || ""),
+                quantity: Number(quantity || 1),
+                item_price: Number(getCurrentProductDisplayPrice(currentProduct))
+            }
+        ]
+    });
 
     if (redirectToCheckout) {
         window.location.href = "/checkout";

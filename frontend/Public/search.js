@@ -666,6 +666,14 @@ async function loadSearchResults() {
         }
 
         if (products.length) {
+            // Track Search event
+            if (typeof window.trackMetaPixelEvent === "function") {
+                window.trackMetaPixelEvent("Search", {
+                    search_string: term,
+                    content_type: "product"
+                });
+            }
+
             renderPaginatedProductGrid(searchResultsGrid, products, buildProductCard);
 
             if (searchEmptyState) {

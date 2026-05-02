@@ -1,3 +1,25 @@
+// ============================================
+// Meta Pixel Event Tracking Helper
+// ============================================
+window.trackMetaPixelEvent = function (eventName, params = {}) {
+    try {
+        if (typeof window.fbq !== "function") {
+            return;
+        }
+
+        const safeParams = {
+            ...params,
+            currency: String(params.currency || "BRL"),
+            value: Number(params.value || 0)
+        };
+
+        window.fbq("track", eventName, safeParams);
+    } catch (_error) {
+        // Silencia erros do pixel para não impactar a experiência do usuário
+        console.debug(`Pixel tracking error for ${eventName}:`, _error);
+    }
+};
+
 const menuIcon = document.querySelector(".menu-icon");
 const sideMenu = document.getElementById("sideMenu");
 const overlay = document.getElementById("overlay");

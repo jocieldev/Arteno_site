@@ -373,6 +373,13 @@ if (registerForm) {
                 throw new Error(result.message || "Não foi possível criar sua conta.");
             }
 
+            // Track CompleteRegistration event
+            if (typeof window.trackMetaPixelEvent === "function") {
+                window.trackMetaPixelEvent("CompleteRegistration", {
+                    status: "completed"
+                });
+            }
+
             window.dispatchEvent(new CustomEvent("auth:updated"));
             window.location.href = "/minha-conta";
         } catch (error) {

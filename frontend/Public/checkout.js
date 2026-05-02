@@ -2470,5 +2470,36 @@ bindCheckoutInteractions();
 setPaymentMethodUI();
 setCardTypeUI();
 tryAutoCalculateStoredShipping();
+
+// Track InitiateCheckout event when user enters checkout page
+(function trackCheckoutPageLoad() {
+    try {
+        const items = getStoredCartItems();
+
+        if (!items || !items.length || typeof window.fbq !== "function") {
+            return;
+        }
+
+        const totalValue = items.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.quantity || 1)), 0);
+
+        window.fbq("track", "InitiateCheckout", {
+            content_ids: items.map((item) => String(item.productId || item.cartKey || item.slug || "")),
+            content_name: items.map((item) => String(item.name || item.slug || "")).join(", "),
+            content_type: "product",
+            currency: "BRL",
+            value: Number(totalValue),
+            num_items: Number(items.reduce((sum, item) => sum + Number(item.quantity || 1), 0)),
+            contents: items.map((item) => ({
+                id: String(item.productId || item.cartKey || item.slug || ""),
+                quantity: Number(item.quantity || 1),
+                item_price: Number(item.price || 0)
+            }))
+        });
+    } catch (_error) {
+        // Silencia erros do pixel para não impactar a experiência do usuário.
+    }
+})();
+
 window.addEventListener("storage", handleCartStateChange);
 window.addEventListener("cart:updated", handleCartStateChange);
+
