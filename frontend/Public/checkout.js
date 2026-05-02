@@ -608,6 +608,22 @@ function clearShippingFeedback() {
     checkoutShippingFeedback.textContent = "";
 }
 
+function buildShippingDiagnosticsMessage(result = {}) {
+    const diagnostics = result?.diagnostics || {};
+    const messages = [
+        diagnostics.correios?.message,
+        diagnostics.motoboy?.message
+    ]
+        .map((message) => String(message || "").trim())
+        .filter(Boolean);
+    const uniqueMessages = [...new Set(messages)];
+    const warnings = Array.isArray(result?.warnings) && result.warnings.length
+        ? result.warnings.map((warning) => String(warning || "").trim()).filter(Boolean)
+        : [];
+
+    return [...uniqueMessages, ...warnings].join(" ");
+}
+
 function renderShippingOptions() {
     if (!checkoutShippingOptions) {
         return;
@@ -685,13 +701,13 @@ async function calculateCheckoutShipping() {
         renderCheckoutSummary();
 
         if (!availableShippingOptions.length) {
-            const motoboyMessage = result?.diagnostics?.motoboy?.message;
+            const diagnosticsMessage = buildShippingDiagnosticsMessage(result);
             const warnings = Array.isArray(result?.warnings) && result.warnings.length
                 ? ` ${result.warnings.join(" ")}`
                 : "";
             showShippingFeedback(
-                motoboyMessage
-                    ? `${motoboyMessage}${warnings}`
+                diagnosticsMessage
+                    ? `${diagnosticsMessage}${warnings}`
                     : `Nenhuma opção de frete foi encontrada para este CEP.${warnings}`
             );
             return;
