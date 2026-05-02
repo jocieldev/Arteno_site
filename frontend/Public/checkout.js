@@ -1197,7 +1197,7 @@ function renderApprovedResult(result) {
 }
 
 function trackCheckoutPurchase(result) {
-    if (typeof fbq !== "function") {
+    if (typeof window.trackMetaPixelEventOnce !== "function") {
         return;
     }
 
@@ -1223,7 +1223,15 @@ function trackCheckoutPurchase(result) {
     }
 
     try {
-        fbq("track", "Purchase", payload);
+        const purchaseIdentifier = String(
+            result.order?.orderNumber
+            || result.order?._id
+            || result.payment?.id
+            || result.payment?.paymentId
+            || `${currency}:${value}:${contentIds.join(",")}`
+        ).trim();
+
+        window.trackMetaPixelEventOnce(`purchase:${purchaseIdentifier}`, "Purchase", payload);
     } catch (_error) {
         // O Pixel pode estar bloqueado, mas não queremos quebrar o checkout.
     }
@@ -2476,13 +2484,20 @@ tryAutoCalculateStoredShipping();
     try {
         const items = getStoredCartItems();
 
-        if (!items || !items.length || typeof window.fbq !== "function") {
+        if (!items || !items.length || typeof window.trackMetaPixelEventOnce !== "function") {
             return;
         }
 
         const totalValue = items.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.quantity || 1)), 0);
+        const cartFingerprint = items
+            .map((item) => [
+                item.productId || item.cartKey || item.slug || "",
+                Number(item.quantity || 1),
+                Number(item.price || 0)
+            ].join(":"))
+            .join("|");
 
-        window.fbq("track", "InitiateCheckout", {
+        window.trackMetaPixelEventOnce(`initiate_checkout:${cartFingerprint}`, "InitiateCheckout", {
             content_ids: items.map((item) => String(item.productId || item.cartKey || item.slug || "")),
             content_name: items.map((item) => String(item.name || item.slug || "")).join(", "),
             content_type: "product",

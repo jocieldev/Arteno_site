@@ -1790,7 +1790,7 @@ function renderProduct(product) {
     });
 }
 
-function addCurrentProductToCart({ redirectToCheckout = false } = {}) {
+function addCurrentProductToCart({ redirectToCheckout = false, showFeedback = !redirectToCheckout } = {}) {
     if (!currentProduct) {
         return false;
     }
@@ -1907,30 +1907,34 @@ function addCurrentProductToCart({ redirectToCheckout = false } = {}) {
 
     setStoredCartItems(items);
     updateCartCount();
-    triggerAddToCartButtonSuccessAnimation();
-    showCartFeedback(
-        personalizationName
+    if (showFeedback) {
+        triggerAddToCartButtonSuccessAnimation();
+        showCartFeedback(
+            personalizationName
             ? `${quantity} item(ns) adicionado(s) ao carrinho com a gravação "${personalizationName}".`
             : `${quantity} item(ns) adicionado(s) ao carrinho.`
-    );
+        );
+    }
 
-    trackMetaPixelEvent("AddToCart", {
-        content_ids: [String(currentProduct._id || currentProduct.slug || "")],
-        content_name: String(currentProduct.name || currentProduct.slug || ""),
-        content_type: "product",
-        currency: "BRL",
-        value: Number(getCurrentProductDisplayPrice(currentProduct)) * Number(quantity || 1),
-        contents: [
-            {
-                id: String(currentProduct._id || currentProduct.slug || ""),
-                quantity: Number(quantity || 1),
-                item_price: Number(getCurrentProductDisplayPrice(currentProduct))
-            }
-        ]
-    });
+    if (typeof window.trackMetaPixelEvent === "function") {
+        window.trackMetaPixelEvent("AddToCart", {
+            content_ids: [String(currentProduct._id || currentProduct.slug || "")],
+            content_name: String(currentProduct.name || currentProduct.slug || ""),
+            content_type: "product",
+            currency: "BRL",
+            value: Number(getCurrentProductDisplayPrice(currentProduct)) * Number(quantity || 1),
+            contents: [
+                {
+                    id: String(currentProduct._id || currentProduct.slug || ""),
+                    quantity: Number(quantity || 1),
+                    item_price: Number(getCurrentProductDisplayPrice(currentProduct))
+                }
+            ]
+        });
+    }
 
     if (redirectToCheckout) {
-        window.location.href = "/checkout";
+        window.location.assign("/checkout");
     }
 
     return true;
@@ -2259,14 +2263,19 @@ function bindProductInteractions() {
                 return;
             }
 
-            const wasAdded = addCurrentProductToCart({ redirectToCheckout: true });
-
-            if (!wasAdded) {
-                return;
-            }
-
             buyNowRequestInFlight = true;
             setBuyNowButtonLoading(true);
+
+            const wasAdded = addCurrentProductToCart({
+                redirectToCheckout: true,
+                showFeedback: false
+            });
+
+            if (!wasAdded) {
+                buyNowRequestInFlight = false;
+                setBuyNowButtonLoading(false);
+                return;
+            }
         });
     }
 }
