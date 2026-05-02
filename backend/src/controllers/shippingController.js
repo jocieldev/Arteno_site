@@ -221,7 +221,26 @@ async function buildSameZipMotoboyOption(orderSubtotal, productionDays) {
 }
 
 function shouldUseDemoShippingMode() {
-    return process.env.SHIPPING_DEMO_MODE !== "false";
+    return String(process.env.SHIPPING_DEMO_MODE || "").trim().toLowerCase() === "true";
+}
+
+async function resolveMotoboyQuote({ zipCode, orderSubtotal, productionDays, allowMotoboy, disabledReasonCode, disabledMessage }) {
+    if (!allowMotoboy) {
+        return {
+            option: null,
+            diagnostics: {
+                available: false,
+                reasonCode: disabledReasonCode,
+                message: disabledMessage
+            }
+        };
+    }
+
+    if (await isOriginZipCode(zipCode)) {
+        return buildSameZipMotoboyOption(orderSubtotal, productionDays);
+    }
+
+    return buildMotoboyOption(zipCode, orderSubtotal, productionDays);
 }
 
 function buildDemoShippingOptions({ zipCode, quantity, product }) {
@@ -491,33 +510,14 @@ async function quoteShipping(req, res) {
         }
 
         if (shouldUseDemoShippingMode()) {
-            if (await isOriginZipCode(zipCode)) {
-                const sameZipMotoboyResult = canUseMotoboy
-                    ? await buildSameZipMotoboyOption(orderSubtotal, productionDays)
-                    : { option: null, diagnostics: null };
-
-                return res.json({
-                    zipCode,
-                    productId,
-                    quantity,
-                    isDemo: true,
-                    productionDays,
-                    options: sameZipMotoboyResult.option ? [sameZipMotoboyResult.option] : [],
-                    warnings,
-                    diagnostics: {
-                        motoboy: sameZipMotoboyResult.diagnostics,
-                        correios: buildCorreiosDiagnostics({
-                            available: false,
-                            reasonCode: "demo_same_zip_only",
-                            message: "No modo atual, para CEP igual ao da origem apenas o motoboy local e avaliado."
-                        })
-                    }
-                });
-            }
-
-            const motoboyResult = canUseMotoboy
-                ? await buildMotoboyOption(zipCode, orderSubtotal, productionDays)
-                : { option: null, diagnostics: null };
+            const motoboyResult = await resolveMotoboyQuote({
+                zipCode,
+                orderSubtotal,
+                productionDays,
+                allowMotoboy: canUseMotoboy,
+                disabledReasonCode: "motoboy_disabled_for_product",
+                disabledMessage: "Este produto nao permite entrega por motoboy."
+            });
 
             return res.json({
                 zipCode,
@@ -535,30 +535,11 @@ async function quoteShipping(req, res) {
                 ].sort((left, right) => left.price - right.price),
                 warnings,
                 diagnostics: {
-                    motoboy: motoboyResult.diagnostics
-                }
-            });
-        }
-
-        if (await isOriginZipCode(zipCode)) {
-            const sameZipMotoboyResult = canUseMotoboy
-                ? await buildSameZipMotoboyOption(orderSubtotal, productionDays)
-                : { option: null, diagnostics: null };
-
-            return res.json({
-                zipCode,
-                productId,
-                quantity,
-                isDemo: false,
-                productionDays,
-                options: sameZipMotoboyResult.option ? [sameZipMotoboyResult.option] : [],
-                warnings,
-                diagnostics: {
-                    motoboy: sameZipMotoboyResult.diagnostics,
+                    motoboy: motoboyResult.diagnostics,
                     correios: buildCorreiosDiagnostics({
-                        available: false,
-                        reasonCode: "same_zip_only",
-                        message: "Para CEP igual ao da origem, o frete exibido e somente o motoboy local."
+                        available: true,
+                        reasonCode: "demo_mode",
+                        message: "Modo demonstracao ativo para PAC e SEDEX."
                     })
                 }
             });
@@ -570,16 +551,14 @@ async function quoteShipping(req, res) {
             productionDays,
             canQuoteCorreios
         });
-        const motoboyResult = canUseMotoboy
-            ? await buildMotoboyOption(zipCode, orderSubtotal, productionDays)
-            : {
-                option: null,
-                diagnostics: {
-                    available: false,
-                    reasonCode: "motoboy_disabled_for_product",
-                    message: "Este produto nao permite entrega por motoboy."
-                }
-            };
+        const motoboyResult = await resolveMotoboyQuote({
+            zipCode,
+            orderSubtotal,
+            productionDays,
+            allowMotoboy: canUseMotoboy,
+            disabledReasonCode: "motoboy_disabled_for_product",
+            disabledMessage: "Este produto nao permite entrega por motoboy."
+        });
 
         return res.json({
             zipCode,
@@ -633,32 +612,14 @@ async function quoteCheckoutShipping(req, res) {
         } = await buildCheckoutProductsPayload(items);
 
         if (shouldUseDemoShippingMode()) {
-            if (await isOriginZipCode(zipCode)) {
-                const sameZipMotoboyResult = allowMotoboy
-                    ? await buildSameZipMotoboyOption(referencePrice, productionDays)
-                    : { option: null, diagnostics: null };
-                const options = sameZipMotoboyResult.option ? [sameZipMotoboyResult.option] : [];
-
-                return res.json({
-                    zipCode,
-                    isDemo: true,
-                    productionDays,
-                    quoteExpiresAt,
-                    options: attachCheckoutQuoteTokens(options, {
-                        zipCode,
-                        items,
-                        expiresAt: quoteExpiresAt
-                    }),
-                    warnings,
-                    diagnostics: {
-                        motoboy: sameZipMotoboyResult.diagnostics
-                    }
-                });
-            }
-
-            const motoboyResult = allowMotoboy
-                ? await buildMotoboyOption(zipCode, referencePrice, productionDays)
-                : { option: null, diagnostics: null };
+            const motoboyResult = await resolveMotoboyQuote({
+                zipCode,
+                orderSubtotal: referencePrice,
+                productionDays,
+                allowMotoboy,
+                disabledReasonCode: "motoboy_disabled_for_cart",
+                disabledMessage: "Um ou mais produtos do carrinho nao permitem entrega por motoboy."
+            });
             const options = [
                 ...(motoboyResult.option ? [motoboyResult.option] : []),
                 ...buildDemoShippingOptions({
@@ -680,35 +641,17 @@ async function quoteCheckoutShipping(req, res) {
                     zipCode,
                     items,
                     expiresAt: quoteExpiresAt
-                }),
-                warnings,
-                diagnostics: {
-                    motoboy: motoboyResult.diagnostics
-                }
-            });
-        }
-
-        if (await isOriginZipCode(zipCode)) {
-            const sameZipMotoboyResult = allowMotoboy
-                ? await buildSameZipMotoboyOption(referencePrice, productionDays)
-                : { option: null, diagnostics: null };
-            const options = sameZipMotoboyResult.option ? [sameZipMotoboyResult.option] : [];
-
-            return res.json({
-                zipCode,
-                isDemo: false,
-                productionDays,
-                quoteExpiresAt,
-                options: attachCheckoutQuoteTokens(options, {
-                    zipCode,
-                    items,
-                    expiresAt: quoteExpiresAt
-                }),
-                warnings,
-                diagnostics: {
-                    motoboy: sameZipMotoboyResult.diagnostics
-                }
-            });
+                    }),
+                    warnings,
+                    diagnostics: {
+                        motoboy: motoboyResult.diagnostics,
+                        correios: buildCorreiosDiagnostics({
+                            available: true,
+                            reasonCode: "demo_mode",
+                            message: "Modo demonstracao ativo para PAC e SEDEX."
+                        })
+                    }
+                });
         }
 
         const correiosResult = await quoteCorreiosOptions({
@@ -717,16 +660,14 @@ async function quoteCheckoutShipping(req, res) {
             productionDays,
             canQuoteCorreios
         });
-        const motoboyResult = allowMotoboy
-            ? await buildMotoboyOption(zipCode, referencePrice, productionDays)
-            : {
-                option: null,
-                diagnostics: {
-                    available: false,
-                    reasonCode: "motoboy_disabled_for_cart",
-                    message: "Um ou mais produtos do carrinho nao permitem entrega por motoboy."
-                }
-            };
+        const motoboyResult = await resolveMotoboyQuote({
+            zipCode,
+            orderSubtotal: referencePrice,
+            productionDays,
+            allowMotoboy,
+            disabledReasonCode: "motoboy_disabled_for_cart",
+            disabledMessage: "Um ou mais produtos do carrinho nao permitem entrega por motoboy."
+        });
         const options = [
             ...(motoboyResult.option ? [motoboyResult.option] : []),
             ...correiosResult.options
