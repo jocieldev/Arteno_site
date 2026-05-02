@@ -12,6 +12,28 @@ function ensureOriginPostalCode(config) {
     }
 }
 
+function formatMelhorEnvioValidationDetails(details) {
+    const errorEntries = Object.entries(details?.errors || {});
+
+    if (!errorEntries.length) {
+        return "";
+    }
+
+    return errorEntries
+        .map(([field, messages]) => {
+            const normalizedMessages = (Array.isArray(messages) ? messages : [messages])
+                .map((message) => String(message || "").trim())
+                .filter(Boolean)
+                .join(", ");
+
+            return normalizedMessages
+                ? `${String(field || "").trim()}: ${normalizedMessages}`
+                : String(field || "").trim();
+        })
+        .filter(Boolean)
+        .join(" | ");
+}
+
 async function requestMelhorEnvio(pathname, { method = "GET", body, headers = {} } = {}) {
     const config = getMelhorEnvioOAuthConfig();
     const token = await getValidAçõessToken();
@@ -36,6 +58,7 @@ async function requestMelhorEnvio(pathname, { method = "GET", body, headers = {}
     }
 
     if (!response.ok) {
+        const validationDetails = formatMelhorEnvioValidationDetails(parsedResponse);
         const error = new Error(
             parsedResponse?.message
             || parsedResponse?.error
@@ -43,6 +66,10 @@ async function requestMelhorEnvio(pathname, { method = "GET", body, headers = {}
         );
         error.status = response.status || 502;
         error.details = parsedResponse || responseText;
+        error.validationDetails = validationDetails;
+        error.userMessage = validationDetails
+            ? `${error.message} Campos rejeitados: ${validationDetails}`
+            : error.message;
         throw error;
     }
 

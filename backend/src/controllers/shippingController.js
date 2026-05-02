@@ -379,6 +379,23 @@ function buildCorreiosDiagnostics({ available, reasonCode, message }) {
     };
 }
 
+function buildCorreiosQuoteDebugPayload({ zipCode = "", products = [], productionDays = 0, canQuoteCorreios = false } = {}) {
+    return {
+        zipCode,
+        canQuoteCorreios: Boolean(canQuoteCorreios),
+        productionDays: Number(productionDays || 0),
+        products: (Array.isArray(products) ? products : []).map((product = {}) => ({
+            id: String(product.id || "").trim(),
+            width: Number(product.width || 0),
+            height: Number(product.height || 0),
+            length: Number(product.length || 0),
+            weight: Number(product.weight || 0),
+            insurance_value: Number(product.insurance_value || 0),
+            quantity: Number(product.quantity || 0)
+        }))
+    };
+}
+
 async function quoteCorreiosOptions({ zipCode, products, productionDays, canQuoteCorreios }) {
     if (!canQuoteCorreios) {
         return {
@@ -414,13 +431,23 @@ async function quoteCorreiosOptions({ zipCode, products, productionDays, canQuot
             })
         };
     } catch (error) {
-        console.error("Correios indisponivel nesta consulta:", error.message);
+        console.error("Correios indisponivel nesta consulta:", {
+            message: error.userMessage || error.message,
+            validationDetails: error.validationDetails || "",
+            details: error.details || null,
+            requestPayload: buildCorreiosQuoteDebugPayload({
+                zipCode,
+                products,
+                productionDays,
+                canQuoteCorreios
+            })
+        });
         return {
             options: [],
             diagnostics: buildCorreiosDiagnostics({
                 available: false,
                 reasonCode: "correios_quote_failed",
-                message: error.message || "Nao foi possivel consultar os Correios nesta tentativa."
+                message: error.userMessage || error.message || "Nao foi possivel consultar os Correios nesta tentativa."
             })
         };
     }
