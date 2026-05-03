@@ -125,8 +125,8 @@ function renderMercadoPagoStatus(status) {
 }
 
 function renderMelhorEnvioStatus(status) {
-    document.getElementById("melhorEnvioEnvironment").textContent = status.useSandbox ? "Sandbox" : "ProduÃ§Ã£o";
-    document.getElementById("melhorEnvioConnectionState").textContent = status.isConnected ? "Conectado" : "NÃ£o conectado";
+    document.getElementById("melhorEnvioEnvironment").textContent = status.useSandbox ? "Sandbox" : "Produção";
+    document.getElementById("melhorEnvioConnectionState").textContent = status.isConnected ? "Conectado" : "Não conectado";
     document.getElementById("melhorEnvioAccountInfo").textContent = status.connectedAccountEmail || status.connectedAccountName || "-";
     document.getElementById("melhorEnvioOriginZip").textContent = status.fromPostalCode || "-";
     document.getElementById("melhorEnvioRedirectUri").textContent = status.redirectUri || "-";
@@ -159,7 +159,7 @@ async function loadMercadoPagoStatus() {
     const result = await response.json();
 
     if (!response.ok) {
-        throw new Error(result.message || "NÃ£o foi possÃ­vel carregar o status do Mercado Pago.");
+        throw new Error(result.message || "Não foi possível carregar o status do Mercado Pago.");
     }
 
     renderMercadoPagoStatus(result);
@@ -172,7 +172,7 @@ async function loadMelhorEnvioStatus() {
     const result = await response.json();
 
     if (!response.ok) {
-        throw new Error(result.message || "NÃ£o foi possÃ­vel carregar a integraÃ§Ã£o.");
+        throw new Error(result.message || "Não foi possível carregar a integração.");
     }
 
     renderMelhorEnvioStatus(result);
@@ -219,12 +219,12 @@ if (disconnectButton) {
             const result = await response.json();
 
             if (!response.ok) {
-                throw new Error(result.message || "NÃ£o foi possÃ­vel desconectar.");
+                throw new Error(result.message || "Não foi possível desconectar.");
             }
 
             disconnectRequestInFlight = false;
             setButtonLoading(disconnectButton, false, "Desconectando...");
-            showFeedback(result.message || "IntegraÃ§Ã£o desconectada.", "success");
+            showFeedback(result.message || "Integração desconectada.", "success");
             await loadStatuses();
         } catch (error) {
             showFeedback(error.message, "error");
